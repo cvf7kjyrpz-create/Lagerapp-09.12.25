@@ -62,7 +62,7 @@ border:1px solid #444;background:#1a1a1a;color:white;
 img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 #salesHistoryPopup h3{margin-top:0;font-size:16px;}
 #salesHistoryPopup table{width:100%;border-collapse:collapse;font-size:11px;}
-#salesHistoryPopup th,#salesHistoryPopup td{border:1px solid #444;padding:4px;white-space:nowrap;}
+#salesHistoryPopup th,#salesHistoryPopup td{border:1px solid #444;padding:4px;white-space:nowrap;max-width:260px;}
 
 .selectedRow{
   background:#0b2a4a !important;
@@ -73,6 +73,18 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 <style>
 .tr-zero-stock{
   background:#3a0000 !important;
+}
+</style>
+
+
+<style>
+#salesHistoryPopup{
+  max-height: 80vh !important;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+}
+#salesHistoryPopup table{
+  min-width: 600px; /* allows horizontal scroll on small screens */
 }
 </style>
 
@@ -774,7 +786,7 @@ function selectRow(i){
   renderTable();
 }
 
-btnSaleSend.onclick = () => {
+/* Rechnung deaktiviert */ btnSaleSend_disabled = function = () => {
   if(currentSaleIndex === -1) return;
   const a = artikel[currentSaleIndex];
   const mengeV = parseInt(s_menge.value) || 0;
@@ -807,7 +819,7 @@ btnSaleSend.onclick = () => {
     if(typeof artikel !== "undefined" && typeof renderTable === "function" && typeof btnSaleSend !== "undefined"){
       clearInterval(wait);
 
-      btnSaleSend.onclick = () => {
+      /* Rechnung deaktiviert */ btnSaleSend_disabled = function = () => {
         if(typeof currentSaleIndex === "undefined" || currentSaleIndex === -1) return;
 
         const a = artikel[currentSaleIndex];
@@ -888,107 +900,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 });
-</script>
-
-
-<script>
-const _origRenderTable = renderTable;
-renderTable = function(){
-  _origRenderTable();
-  document.querySelectorAll("#tableBody tr").forEach((tr, i) => {
-    const a = artikel[i];
-    if(!a) return;
-
-    const cam = tr.querySelector(".iconCell span:nth-child(1)");
-    if(cam){
-      if(!a.bild){
-        cam.style.opacity = "0.3";
-        cam.style.pointerEvents = "none";
-      } else {
-        cam.style.opacity = "1";
-        cam.style.pointerEvents = "auto";
-      }
-    }
-
-    const note = tr.querySelector(".iconCell span:nth-child(2)");
-    if(note){
-      if(!a.notiz){
-        note.style.opacity = "0.3";
-        note.style.pointerEvents = "none";
-      } else {
-        note.style.opacity = "1";
-        note.style.pointerEvents = "auto";
-      }
-    }
-  });
-};
-</script>
-
-<script>
-(function(){
-  const wait = setInterval(() => {
-    if(typeof artikel !== "undefined" && typeof btnSaleSend !== "undefined"){
-      clearInterval(wait);
-
-      btnSaleSend.onclick = () => {
-        if(currentSaleIndex === -1) return;
-
-        const a = artikel[currentSaleIndex];
-        const mengeV = parseInt(s_menge.value) || 0;
-        const preisV = parseFloat(s_preis.value) || 0;
-        const versK  = parseFloat(s_versandKunde.value) || 0;
-        const versC  = parseFloat(s_versandKosten.value) || 0;
-        const datV   = s_datum.value;
-
-        if(mengeV <= 0 || mengeV > a.menge || preisV <= 0){
-          alert("Ungültige Verkaufsdaten");
-          return;
-        }
-
-        const umsatz = mengeV * preisV + versK;
-        const einkaufKosten = mengeV * (a.preis || 0);
-        const gewinn = umsatz - einkaufKosten - versC;
-
-        const sale = {
-          artnr: a.artnr,
-          name: a.name,
-          menge: mengeV,
-          verkaufPreis: preisV,
-          versandKunde: versK,
-          versandKosten: versC,
-          einkaufPreis: a.preis || 0,
-          datum: datV,
-          umsatz,
-          gewinn
-        };
-
-        sales.push(sale);
-        localStorage.setItem("lagerSales", JSON.stringify(sales));
-
-        a.menge -= mengeV;
-        if(a.menge < 0) a.menge = 0;
-        localStorage.setItem("lagerData", JSON.stringify(artikel));
-
-        let buffer = JSON.parse(localStorage.getItem("invoiceBuffer") || "[]");
-        if(!Array.isArray(buffer)) buffer = [];
-        buffer.push({
-          artnr: a.artnr,
-          name: a.name,
-          menge: mengeV,
-          preis: preisV,
-          versand: versK,
-          datum: datV
-        });
-        localStorage.setItem("invoiceBuffer", JSON.stringify(buffer));
-
-        salePopup.style.display = "none";
-        currentSaleIndex = -1;
-        renderTable();
-        alert("Verkauf verbucht – Umsatz & Gewinn berechnet ✅");
-      };
-    }
-  }, 200);
-})();
 </script>
 
 </body>
