@@ -72,6 +72,13 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 }
 </style>
 
+
+<style>
+.tr-zero-stock{
+  background:#3a0000 !important;
+}
+</style>
+
 </head>
 
 <body>
@@ -172,7 +179,7 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   <div class="popup-row"><label>Eigene Versandkosten (€)</label><input type="number" id="s_versandKosten" step="0.01"></div>
   <div class="popup-row"><label>Verkaufsdatum</label><input type="date" id="s_datum"></div>
   <div id="saleButtons">
-    <button id="btnSaleSend">Speichern & Kopieren</button>
+    <button id="btnSaleSend">An Rechnung senden</button>
     <button id="btnSaleOk">Verkaufen</button>
     <button id="btnSaleCancel">Abbrechen</button>
   </div>
@@ -772,33 +779,94 @@ function selectRow(i){
 
 btnSaleSend.onclick = () => {
   if(currentSaleIndex === -1) return;
-
   const a = artikel[currentSaleIndex];
   const mengeV = parseInt(s_menge.value) || 0;
   const preisV = parseFloat(s_preis.value) || 0;
-  const versK  = parseFloat(s_versandKunde?.value || 0) || 0;
-  const datV   = s_datum?.value || "";
 
   if(mengeV <= 0 || preisV <= 0){
     alert("Bitte Menge und Preis korrekt eingeben.");
     return;
   }
 
-  const buffer = {
+  const pending = {
     name: a.name,
     menge: mengeV,
-    preis: preisV,
-    versand: versK,
-    datum: datV
+    preis: preisV
   };
 
-  localStorage.setItem("invoiceBuffer", JSON.stringify(buffer));
-  alert("Verkauf gespeichert & kopiert ✅");
+  localStorage.setItem("pendingInvoiceData", JSON.stringify(pending));
+
   salePopup.style.display = "none";
+  
 };
 
 </script>
 
+
+
+<script>
+(function(){
+  const wait = setInterval(() => {
+    if(typeof artikel !== "undefined" && typeof renderTable === "function" && typeof btnSaleSend !== "undefined"){
+      clearInterval(wait);
+
+      btnSaleSend.onclick = () => {
+        if(typeof currentSaleIndex === "undefined" || currentSaleIndex === -1) return;
+
+        const a = artikel[currentSaleIndex];
+        const mengeV = parseInt(s_menge.value) || 0;
+        const preisV = parseFloat(s_preis.value) || 0;
+        const versand = parseFloat(s_versandKunde.value || 0) || 0;
+        const datum = s_datum.value || "";
+
+        if(mengeV <= 0 || preisV <= 0 || mengeV > a.menge){
+          alert("Ungültige Verkaufsdaten");
+          return;
+        }
+
+        a.menge -= mengeV;
+        if(a.menge < 0) a.menge = 0;
+
+        localStorage.setItem("lagerData", JSON.stringify(artikel));
+
+        let buffer = JSON.parse(localStorage.getItem("invoiceBuffer") || "[]");
+        if(!Array.isArray(buffer)) buffer = [];
+
+        buffer.push({
+          artnr: a.artnr,
+          name: a.name,
+          menge: mengeV,
+          preis: preisV,
+          versand: versand,
+          datum: datum
+        });
+
+        localStorage.setItem("invoiceBuffer", JSON.stringify(buffer));
+
+        if(typeof salePopup !== "undefined"){
+          salePopup.style.display = "none";
+        }
+
+        currentSaleIndex = -1;
+
+        const oldRender = renderTable;
+        renderTable = function(){
+          oldRender();
+          document.querySelectorAll("tbody tr").forEach((tr, i) => {
+            const m = artikel[i]?.menge || 0;
+            if(m === 0){
+              tr.classList.add("tr-zero-stock");
+            }
+          });
+        };
+
+        renderTable();
+        alert("Verkauf gespeichert & in Zwischenspeicher abgelegt ✅");
+      };
+    }
+  }, 200);
+})();
+</script>
 
 </body>
 </html>
