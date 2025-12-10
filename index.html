@@ -951,6 +951,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const btnExport = document.getElementById("btnExport");
+  const btnSave   = document.getElementById("btnSave");
+  const popup     = document.getElementById("popup");
+
+  if (btnExport) {
+    const origExport = btnExport.onclick;
+    btnExport.onclick = () => {
+      if (popup && popup.style.display === "block" && btnSave) {
+        btnSave.click(); // always save article first
+      }
+      if (typeof origExport === "function") {
+        origExport();
+      }
+    };
+  }
+
+  const btnSales = document.getElementById("btnSales");
+  if (btnSales && typeof openSalesHistory === "function") {
+    btnSales.onclick = () => openSalesHistory();
+  }
+});
+</script>
+
 </body>
 </html>
 <script>
