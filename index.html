@@ -76,31 +76,6 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 }
 </style>
 
-
-<style>
-#salesHistoryPopup{
-  max-height: 80vh !important;
-  overflow-y: auto !important;
-  overflow-x: auto !important;
-}
-#salesHistoryPopup table{
-  min-width: 700px;
-}
-</style>
-
-
-<style>
-#tableContainer {
-  overflow-y: auto;
-}
-#tableContainer thead {
-  position: sticky;
-  top: 0;
-  background: #000;
-  z-index: 10;
-}
-</style>
-
 </head>
 
 <body>
@@ -201,7 +176,7 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   <div class="popup-row"><label>Eigene Versandkosten (€)</label><input type="number" id="s_versandKosten" step="0.01"></div>
   <div class="popup-row"><label>Verkaufsdatum</label><input type="date" id="s_datum"></div>
   <div id="saleButtons">
-    <button id="btnSaleSend_DISABLED">—</button>
+    <button id="btnSaleSend">An Rechnung senden</button>
     <button id="btnSaleOk">Verkaufen</button>
     <button id="btnSaleCancel">Abbrechen</button>
   </div>
@@ -564,7 +539,7 @@ const s_versandKunde = document.getElementById("s_versandKunde");
 const s_versandKosten= document.getElementById("s_versandKosten");
 const s_datum        = document.getElementById("s_datum");
 
-const btnSaleSend_DISABLED   = document.getElementById("btnSaleSend_DISABLED");
+const btnSaleSend   = document.getElementById("btnSaleSend");
 const s_rechnung    = document.getElementById("s_rechnung");
 
 function nextInvoiceNrLager(){
@@ -799,7 +774,7 @@ function selectRow(i){
   renderTable();
 }
 
-btnSaleSend_DISABLED.onclick = () => {
+btnSaleSend.onclick = () => {
   if(currentSaleIndex === -1) return;
   const a = artikel[currentSaleIndex];
   const mengeV = parseInt(s_menge.value) || 0;
@@ -816,7 +791,7 @@ btnSaleSend_DISABLED.onclick = () => {
     preis: preisV
   };
 
-  localStorage.setItem("lagerOnlyDisabled", JSON.stringify(pending));
+  localStorage.setItem("pendingInvoiceData", JSON.stringify(pending));
 
   salePopup.style.display = "none";
   
@@ -829,10 +804,10 @@ btnSaleSend_DISABLED.onclick = () => {
 <script>
 (function(){
   const wait = setInterval(() => {
-    if(typeof artikel !== "undefined" && typeof renderTable === "function" && typeof btnSaleSend_DISABLED !== "undefined"){
+    if(typeof artikel !== "undefined" && typeof renderTable === "function" && typeof btnSaleSend !== "undefined"){
       clearInterval(wait);
 
-      btnSaleSend_DISABLED.onclick = () => {
+      btnSaleSend.onclick = () => {
         if(typeof currentSaleIndex === "undefined" || currentSaleIndex === -1) return;
 
         const a = artikel[currentSaleIndex];
@@ -851,7 +826,7 @@ btnSaleSend_DISABLED.onclick = () => {
 
         localStorage.setItem("lagerData", JSON.stringify(artikel));
 
-        let buffer = JSON.parse(localStorage.getItem("lagerOnlyDisabled") || "[]");
+        let buffer = JSON.parse(localStorage.getItem("invoiceBuffer") || "[]");
         if(!Array.isArray(buffer)) buffer = [];
 
         buffer.push({
@@ -863,7 +838,7 @@ btnSaleSend_DISABLED.onclick = () => {
           datum: datum
         });
 
-        localStorage.setItem("lagerOnlyDisabled", JSON.stringify(buffer));
+        localStorage.setItem("invoiceBuffer", JSON.stringify(buffer));
 
         if(typeof salePopup !== "undefined"){
           salePopup.style.display = "none";
@@ -913,6 +888,138 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 });
+</script>
+
+
+<script>
+(function(){
+  const _origRender = typeof renderTable === "function" ? renderTable : null;
+  if(!_origRender) return;
+
+  window.renderTable = function(){
+    _origRender();
+    document.querySelectorAll("#tableBody tr").forEach((tr, i) => {
+      const a = artikel[i];
+      if(!a) return;
+
+      if(a.menge === 0){
+        tr.classList.add("tr-zero-stock");
+      } else {
+        tr.classList.remove("tr-zero-stock");
+      }
+
+      const cam = tr.querySelector(".iconCell span:nth-child(1)");
+      if(cam){
+        cam.style.opacity = a.bild ? "1" : "0.3";
+        cam.style.pointerEvents = a.bild ? "auto" : "none";
+      }
+
+      const note = tr.querySelector(".iconCell span:nth-child(2)");
+      if(note){
+        note.style.opacity = a.notiz ? "1" : "0.3";
+        note.style.pointerEvents = a.notiz ? "auto" : "none";
+      }
+    });
+  };
+})();
+</script>
+
+<script>
+(function(){
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const popup = document.getElementById("salesHistoryPopup");
+    if(!popup) return;
+
+    if(!document.getElementById("salesSearch")){
+      const input = document.createElement("input");
+      input.id = "salesSearch";
+      input.placeholder = "Suche in Verkäufen...";
+      input.style.width = "100%";
+      input.style.marginBottom = "8px";
+      input.oninput = () => renderSalesFiltered(input.value);
+      popup.prepend(input);
+    }
+  });
+
+  function renderSalesFiltered(q){
+    if(typeof sales === "undefined") return;
+    const tbody = document.getElementById("salesHistoryBody");
+    if(!tbody) return;
+
+    tbody.innerHTML = "";
+    const query = q.toLowerCase();
+
+    sales.forEach((s, i) => {
+      if(String(s.name).toLowerCase().includes(query) ||
+          String(s.artnr).toLowerCase().includes(query) ||
+          String(s.rechnungsnr || "").toLowerCase().includes(query)){
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${s.rechnungsnr || "-"}</td>
+          <td>${s.name}</td>
+          <td>${s.menge}</td>
+          <td>${s.verkaufPreis}</td>
+          <td>${s.datum}</td>
+          <td>
+            <button onclick="editSale(${i})">✏️</button>
+            <button onclick="stornoSale(${i})">↩️</button>
+            <button onclick="deleteSale(${i})">🗑</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+    });
+  }
+
+  if(window.btnSaleSend){
+    const _orig = btnSaleSend.onclick;
+    btnSaleSend.onclick = function(){
+      if(!window._invoiceCounter){
+        window._invoiceCounter = parseInt(localStorage.getItem("invoiceCounter") || "1000");
+      }
+      window._invoiceCounter++;
+      localStorage.setItem("invoiceCounter", window._invoiceCounter);
+      const rn = "R" + window._invoiceCounter;
+
+      _orig();
+
+      if(sales && sales.length > 0){
+        sales[sales.length - 1].rechnungsnr = rn;
+        localStorage.setItem("lagerSales", JSON.stringify(sales));
+      }
+    };
+  }
+
+  window.editSale = function(i){
+    alert("Bearbeiten folgt als nächster Feinschliff.");
+  };
+
+  window.stornoSale = function(i){
+    if(!confirm("Verkauf wirklich stornieren?")) return;
+    const s = sales[i];
+    if(!s) return;
+
+    const a = artikel.find(x => x.artnr === s.artnr);
+    if(a) a.menge += s.menge;
+
+    sales.splice(i,1);
+    localStorage.setItem("lagerSales", JSON.stringify(sales));
+    localStorage.setItem("lagerData", JSON.stringify(artikel));
+
+    renderTable();
+    renderSalesFiltered(document.getElementById("salesSearch")?.value || "");
+  };
+
+  window.deleteSale = function(i){
+    if(!confirm("Verkauf endgültig löschen?")) return;
+    sales.splice(i,1);
+    localStorage.setItem("lagerSales", JSON.stringify(sales));
+    renderSalesFiltered(document.getElementById("salesSearch")?.value || "");
+  };
+
+})();
 </script>
 
 </body>
