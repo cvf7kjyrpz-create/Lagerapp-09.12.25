@@ -76,6 +76,16 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 }
 </style>
 
+
+<style>
+#salesHistoryPopup{
+  overflow-x: auto !important;
+}
+#salesHistoryPopup table{
+  min-width: 900px !important;
+}
+</style>
+
 </head>
 
 <body>
@@ -1019,6 +1029,46 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSalesFiltered(document.getElementById("salesSearch")?.value || "");
   };
 
+})();
+</script>
+
+
+<script>
+(function(){
+  document.addEventListener("DOMContentLoaded", () => {
+    const btnSave = document.getElementById("btnSaveArticle");
+    const articlePopup = document.getElementById("articlePopup");
+    if(!btnSave || !articlePopup) return;
+
+    const orig = btnSave.onclick;
+    btnSave.onclick = function(){
+      if(typeof orig === "function") orig();
+
+      // ✅ Nach Speichern Maske schließen
+      setTimeout(() => {
+        articlePopup.style.display = "none";
+      }, 100);
+    };
+  });
+})();
+</script>
+
+<script>
+(function(){
+  // Falls irgendwo Artikel bei Menge 0 gelöscht werden, verhindern wir das hier
+  const _splice = Array.prototype.splice;
+  Array.prototype.splice = function(start, deleteCount){
+    try{
+      if(this === window.artikel && deleteCount === 1){
+        const a = this[start];
+        if(a && a.menge === 0){
+          // ❌ Nicht löschen, nur rot markieren lassen
+          return [];
+        }
+      }
+    }catch(e){}
+    return _splice.apply(this, arguments);
+  };
 })();
 </script>
 
