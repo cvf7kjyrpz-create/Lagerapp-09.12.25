@@ -62,7 +62,7 @@ border:1px solid #444;background:#1a1a1a;color:white;
 img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 #salesHistoryPopup h3{margin-top:0;font-size:16px;}
 #salesHistoryPopup table{width:100%;border-collapse:collapse;font-size:11px;}
-#salesHistoryPopup th,#salesHistoryPopup td{border:1px solid #444;padding:4px;white-space:nowrap;max-width:260px;}
+#salesHistoryPopup th,#salesHistoryPopup td{border:1px solid #444;padding:4px;white-space:nowrap;}
 
 .selectedRow{
   background:#0b2a4a !important;
@@ -84,7 +84,20 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   overflow-x: auto !important;
 }
 #salesHistoryPopup table{
-  min-width: 600px; /* allows horizontal scroll on small screens */
+  min-width: 700px;
+}
+</style>
+
+
+<style>
+#tableContainer {
+  overflow-y: auto;
+}
+#tableContainer thead {
+  position: sticky;
+  top: 0;
+  background: #000;
+  z-index: 10;
 }
 </style>
 
@@ -188,7 +201,7 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   <div class="popup-row"><label>Eigene Versandkosten (€)</label><input type="number" id="s_versandKosten" step="0.01"></div>
   <div class="popup-row"><label>Verkaufsdatum</label><input type="date" id="s_datum"></div>
   <div id="saleButtons">
-    <button id="btnSaleSend">An Rechnung senden</button>
+    <button id="btnSaleSend_DISABLED">—</button>
     <button id="btnSaleOk">Verkaufen</button>
     <button id="btnSaleCancel">Abbrechen</button>
   </div>
@@ -551,7 +564,7 @@ const s_versandKunde = document.getElementById("s_versandKunde");
 const s_versandKosten= document.getElementById("s_versandKosten");
 const s_datum        = document.getElementById("s_datum");
 
-const btnSaleSend   = document.getElementById("btnSaleSend");
+const btnSaleSend_DISABLED   = document.getElementById("btnSaleSend_DISABLED");
 const s_rechnung    = document.getElementById("s_rechnung");
 
 function nextInvoiceNrLager(){
@@ -786,7 +799,7 @@ function selectRow(i){
   renderTable();
 }
 
-/* Rechnung deaktiviert */ btnSaleSend_disabled = function = () => {
+btnSaleSend_DISABLED.onclick = () => {
   if(currentSaleIndex === -1) return;
   const a = artikel[currentSaleIndex];
   const mengeV = parseInt(s_menge.value) || 0;
@@ -803,7 +816,7 @@ function selectRow(i){
     preis: preisV
   };
 
-  localStorage.setItem("pendingInvoiceData", JSON.stringify(pending));
+  localStorage.setItem("lagerOnlyDisabled", JSON.stringify(pending));
 
   salePopup.style.display = "none";
   
@@ -816,10 +829,10 @@ function selectRow(i){
 <script>
 (function(){
   const wait = setInterval(() => {
-    if(typeof artikel !== "undefined" && typeof renderTable === "function" && typeof btnSaleSend !== "undefined"){
+    if(typeof artikel !== "undefined" && typeof renderTable === "function" && typeof btnSaleSend_DISABLED !== "undefined"){
       clearInterval(wait);
 
-      /* Rechnung deaktiviert */ btnSaleSend_disabled = function = () => {
+      btnSaleSend_DISABLED.onclick = () => {
         if(typeof currentSaleIndex === "undefined" || currentSaleIndex === -1) return;
 
         const a = artikel[currentSaleIndex];
@@ -838,7 +851,7 @@ function selectRow(i){
 
         localStorage.setItem("lagerData", JSON.stringify(artikel));
 
-        let buffer = JSON.parse(localStorage.getItem("invoiceBuffer") || "[]");
+        let buffer = JSON.parse(localStorage.getItem("lagerOnlyDisabled") || "[]");
         if(!Array.isArray(buffer)) buffer = [];
 
         buffer.push({
@@ -850,7 +863,7 @@ function selectRow(i){
           datum: datum
         });
 
-        localStorage.setItem("invoiceBuffer", JSON.stringify(buffer));
+        localStorage.setItem("lagerOnlyDisabled", JSON.stringify(buffer));
 
         if(typeof salePopup !== "undefined"){
           salePopup.style.display = "none";
