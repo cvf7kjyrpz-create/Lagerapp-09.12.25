@@ -167,7 +167,7 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
       <option value="Gebraucht">Gebraucht</option>
     </select>
   </div>
-  <div class="popup-row"><label>Bild</label><input type="file" id="p_bild"></div>
+  <div class="popup-row"><label>Bild</label><input type="file" id="p_bild" accept="image/*" capture="environment"></div>
   <div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
   <div id="popupButtons">
     <button id="btnSave">Speichern</button>
@@ -218,6 +218,13 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 </div>
 
 <script>
+
+function resetFileInput(input){
+  const newInput = input.cloneNode();
+  input.parentNode.replaceChild(newInput, input);
+  return newInput;
+}
+
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let sales   = JSON.parse(localStorage.getItem("lagerSales") || "[]");
 let editIndex = -1;
@@ -537,7 +544,7 @@ function editArtikel(i){
   p_ort.value     = a.ort || "";
   p_datum.value   = a.datum || "";
   p_zustand.value = a.zustand || "Neu";
-  p_bild.value    = "";
+  p_bild = resetFileInput(p_bild);
   p_notiz.value   = a.notiz || "";
   popup.style.display = "block";
 }
