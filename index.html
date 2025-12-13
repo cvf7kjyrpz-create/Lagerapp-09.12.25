@@ -996,6 +996,39 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+
+<script>
+// ===== Verkaufsnummer im Format 001-YYYY =====
+function getNextSaleNumber(){
+  const year = new Date().getFullYear();
+  const key = "saleCounter_" + year;
+  let n = parseInt(localStorage.getItem(key) || "0", 10) + 1;
+  localStorage.setItem(key, n);
+  return String(n).padStart(3, "0") + "-" + year;
+}
+
+// beim Anlegen eines Verkaufs Nummer setzen
+(function(){
+  const wait = setInterval(() => {
+    if (typeof btnSaleOk !== "undefined" && btnSaleOk) {
+      clearInterval(wait);
+      const orig = btnSaleOk.onclick;
+      btnSaleOk.onclick = function(){
+        if(typeof orig === "function"){
+          orig();
+          if (window.sales && sales.length > 0) {
+            sales[sales.length - 1].verkaufsnr = getNextSaleNumber();
+            localStorage.setItem("lagerSales", JSON.stringify(sales));
+            renderTable();
+            updateCounters();
+          }
+        }
+      };
+    }
+  }, 200);
+})();
+</script>
+
 </body>
 </html>
 <script>
