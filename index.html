@@ -88,6 +88,18 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 }
 </style>
 
+
+<style>
+.pseudo-header th{
+  position: sticky;
+  top: 0;
+  background:#111;
+  color:#fff;
+  font-weight:600;
+  z-index:2;
+}
+</style>
+
 </head>
 
 <body>
@@ -148,7 +160,16 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   <th>Aktionen</th>
 </tr>
 </thead>
-<tbody id="tableBody"></tbody>
+<tbody id="tableBody">
+<tr class="pseudo-header">
+  <th>Nr</th>
+  <th>Artikel</th>
+  <th>Menge</th>
+  <th>EK</th>
+  <th>VK</th>
+  <th>Aktion</th>
+</tr>
+</tbody>
 </table>
 </div>
 
