@@ -801,7 +801,7 @@ function editSale(index){
   s_rechnung.value     = s.rechnungsnr || "";
 
   // Menge beim Bearbeiten nicht änderbar, Bestand bleibt über Storno korrekt
-  s_menge.disabled = false;
+  s_menge. = false;
 
   salePopup.style.display = "block";
 }
@@ -1027,6 +1027,16 @@ function getNextSaleNumber(){
     }
   }, 200);
 })();
+</script>
+
+
+<script>
+// Allow editing quantity input inside table rows
+document.addEventListener("click", function(e){
+  if(e.target && e.target.tagName === "INPUT"){
+    e.stopPropagation();
+  }
+}, true);
 </script>
 
 </body>
