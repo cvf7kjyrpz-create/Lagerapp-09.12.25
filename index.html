@@ -96,8 +96,8 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   overflow-y: auto;
 }
 #tableContainer thead th {
-  position: sticky;
-  top: 0;
+  
+  
   z-index: 5;
   background: #0f0f0f;
 }
@@ -1052,6 +1052,58 @@ document.addEventListener("click", function(e){
     e.stopPropagation();
   }
 }, true);
+</script>
+
+
+<style>
+/* Fixed header container */
+#fixedHeader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: #0f0f0f;
+  overflow: hidden;
+}
+#fixedHeader table {
+  border-collapse: collapse;
+  width: 100%;
+}
+#fixedHeader th {
+  background: #0f0f0f;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const table = document.querySelector("table");
+  if(!table) return;
+
+  const thead = table.querySelector("thead");
+  const container = document.getElementById("tableContainer");
+  if(!thead || !container) return;
+
+  const fixed = document.createElement("div");
+  fixed.id = "fixedHeader";
+  const cloneTable = document.createElement("table");
+  cloneTable.appendChild(thead.cloneNode(true));
+  fixed.appendChild(cloneTable);
+  document.body.appendChild(fixed);
+
+  function syncWidths(){
+    const origThs = thead.querySelectorAll("th");
+    const cloneThs = fixed.querySelectorAll("th");
+    origThs.forEach((th,i)=>{
+      cloneThs[i].style.width = th.offsetWidth + "px";
+    });
+    fixed.style.display = container.scrollTop > 0 ? "block" : "none";
+  }
+
+  container.addEventListener("scroll", syncWidths);
+  window.addEventListener("resize", syncWidths);
+  syncWidths();
+});
 </script>
 
 </body>
