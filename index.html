@@ -7,7 +7,7 @@
 
 <style>
 body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:hidden;overscroll-behavior:none;}
-#topbar{position:fixed;top:0;left:0;right:0;padding:15px;background:#000;z-index:5000;border-bottom:2px solid #333;}
+#topbar{top:0;left:0;right:0;padding:15px;background:#000;z-index:5000;border-bottom:2px solid #333;}
 #counterWrapper{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
 .counter-box{padding:10px;border:1px solid #444;border-radius:10px;background:#000;}
 .counter-title{font-size:11px;color:#bbb;}
@@ -18,7 +18,7 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
 #buttonRow button{flex:1;padding:6px 4px;font-size:10px;color:#bbb;border-radius:8px;background:#000;border:1px solid #444;font-weight:bold;height:32px}
 
 #tableContainer{
-  position:fixed;
+  
   left:0;
   right:0;
   bottom:0;
@@ -41,7 +41,7 @@ input.miniQty{width:42px;background:#111;color:white;border:1px solid #444;borde
 
 #popup,#viewPopup,#salePopup,#salesHistoryPopup{
   z-index:10000;
-position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+top:50%;left:50%;transform:translate(-50%,-50%);
 background:#111;padding:16px;border:2px solid #444;border-radius:12px;
 width:360px;max-width:92vw;overflow:hidden;display:none;z-index:9999;
 }
@@ -91,12 +91,22 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 
 <style>
 .pseudo-header th{
-  position: sticky;
+  
   top: 0;
   background:#111;
   color:#fff;
   font-weight:600;
   z-index:2;
+}
+</style>
+
+
+<style>
+.pseudo-header th{
+  background:#111;
+  color:#fff;
+  font-weight:600;
+  text-align:left;
 }
 </style>
 
@@ -162,6 +172,15 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 </thead>
 <tbody id="tableBody">
 <tr class="pseudo-header">
+  <th>Nr</th>
+  <th>Artikel</th>
+  <th>Menge</th>
+  <th>EK</th>
+  <th>VK</th>
+  <th>Aktion</th>
+</tr>
+
+
   <th>Nr</th>
   <th>Artikel</th>
   <th>Menge</th>
