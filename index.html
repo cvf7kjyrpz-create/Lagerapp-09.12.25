@@ -7,7 +7,7 @@
 
 <style>
 body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:hidden;overscroll-behavior:none;}
-#topbar{top:0;left:0;right:0;padding:15px;background:#000;z-index:5000;border-bottom:2px solid #333;}
+#topbar{position:fixed;top:0;left:0;right:0;padding:15px;background:#000;z-index:5000;border-bottom:2px solid #333;}
 #counterWrapper{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
 .counter-box{padding:10px;border:1px solid #444;border-radius:10px;background:#000;}
 .counter-title{font-size:11px;color:#bbb;}
@@ -18,7 +18,7 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
 #buttonRow button{flex:1;padding:6px 4px;font-size:10px;color:#bbb;border-radius:8px;background:#000;border:1px solid #444;font-weight:bold;height:32px}
 
 #tableContainer{
-  
+  position:fixed;
   left:0;
   right:0;
   bottom:0;
@@ -32,7 +32,7 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
 }
 
 table{width:100%;border-collapse:collapse;}
-th{background:#111;position:;top:0;z-index:200;padding:6px;color:#bbb;font-size:9px;white-space:nowrap;}
+th{background:#111;position:sticky;top:0;z-index:200;padding:6px;color:#bbb;font-size:9px;white-space:nowrap;}
 td{padding:4px;font-size:9px;border-bottom:1px solid #222;white-space:nowrap;}
 .marked{background:#222;}
 .iconCell span{cursor:pointer;margin-right:8px;}
@@ -40,8 +40,7 @@ td{padding:4px;font-size:9px;border-bottom:1px solid #222;white-space:nowrap;}
 input.miniQty{width:42px;background:#111;color:white;border:1px solid #444;border-radius:5px;text-align:center;}
 
 #popup,#viewPopup,#salePopup,#salesHistoryPopup{
-  z-index:10000;
-top:50%;left:50%;transform:translate(-50%,-50%);
+position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
 background:#111;padding:16px;border:2px solid #444;border-radius:12px;
 width:360px;max-width:92vw;overflow:hidden;display:none;z-index:9999;
 }
@@ -90,23 +89,79 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 
 
 <style>
-.pseudo-header th{
-  
-  top: 0;
+.table-header th{
   background:#111;
   color:#fff;
   font-weight:600;
-  z-index:2;
 }
 </style>
 
 
 <style>
-.pseudo-header th{
-  background:#111;
-  color:#fff;
-  font-weight:600;
-  text-align:left;
+/* ---- TOP BAR KOMPAKTER ---- */
+.topbar,
+.header,
+.counters,
+.buttons {
+  padding: 4px 6px !important;
+}
+
+.topbar h1,
+.header h1 {
+  font-size: 16px !important;
+  margin: 2px 0 !important;
+}
+
+.counter,
+.counter-box {
+  padding: 4px 6px !important;
+  font-size: 12px !important;
+  min-width: 0 !important;
+}
+
+.counter-value {
+  font-size: 14px !important;
+}
+
+button,
+.btn {
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  height: 30px !important;
+}
+
+button svg,
+button i {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+#tableContainer {
+  margin-top: 4px !important;
+}
+</style>
+
+
+<style>
+/* Artikel-Spalte sauber ausrichten */
+td.article-cell{
+  vertical-align: middle;
+  line-height: 1.3;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  white-space: normal;
+  word-break: break-word;
+}
+</style>
+
+
+<style>
+/* Entfernt jegliche Zusatzbeschriftung über der Artikel-Spalte */
+td.article-cell::before,
+td.article-cell .label,
+td.article-cell .sub,
+td.article-cell .hint {
+  display:none !important;
 }
 </style>
 
@@ -145,7 +200,7 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   <div id="searchRow"><input id="search" placeholder="Suchen …"></div>
 
   <div id="buttonRow">
-    <button id="btnAdd">+ Artikel</button>
+    <button id="btnAdd">Artikel</button>
     <button id="btnExport">Sichern</button>
     <button id="btnImport">Laden</button>
     <button id="btnPDF">PDF</button>
@@ -155,32 +210,9 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 
 <div id="tableContainer">
 <table>
-<thead>
-<tr>
-  <th>*</th>
-  <th>Nr</th>
-  <th>Name</th>
-  <th>Zustand</th>
-  <th>Menge</th>
-  <th>Größe</th>
-  <th>Einz.</th>
-  <th>Gesamt</th>
-  <th>Ort</th>
-  <th>Datum</th>
-  <th>Aktionen</th>
-</tr>
-</thead>
+
 <tbody id="tableBody">
-<tr class="pseudo-header">
-  <th>Nr</th>
-  <th>Artikel</th>
-  <th>Menge</th>
-  <th>EK</th>
-  <th>VK</th>
-  <th>Aktion</th>
-</tr>
-
-
+<tr class="table-header">
   <th>Nr</th>
   <th>Artikel</th>
   <th>Menge</th>
@@ -239,18 +271,7 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   <h3>Verkäufe</h3>
   <input id="salesSearch" placeholder="Suche..." style="width:100%;margin-bottom:8px;">
   <table>
-    <thead>
-      <tr>
-        <th>Re-Nr</th>
-        <th>Datum</th>
-        <th>Nr</th>
-        <th>Name</th>
-        <th>Menge</th>
-        <th>Umsatz</th>
-        <th>Gewinn</th>
-        <th>Aktion</th>
-      </tr>
-    </thead>
+    
     <tbody id="salesBody"></tbody>
   </table>
   <div style="margin-top:10px;text-align:right;">
@@ -364,7 +385,7 @@ function renderTable(){
       <td>${a.artnr || ""}</td>
       <td>${a.name || ""}</td>
       <td>${a.zustand || ""}</td>
-      <td><input class="miniQty" type="number" value="${a.menge}" onchange="updateQty(${i},this.value)"></td>
+      <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
       <td>${a.groesse || ""}</td>
       <td>${isNaN(a.preis) ? "" : a.preis.toFixed(2)}</td>
       <td>${isNaN(a.preis) ? "" : gesamt}</td>
@@ -461,7 +482,6 @@ function updateQty(i,val){
   artikel[i].menge = parseInt(val) || 0;
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
-  updateCounters();
 }
 
 /* ===== Markieren (⭐) ===== */
@@ -471,7 +491,6 @@ function toggleMark(i){
   artikel[i].markiert = !artikel[i].markiert;
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
-  updateCounters();
 }
 
 /* ===== Pop-up Logik (Neu + Bearbeiten) ===== */
@@ -566,7 +585,6 @@ function pushNew(obj){
   popup.style.display = "none";
   editIndex = -1;
   renderTable();
-  updateCounters();
 }
 
 function applyEdit(obj){
@@ -575,7 +593,6 @@ function applyEdit(obj){
   popup.style.display = "none";
   editIndex = -1;
   renderTable();
-  updateCounters();
 }
 
 function editArtikel(i){
@@ -604,7 +621,6 @@ function del(i){
     artikel.splice(i,1);
     localStorage.setItem("lagerData", JSON.stringify(artikel));
     renderTable();
-  updateCounters();
   }
 }
 
@@ -741,7 +757,6 @@ btnSaleOk.onclick = () => {
   currentSaleIndex = -1;
   renderTable();
   updateCounters();
-  updateCounters();
 };
 
 function openSalesHistory(){
@@ -823,7 +838,6 @@ function stornoSale(index){
 
   openSalesHistory(); // neu aufbauen
   renderTable();
-  updateCounters();
 }
 
 function editSale(index){
@@ -841,7 +855,7 @@ function editSale(index){
   s_rechnung.value     = s.rechnungsnr || "";
 
   // Menge beim Bearbeiten nicht änderbar, Bestand bleibt über Storno korrekt
-  s_menge. = false;
+  s_menge.disabled = true;
 
   salePopup.style.display = "block";
 }
@@ -900,7 +914,6 @@ btnImport.onclick = () => {
 
         initArtNrCounter();
         renderTable();
-  updateCounters();
 
         alert("Daten erfolgreich geladen ✔");
 
@@ -937,7 +950,6 @@ searchInp.oninput = () => {
 
 /* ===== Start ===== */
 renderTable();
-  updateCounters();
 
 // ✅ Blau-Markierung: nur visuell, nicht gespeichert
 function selectRow(i){
@@ -947,7 +959,6 @@ function selectRow(i){
     selectedRowIndex = i;
   }
   renderTable();
-  updateCounters();
 }
 
 btnSaleSend.onclick = () => {
@@ -993,7 +1004,6 @@ document.addEventListener("DOMContentLoaded", () => {
           artikel = JSON.parse(ev.target.result) || [];
           localStorage.setItem("lagerData", JSON.stringify(artikel));
           renderTable();
-  updateCounters();
           alert("Datei erfolgreich geladen ✅");
         }catch(err){
           alert("Datei konnte nicht geladen werden");
@@ -1034,49 +1044,6 @@ document.addEventListener("DOMContentLoaded", () => {
     btnSales.onclick = () => openSalesHistory();
   }
 });
-</script>
-
-
-<script>
-// ===== Verkaufsnummer im Format 001-YYYY =====
-function getNextSaleNumber(){
-  const year = new Date().getFullYear();
-  const key = "saleCounter_" + year;
-  let n = parseInt(localStorage.getItem(key) || "0", 10) + 1;
-  localStorage.setItem(key, n);
-  return String(n).padStart(3, "0") + "-" + year;
-}
-
-// beim Anlegen eines Verkaufs Nummer setzen
-(function(){
-  const wait = setInterval(() => {
-    if (typeof btnSaleOk !== "undefined" && btnSaleOk) {
-      clearInterval(wait);
-      const orig = btnSaleOk.onclick;
-      btnSaleOk.onclick = function(){
-        if(typeof orig === "function"){
-          orig();
-          if (window.sales && sales.length > 0) {
-            sales[sales.length - 1].verkaufsnr = getNextSaleNumber();
-            localStorage.setItem("lagerSales", JSON.stringify(sales));
-            renderTable();
-            updateCounters();
-          }
-        }
-      };
-    }
-  }, 200);
-})();
-</script>
-
-
-<script>
-// Allow editing quantity input inside table rows
-document.addEventListener("click", function(e){
-  if(e.target && e.target.tagName === "INPUT"){
-    e.stopPropagation();
-  }
-}, true);
 </script>
 
 </body>
