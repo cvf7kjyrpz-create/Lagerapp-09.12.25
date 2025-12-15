@@ -7,7 +7,7 @@
 
 <style>
 /* ====================================================================
-   DARK MODE FARBEN DEFINITION
+   DARK MODE FARBEN DEFINITION (MODERN & STABIL)
    ==================================================================== */
 :root {
     --bg-primary: #121212;         /* Haupt-Hintergrund (Schwarz) */
@@ -49,8 +49,9 @@ body {
 }
 
 #counterWrapper {
+    /* Dein Layout: 2 Spalten pro Reihe */
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr); 
     gap: 8px;
     margin-bottom: 8px;
 }
@@ -84,6 +85,7 @@ body {
     color: var(--text-light);
     box-sizing: border-box;
     font-size: 14px;
+    margin-top: 8px;
 }
 
 #buttonRow {
@@ -103,13 +105,17 @@ body {
     font-weight: 600;
 }
 
-#buttonRow button:first-child {
+#buttonRow button:nth-child(1) { /* + Artikel */
     background: var(--accent-blue);
     color: white;
 }
+#buttonRow button:nth-child(4) { /* PDF-Button ausblenden */
+    display: none; 
+}
+
 
 /* ====================================================================
-   TABELLE & SCROLLING
+   TABELLE & SCROLLING (STABILER FIX)
    ==================================================================== */
 #tableContainer {
     position: fixed;
@@ -132,7 +138,7 @@ table {
 
 th {
     background: var(--bg-tertiary);
-    position: sticky;
+    position: sticky; /* WICHTIG: Stabiler Header-Fix */
     top: 0;
     z-index: 200;
     padding: 8px 10px;
@@ -160,6 +166,9 @@ tr:nth-child(even) {
     margin-right: 10px;
     font-size: 14px;
     color: var(--accent-blue);
+}
+.iconCell span.delete {
+    margin-left: 0; /* Unnötigen margin entfernt */
 }
 
 input.miniQty {
@@ -217,6 +226,19 @@ input.miniQty {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
+#viewPopup {
+  padding: 16px; 
+}
+#viewPopup button {
+    padding: 10px 20px;
+    border-radius: 10px;
+    background: var(--bg-tertiary);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    font-weight: 600;
+    margin-top: 10px;
+}
+
 .popup-row {
     margin-bottom: 12px;
     text-align: left;
@@ -228,6 +250,7 @@ input.miniQty {
     display: block;
     margin-bottom: 5px;
     font-weight: 500;
+    text-align: left; 
 }
 
 .popup-row input, .popup-row textarea, .popup-row select {
@@ -265,6 +288,36 @@ input.miniQty {
     color: var(--text-light);
     border: 1px solid var(--border-color);
 }
+.popup-row input[type="file"] {
+    padding: 5px;
+}
+img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
+
+/* Sales History Pop-up */
+#salesHistoryPopup table{
+    min-width: 500px !important;
+    border-collapse: collapse;
+}
+#salesHistoryPopup th, #salesHistoryPopup td {
+    border: 1px solid var(--border-color);
+    padding: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+#salesHistoryPopup th {
+    background: var(--bg-tertiary);
+}
+#salesHistoryPopup button {
+    padding: 5px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-light);
+    font-size: 10px;
+}
+#salesHistoryPopup button:last-child {
+    background: #401010; /* Dark red for delete */
+}
 </style>
 </head>
 
@@ -273,745 +326,869 @@ input.miniQty {
 <div id="topbar">
   <div id="counterWrapper">
     <div class="counter-box">
-      <div class="counter-title">Artikel</div>
+      <div class="counter-title">Artikel im Bestand</div>
       <div id="countArtikel" class="counter-value">0</div>
     </div>
     <div class="counter-box">
-      <div class="counter-title">Ges. Menge</div>
+      <div class="counter-title">Gegenstände insgesamt</div>
       <div id="countMenge" class="counter-value">0</div>
     </div>
     <div class="counter-box">
-      <div class="counter-title">Warenwert (€)</div>
+      <div class="counter-title">Warenwert aktuell (€)</div>
       <div id="countWert" class="counter-value">0</div>
+    </div>
+    <div class="counter-box">
+      <div class="counter-title">Warenwert gesamt (€)</div>
+      <div id="countWertTotal" class="counter-value">0</div>
     </div>
     <div class="counter-box">
       <div class="counter-title">Umsatz Jahr (€)</div>
       <div id="countUmsatzJahr" class="counter-value">0</div>
     </div>
     <div class="counter-box">
-      <div class="counter-title">Gewinn Ges. (€)</div>
+      <div class="counter-title">Gewinn gesamt (€)</div>
       <div id="countGewinn" class="counter-value">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Lagerort</div>
-      <div id="countWertTotal" class="counter-value">Alle</div>
     </div>
   </div>
 
-  <div id="searchRow"><input id="search" placeholder="Artikel / Nr. / Ort suchen …"></div>
+  <div id="searchRow"><input id="search" placeholder="Suchen …"></div>
 
   <div id="buttonRow">
-    <button id="btnAdd">➕ Neuer Artikel</button>
-    <button id="btnSales">🧾 Verkäufe</button>
-    <button id="btnExport">⬇️ Sichern</button>
-    <button id="btnImport">⬆️ Laden</button>
+    <button id="btnAdd">+ Artikel</button>
+    <button id="btnExport">Sichern</button>
+    <button id="btnImport">Laden</button>
+    <button id="btnPDF" style="display:none">PDF</button>
+    <button id="btnSales">Verkäufe</button>
   </div>
 </div>
 
 <div id="tableContainer">
 <table>
 <thead>
-<tr class="table-header">
-  <th>⭐</th>          <th>Nr</th>          <th>Artikelname</th> <th>Menge</th>       <th>EK (€)</th>      <th>VK (€)</th>      <th>Größe</th>       <th>Zustand</th>     <th>Ort</th>         <th>Datum</th>       <th>Aktion</th>      </tr>
+<tr>
+  <th>*</th>
+  <th>Nr</th>
+  <th>Name</th>
+  <th>Zustand</th>
+  <th>Menge</th>
+  <th>Größe</th>
+  <th>EK (€)</th>
+  <th>EK Gesamt (€)</th>
+  <th>Ort</th>
+  <th>Datum</th>
+  <th>Aktionen</th>
+</tr>
 </thead>
-<tbody id="tableBody">
-</tbody>
+<tbody id="tableBody"></tbody>
 </table>
 </div>
 
 <div id="modalOverlay" class="modal-overlay"></div>
 
 <div id="popup">
-    <h3>Artikeldetails</h3>
-    <div class="popup-row"><label>Artikelnummer</label><input id="p_artnr"></div>
-    <div class="popup-row"><label>Name</label><input id="p_name"></div>
-    <div class="popup-row"><label>Menge</label><input type="number" id="p_menge" value="1" min="0"></div>
-    <div class="popup-row"><label>Größe</label><input id="p_groesse"></div>
-    <div class="popup-row"><label>Preis (Einkauf, pro Stück)</label><input type="number" id="p_preis" step="0.01" min="0"></div>
-    <div class="popup-row"><label>Ort</label><input id="p_ort"></div>
-    <div class="popup-row"><label>Datum</label><input type="date" id="p_datum"></div>
-    <div class="popup-row">
-        <label>Zustand</label>
-        <select id="p_zustand">
-            <option value="Neu">Neu</option>
-            <option value="Gebraucht">Gebraucht</option>
-        </select>
-    </div>
-    <div class="popup-row"><label>Bild (optional)</label><input type="file" id="p_bild" accept="image/*" capture="environment"></div>
-    <div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
-    <div id="popupButtons">
-        <button id="btnSave">💾 Speichern</button>
-        <button id="btnCancel">❌ Abbrechen</button>
-    </div>
+  <h3>Artikeldetails</h3>
+  <div class="popup-row"><label>Artikelnummer</label><input id="p_artnr"></div>
+  <div class="popup-row"><label>Name</label><input id="p_name"></div>
+  <div class="popup-row"><label>Menge</label><input type="number" id="p_menge" value="1"></div>
+  <div class="popup-row"><label>Größe</label><input id="p_groesse"></div>
+  <div class="popup-row"><label>Preis (Einkauf, pro Stück)</label><input type="number" id="p_preis" step="0.01"></div>
+  <div class="popup-row"><label>Ort</label><input id="p_ort"></div>
+  <div class="popup-row"><label>Datum</label><input type="date" id="p_datum"></div>
+  <div class="popup-row">
+    <label>Zustand</label>
+    <select id="p_zustand">
+      <option value="Neu">Neu</option>
+      <option value="Gebraucht">Gebraucht</option>
+    </select>
+  </div>
+  <div class="popup-row"><label>Bild</label><input type="file" id="p_bild" accept="image/*" capture="environment"></div>
+  <div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
+  <div id="popupButtons">
+    <button id="btnSave">💾 Speichern</button>
+    <button id="btnCancel">❌ Abbrechen</button>
+  </div>
 </div>
 
-<div id="viewPopup" class="popup"></div>
+<div id="viewPopup"></div>
 
 <div id="salePopup">
-    <h3>Artikel verkaufen</h3>
-    <div class="popup-row"><label>Rechnungsnummer</label><input id="s_rechnung"></div>
-    <div class="popup-row"><label>Verkaufte Menge</label><input type="number" id="s_menge" min="1"></div>
-    <div class="popup-row"><label>Verkaufspreis pro Stück (€)</label><input type="number" id="s_preis" step="0.01"></div>
-    <div class="popup-row"><label>Versand vom Kunden (€)</label><input type="number" id="s_versandKunde" step="0.01"></div>
-    <div class="popup-row"><label>Eigene Versandkosten (€)</label><input type="number" id="s_versandKosten" step="0.01"></div>
-    <div class="popup-row"><label>Verkaufsdatum</label><input type="date" id="s_datum"></div>
-    <div id="saleButtons">
-        <button id="btnSaleOk">✅ Verkaufen & Bestand reduzieren</button>
-        <button id="btnSaleCancel">❌ Abbrechen</button>
-    </div>
+  <h3>Artikel verkaufen</h3>
+  <div class="popup-row"><label>Rechnungsnummer</label><input id="s_rechnung"></div>
+  <div class="popup-row"><label>Verkaufte Menge</label><input type="number" id="s_menge" min="1"></div>
+  <div class="popup-row"><label>Verkaufspreis pro Stück (€)</label><input type="number" id="s_preis" step="0.01"></div>
+  <div class="popup-row"><label>Versand vom Kunden (€)</label><input type="number" id="s_versandKunde" step="0.01"></div>
+  <div class="popup-row"><label>Eigene Versandkosten (€)</label><input type="number" id="s_versandKosten" step="0.01"></div>
+  <div class="popup-row"><label>Verkaufsdatum</label><input type="date" id="s_datum"></div>
+  <div id="saleButtons">
+    <button id="btnSaleOk">✅ Verkaufen & Bestand reduzieren</button>
+    <button id="btnSaleCancel">❌ Abbrechen</button>
+  </div>
 </div>
 
 <div id="salesHistoryPopup">
-    <h3>Verkaufs-Historie</h3>
-    <input id="salesSearch" placeholder="Suche (Artikel, Nr., Rechnung)..." style="width:100%;margin-bottom:15px;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-light);">
-    <div style="max-height: 40vh; overflow-y: auto;">
-        <table style="min-width: 500px;">
-            <thead>
-                <tr><th>RG Nr.</th><th>Datum</th><th>Artikel Nr.</th><th>Name</th><th>Menge</th><th>Umsatz (€)</th><th>Gewinn (€)</th><th>Aktion</th></tr>
-            </thead>
-            <tbody id="salesBody"></tbody>
-        </table>
-    </div>
-    <div style="margin-top:20px;text-align:right;">
-        <button onclick="closeSalesHistory()" style="padding:10px 20px; background:var(--bg-tertiary); border:1px solid var(--border-color); color:var(--text-light); border-radius:10px;">Schließen</button>
-    </div>
+  <h3>Verkaufs-Historie</h3>
+  <input id="salesSearch" placeholder="Suche (Artikel, Nr., Rechnung)..." style="width:100%;margin-bottom:15px;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-light);">
+  <div style="max-height: 40vh; overflow-y: auto; overflow-x: auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Re-Nr</th>
+          <th>Datum</th>
+          <th>Nr</th>
+          <th>Name</th>
+          <th>Menge</th>
+          <th>Umsatz (€)</th>
+          <th>Gewinn (€)</th>
+          <th>Aktion</th>
+        </tr>
+      </thead>
+      <tbody id="salesBody"></tbody>
+    </table>
+  </div>
+  <div style="margin-top:20px;text-align:right;">
+    <button onclick="closeSalesHistory()">Schließen</button>
+  </div>
 </div>
-
 
 <script>
 // ====================================================================
-// GLOBALE VARIABLEN & INIT 
+// GLOBALE VARIABLEN & INIT (BASE FROM USER'S FILE)
 // ====================================================================
+function resetFileInput(input){
+  const newInput = input.cloneNode();
+  input.parentNode.replaceChild(newInput, input);
+  return newInput;
+}
+
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let sales   = JSON.parse(localStorage.getItem("lagerSales") || "[]");
-let editIndex = -1; 
-let currentSaleIndex = -1; 
-let editSaleIndex = -1; 
+let editIndex = -1;
+let currentSaleIndex = -1;
+let selectedRowIndex = -1;
+let editSaleIndex = -1;
 
 const DOM = {
-    tableBody: document.getElementById("tableBody"),
     popup: document.getElementById("popup"),
     viewPopup: document.getElementById("viewPopup"),
     salePopup: document.getElementById("salePopup"),
     salesHistoryPopup: document.getElementById("salesHistoryPopup"),
-    search: document.getElementById("search"),
-    salesSearch: document.getElementById("salesSearch"),
-    modalOverlay: document.getElementById("modalOverlay") 
+    modalOverlay: document.getElementById("modalOverlay")
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-    initArtNrCounter();
-    renderTable();
-    setupEventListeners();
-});
-
-// ====================================================================
-// ART-NR LOGIK
-// ====================================================================
-
+/* ===== Artikelnummern-Logik (FROM USER'S FILE) ===== */
 function initArtNrCounter(){
-    const jahr = new Date().getFullYear();
-    const key  = "artnrCounter_" + jahr;
-    if (localStorage.getItem(key) !== null) return;
-    let max = -1;
-    artikel.forEach(a=>{
-        if(!a.artnr) return;
-        const m = a.artnr.match(/^(\d{3})-(\d{4})$/);
-        if(m && Number(m[2]) === jahr){
-            max = Math.max(max, Number(m[1]));
-        }
-    });
-    localStorage.setItem(key, max);
+  const jahr = new Date().getFullYear();
+  const key  = "artnrCounter_" + jahr;
+  if (localStorage.getItem(key) !== null) return;
+  let max = -1;
+  artikel.forEach(a=>{
+    if(!a.artnr) return;
+    const m = a.artnr.match(/^(\d{3})-(\d{4})$/);
+    if(m && Number(m[2]) === jahr){
+      max = Math.max(max, Number(m[1]));
+    }
+  });
+  localStorage.setItem(key, max);
 }
-
 function previewNextArtNr(){
-    const jahr = new Date().getFullYear();
-    const key  = "artnrCounter_" + jahr;
-    const val  = Number(localStorage.getItem(key) || -1) + 1;
-    return String(val).padStart(3,"0") + "-" + jahr;
+  const jahr = new Date().getFullYear();
+  const key  = "artnrCounter_" + jahr;
+  const val  = Number(localStorage.getItem(key) || -1) + 1;
+  return String(val).padStart(3,"0") + "-" + jahr;
 }
-
 function commitNextArtNr(){
-    const jahr = new Date().getFullYear();
-    const key  = "artnrCounter_" + jahr;
-    let counter = Number(localStorage.getItem(key) || -1) + 1;
-    localStorage.setItem(key, counter);
-    return String(counter).padStart(3,"0") + "-" + jahr;
+  const jahr = new Date().getFullYear();
+  const key  = "artnrCounter_" + jahr;
+  let counter = Number(localStorage.getItem(key) || -1) + 1;
+  localStorage.setItem(key, counter);
+  return String(counter).padStart(3,"0") + "-" + jahr;
 }
+initArtNrCounter();
 
-// ====================================================================
-// DATENBANK & EXPORT
-// ====================================================================
-
-function autoBackup(reason){
-    const data = { artikel, sales };
-    const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
-    const a    = document.createElement("a");
-    a.href     = URL.createObjectURL(blob);
-    a.download = `lager_backup_${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-}
-
-// ***************************************************************
-// MODIFIZIERTE IMPORT-FUNKTION FÜR MAXIMALE KOMPATIBILITÄT
-// ***************************************************************
-function handleImport(){
-    const inp = document.createElement("input");
-    inp.type  = "file";
-    inp.accept= "*/*"; // Erlaubt alle Dateitypen, muss aber JSON-Inhalt sein!
-
-    inp.onchange = e => {
-        const file = e.target.files[0];
-        if(!file) return;
-
-        const r = new FileReader();
-        r.onload = () => {
-            try{
-                const data = JSON.parse(r.result);
-                
-                // Prüft, ob es das vollständige Backup-Format ist ({artikel: [], sales: []})
-                if(data.artikel && Array.isArray(data.artikel)){
-                    artikel = data.artikel;
-                    sales   = data.sales || [];
-                // Prüft, ob es nur eine reine Artikelliste ist
-                } else if(Array.isArray(data)){
-                    artikel = data;
-                    sales   = [];
-                } else {
-                    alert("Unbekanntes Dateiformat! Bitte eine gültige JSON-Backup-Datei wählen (Format: {artikel:[...], sales:[...]}).");
-                    return;
-                }
-                
-                localStorage.setItem("lagerData", JSON.stringify(artikel));
-                localStorage.setItem("lagerSales", JSON.stringify(sales));
-                initArtNrCounter();
-                renderTable();
-                alert("Daten erfolgreich geladen ✔");
-            }catch(error){
-                console.error("Import-Fehler:", error);
-                alert("Datei konnte nicht gelesen werden. Stellen Sie sicher, dass es eine gültige JSON-Backup-Datei ist.");
-            }
-        };
-        r.readAsText(file);
-    };
-    inp.click();
-}
-
-// ====================================================================
-// UI-RENDERING & ZÄHLER (UNVERÄNDERT)
-// ====================================================================
-
+/* ===== Layout: Tabelle direkt unter Header (SIMPLIFIED FIX) ===== */
 function adjustTableTop(){
-    const header = document.getElementById("topbar");
-    const tableC = document.getElementById("tableContainer");
-    tableC.style.top = header.offsetHeight + "px";
+  const header = document.getElementById("topbar");
+  const tableC = document.getElementById("tableContainer");
+  tableC.style.top = header.offsetHeight + "px";
 }
+window.addEventListener("load", adjustTableTop);
 window.addEventListener("resize", adjustTableTop);
 
+
+/* ===== Datum formatieren (TT-MM-JJJJ) (FROM USER'S FILE) ===== */
+function formatDate(d){
+  if(!d) return "";
+  const [y,m,dd] = d.split("-");
+  return `${dd}-${m}-${y}`;
+}
+
+/* ===== Auto-Backup (wie "Sichern") (FROM USER'S FILE) ===== */
+function autoBackup(reason){
+  const data = { artikel, sales };
+  const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
+  const a    = document.createElement("a");
+  a.href     = URL.createObjectURL(blob);
+  a.download = `lager_backup_${new Date().toISOString().slice(0,10)}.json`; 
+  a.click();
+}
+
+/* ===== Rendern Lager-Tabelle (FROM USER'S FILE) ===== */
 function renderTable(){
-    DOM.tableBody.innerHTML = "";
-    
-    const sortedArtikel = [...artikel].sort((a, b) => {
-        if (a.markiert && !b.markiert) return -1;
-        if (!a.markiert && b.markiert) return 1;
-        return (a.name || "").localeCompare(b.name || "");
-    });
+  const tbody = document.getElementById("tableBody");
+  if(!tbody) return;
+  tbody.innerHTML = "";
 
-    sortedArtikel.forEach((a, i) => {
-        const originalIndex = artikel.findIndex(item => item === a);
-        if(!a) return;
+  const sortedArtikel = [...artikel].sort((a, b) => {
+    if (a.markiert && !b.markiert) return -1;
+    if (!a.markiert && b.markiert) return 1;
+    return (a.name || "").localeCompare(b.name || "");
+  });
 
-        const tr = document.createElement("tr");
-        tr.onclick = () => selectRow(originalIndex);
-        if(a.markiert) tr.classList.add("marked");
-        
-        if(a.menge === 0){
-            tr.classList.add("tr-zero-stock");
-        }
-        
-        const maxVK = sales
-            .filter(s => s.artnr === a.artnr)
-            .reduce((max, s) => Math.max(max, s.verkaufPreis || 0), 0);
+  sortedArtikel.forEach((a,i)=>{
+    const originalIndex = artikel.findIndex(item => item === a);
+    if(!a) return; 
 
-        tr.innerHTML = `
-            <td onclick="event.stopPropagation(); toggleMark(${originalIndex})">${a.markiert ? "⭐" : "☆"}</td>
-            <td>${a.artnr || ""}</td>
-            <td>${a.name || ""}</td>
-            <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${originalIndex}, this.value)"></td>
-            <td>${isNaN(a.preis) ? "" : a.preis.toFixed(2)}</td>
-            <td>${maxVK > 0 ? maxVK.toFixed(2) : ""}</td>
-            <td>${a.groesse || ""}</td>
-            <td>${a.zustand || ""}</td>
-            <td>${a.ort || ""}</td>
-            <td>${a.datum ? formatDate(a.datum) : ""}</td>
-            <td class="iconCell">
-                <span onclick="event.stopPropagation(); viewImg(${originalIndex})" style="opacity:${a.bild ? 1 : 0.3}">📷</span>
-                <span onclick="event.stopPropagation(); viewNote(${originalIndex})" style="opacity:${a.notiz ? 1 : 0.3}">📝</span>
-                <span onclick="event.stopPropagation(); editArtikel(${originalIndex})">✏️</span>
-                <span onclick="event.stopPropagation(); sellArtikel(${originalIndex})">🛒</span>
-                <span onclick="event.stopPropagation(); del(${originalIndex})">🗑</span>
-            </td>
-        `;
+    const tr = document.createElement("tr");
+    tr.onclick = () => selectRow(originalIndex);
+    if(a.markiert) tr.classList.add("marked");
+    if(originalIndex === selectedRowIndex) tr.classList.add("selectedRow");
 
-        DOM.tableBody.appendChild(tr);
-    });
+    if(a.menge === 0){
+      tr.classList.add("tr-zero-stock");
+    }
 
-    updateCounters();
-    adjustTableTop();
+    const gesamt = (a.preis * a.menge).toFixed(2);
+
+    tr.innerHTML = `
+      <td onclick="event.stopPropagation(); toggleMark(${originalIndex})">${a.markiert ? "⭐" : "☆"}</td>
+      <td>${a.artnr || ""}</td>
+      <td>${a.name || ""}</td>
+      <td>${a.zustand || ""}</td>
+      <td><input class="miniQty" type="number" value="${a.menge}" onchange="updateQty(${originalIndex},this.value)"></td>
+      <td>${a.groesse || ""}</td>
+      <td>${isNaN(a.preis) ? "" : a.preis.toFixed(2)}</td>
+      <td>${isNaN(a.preis) ? "" : gesamt}</td>
+      <td>${a.ort || ""}</td>
+      <td>${a.datum ? formatDate(a.datum) : ""}</td>
+      <td class="iconCell">
+        <span onclick="event.stopPropagation(); viewImg(${originalIndex})" style="opacity:${a.bild ? 1 : 0.3}">📷</span>
+        <span onclick="event.stopPropagation(); viewNote(${originalIndex})" style="opacity:${a.notiz ? 1 : 0.3}">📝</span>
+        <span onclick="event.stopPropagation(); editArtikel(${originalIndex})">✏️</span>
+        <span onclick="event.stopPropagation(); sellArtikel(${originalIndex})">🛒</span>
+        <span class="delete" onclick="event.stopPropagation(); del(${originalIndex})">🗑</span>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  updateCounters();
+  adjustTableTop();
 }
 
+/* ===== Zähler (FROM USER'S FILE) ===== */
 function updateCounters(){
-    let gesamtMenge = 0;
-    let gesamtEKWert = 0;
-    artikel.forEach(a=>{
-        gesamtMenge += a.menge || 0;
-        gesamtEKWert += (a.menge || 0) * (a.preis || 0);
-    });
+  let m = 0;
+  let w = 0;
+  artikel.forEach(a=>{
+    m += a.menge || 0;
+    w += (a.menge || 0) * (a.preis || 0);
+  });
+  document.getElementById("countArtikel").textContent   = artikel.filter(a=>a && a.menge>0).length;
+  document.getElementById("countMenge").textContent     = m;
+  document.getElementById("countWert").textContent      = w.toFixed(2);
+  document.getElementById("countWertTotal").textContent = w.toFixed(2);
 
-    let umsatzJahr = 0;
-    let gewinnGesamt = 0;
-    const currentYear = new Date().getFullYear();
+  let umsatzGes = 0;
+  let gewinnGes = 0;
+  let umsatzJahr = 0;
+  const currentYear = new Date().getFullYear();
 
-    sales.forEach(s=>{
-        const u = s.umsatz || 0;
-        const g = s.gewinn || 0;
-        gewinnGesamt += g;
-        if(s.datum && parseInt(s.datum.slice(0,4),10) === currentYear) {
-            umsatzJahr += u;
-        }
-    });
-
-    document.getElementById("countArtikel").textContent   = artikel.filter(a=>a && a.menge>0).length;
-    document.getElementById("countMenge").textContent     = gesamtMenge;
-    document.getElementById("countWert").textContent      = gesamtEKWert.toFixed(2);
-    document.getElementById("countUmsatzJahr").textContent= umsatzJahr.toFixed(2);
-    document.getElementById("countGewinn").textContent    = gewinnGesamt.toFixed(2);
-
-    const umsatzElm = document.getElementById("countUmsatzJahr");
-    umsatzElm.style.color = "var(--accent-blue)";
-    if(umsatzJahr >= 25000){
-        umsatzElm.style.color = "#ff453a"; // iOS Red
-    } else if(umsatzJahr >= 22000){
-        umsatzElm.style.color = "#ff9f0a"; // iOS Orange
+  sales.forEach(s=>{
+    const u = s.umsatz || 0;
+    const g = s.gewinn || 0;
+    umsatzGes += u;
+    gewinnGes += g;
+    if(s.datum){
+      const year = parseInt(s.datum.slice(0,4),10);
+      if(year === currentYear) umsatzJahr += u;
     }
+  });
+
+  const umsatzElm = document.getElementById("countUmsatzJahr");
+  const gewinnElm = document.getElementById("countGewinn");
+
+  umsatzElm.textContent = umsatzJahr.toFixed(2);
+  gewinnElm.textContent = gewinnGes.toFixed(2);
+
+  // Warnfarben für 25.000-Grenze (mit modernen CSS-Variablen)
+  umsatzElm.style.color = "var(--accent-blue)";
+  if(umsatzJahr >= 25000){
+    umsatzElm.style.color = "#ff453a"; 
+  }else if(umsatzJahr >= 22000){
+    umsatzElm.style.color = "#ff9f0a"; 
+  }
+  gewinnElm.style.color = "var(--accent-blue)";
 }
 
-// ====================================================================
-// AKTIONEN IN DER TABELLE (UNVERÄNDERT)
-// ====================================================================
-
-function updateQty(i, val){
-    artikel[i].menge = parseInt(val) || 0;
-    localStorage.setItem("lagerData", JSON.stringify(artikel));
-    renderTable();
+/* ===== Menge direkt in Tabelle (FROM USER'S FILE) ===== */
+function updateQty(i,val){
+  autoBackup("menge");
+  artikel[i].menge = parseInt(val) || 0;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  renderTable();
+  updateCounters();
 }
 
+/* ===== Markieren (⭐) (FROM USER'S FILE) ===== */
 function toggleMark(i){
-    artikel[i].markiert = !artikel[i].markiert;
+  autoBackup("markierung");
+  artikel[i].markiert = !artikel[i].markiert;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  renderTable();
+  updateCounters();
+}
+
+/* ===== Pop-up Logik (Neu + Bearbeiten) (FROM USER'S FILE) ===== */
+const p_artnr       = document.getElementById("p_artnr");
+const p_name        = document.getElementById("p_name");
+const p_menge       = document.getElementById("p_menge");
+const p_groesse     = document.getElementById("p_groesse");
+const p_preis       = document.getElementById("p_preis");
+const p_ort         = document.getElementById("p_ort");
+const p_datum       = document.getElementById("p_datum");
+const p_zustand     = document.getElementById("p_zustand");
+let p_bild          = document.getElementById("p_bild");
+const p_notiz       = document.getElementById("p_notiz");
+
+const btnAdd        = document.getElementById("btnAdd");
+const btnSave       = document.getElementById("btnSave");
+const btnCancel     = document.getElementById("btnCancel");
+
+
+btnAdd.onclick = () => {
+  editIndex = -1;
+  p_artnr.value       = previewNextArtNr(); 
+  p_name.value        = "";
+  p_menge.value       = 1;
+  p_groesse.value     = "";
+  p_preis.value       = "";
+  p_ort.value         = "";
+  p_datum.value       = new Date().toISOString().slice(0, 10); 
+  p_zustand.value     = "Neu";
+  p_bild = resetFileInput(p_bild);
+  p_notiz.value       = "";
+  DOM.popup.style.display = "block";
+  DOM.modalOverlay.style.display = "block";
+};
+
+btnCancel.onclick = () => {
+  DOM.popup.style.display = "none";
+  DOM.modalOverlay.style.display = "none";
+  editIndex = -1;
+};
+
+btnSave.onclick = () => {
+  if (p_name.value.trim().length === 0) {
+        alert("Der Artikel muss einen Namen haben!");
+        return;
+  }
+  
+  if (editIndex === -1){
+    const nextNr     = commitNextArtNr();
+    const artnrInput = p_artnr.value.trim();
+    const artnrFinal = artnrInput || nextNr;
+
+    const obj = {
+      artnr:  artnrFinal,
+      name:   p_name.value.trim(),
+      menge: +p_menge.value || 0,
+      groesse:p_groesse.value.trim(),
+      preis: +p_preis.value || 0,
+      ort:    p_ort.value.trim(),
+      datum:  p_datum.value,
+      zustand:p_zustand.value || "Neu",
+      notiz:  p_notiz.value.trim(),
+      bild:   "",
+      markiert:false
+    };
+
+    const file = p_bild.files[0];
+    if(file){
+      const r = new FileReader();
+      r.onload = e => { obj.bild = e.target.result; pushNew(obj); };
+      r.readAsDataURL(file);
+    } else {
+      pushNew(obj);
+    }
+
+  } else {
+    const alt = artikel[editIndex];
+    const artnrInput = p_artnr.value.trim();
+    const obj = {
+      artnr:  artnrInput || alt.artnr,
+      name:   p_name.value.trim(),
+      menge: +p_menge.value || 0,
+      groesse:p_groesse.value.trim(),
+      preis: +p_preis.value || 0,
+      ort:    p_ort.value.trim(),
+      datum:  p_datum.value,
+      zustand:p_zustand.value || alt.zustand || "Neu",
+      notiz:  p_notiz.value.trim(),
+      bild:   alt.bild || "",
+      markiert: alt.markiert || false
+    };
+
+    const file = p_bild.files[0];
+    if(file){
+      const r = new FileReader();
+      r.onload = e => { obj.bild = e.target.result; applyEdit(obj); };
+      r.readAsDataURL(file);
+    } else {
+      applyEdit(obj);
+    }
+  }
+};
+
+function pushNew(obj){
+  artikel.push(obj);
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  DOM.popup.style.display = "none";
+  DOM.modalOverlay.style.display = "none";
+  editIndex = -1;
+  renderTable();
+}
+
+function applyEdit(obj){
+  artikel[editIndex] = obj;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  DOM.popup.style.display = "none";
+  DOM.modalOverlay.style.display = "none";
+  editIndex = -1;
+  renderTable();
+}
+
+function editArtikel(i){
+  editIndex       = i;
+  const a         = artikel[i];
+  p_artnr.value   = a.artnr || "";
+  p_name.value    = a.name || "";
+  p_menge.value   = a.menge || 1;
+  p_groesse.value = a.groesse || "";
+  p_preis.value   = a.preis || 0;
+  p_ort.value     = a.ort || "";
+  p_datum.value   = a.datum || "";
+  p_zustand.value = a.zustand || "Neu";
+  p_bild = resetFileInput(p_bild);
+  p_notiz.value   = a.notiz || "";
+  DOM.popup.style.display = "block";
+  DOM.modalOverlay.style.display = "block";
+}
+
+/* ===== Löschen, Bild, Notiz (FROM USER'S FILE) ===== */
+function del(i){
+  if(confirm("Wirklich löschen?")){
+    autoBackup("löschen");
+    artikel.splice(i,1);
     localStorage.setItem("lagerData", JSON.stringify(artikel));
     renderTable();
-}
-
-function selectRow(i){
-    const clickedElement = DOM.tableBody.children[i];
-    document.querySelectorAll(".selectedRow").forEach(el => el.classList.remove("selectedRow"));
-    if (clickedElement) {
-        clickedElement.classList.add("selectedRow");
-    }
-}
-
-function del(i){
-    if(confirm("Wirklich löschen?")){
-        artikel.splice(i,1);
-        localStorage.setItem("lagerData", JSON.stringify(artikel));
-        renderTable();
-    }
+    updateCounters();
+  }
 }
 
 function viewImg(i){
-    const a = artikel[i];
-    DOM.viewPopup.innerHTML = `
-        <h3>Bild Vorschau</h3>
-        ${a.bild ? `<img src="${a.bild}" style="max-width:100%; height:auto; border-radius:8px;">` : `<div>Kein Bild vorhanden.</div>`}
-        <br><button onclick="closeViewPopup()">Schließen</button>
-    `;
-    DOM.viewPopup.style.display = "block";
-    DOM.modalOverlay.style.display = "block";
+  const a = artikel[i];
+  DOM.viewPopup.innerHTML = a.bild
+    ? `<img class="preview" src="${a.bild}"><br><button onclick="closeViewPopup()">Schließen</button>`
+    : `<div>Kein Bild</div><br><button onclick="closeViewPopup()">Schließen</button>`;
+  DOM.viewPopup.style.display = "block";
+  DOM.modalOverlay.style.display = "block";
 }
 
 function viewNote(i){
-    const a = artikel[i];
-    DOM.viewPopup.innerHTML = `
-        <h3>Notiz</h3>
-        <div>${a.notiz || "Keine Notiz vorhanden."}</div>
-        <br><button onclick="closeViewPopup()">Schließen</button>
-    `;
-    DOM.viewPopup.style.display = "block";
-    DOM.modalOverlay.style.display = "block";
+  const a = artikel[i];
+  DOM.viewPopup.innerHTML = `<div>${a.notiz || "Keine Notiz"}</div>
+  <br><button onclick="closeViewPopup()">Schließen</button>`;
+  DOM.viewPopup.style.display = "block";
+  DOM.modalOverlay.style.display = "block";
 }
-
 function closeViewPopup() {
     DOM.viewPopup.style.display = "none";
     DOM.modalOverlay.style.display = "none";
 }
 
-// ====================================================================
-// ARTIKEL BEARBEITEN / NEU HINZUFÜGEN (UNVERÄNDERT)
-// ====================================================================
+/* ===== Verkaufen (Teilmenge möglich) (FROM USER'S FILE) ===== */
+const s_menge        = document.getElementById("s_menge");
+const s_preis        = document.getElementById("s_preis");
+const s_versandKunde = document.getElementById("s_versandKunde");
+const s_versandKosten= document.getElementById("s_versandKosten");
+const s_datum        = document.getElementById("s_datum");
+const s_rechnung     = document.getElementById("s_rechnung");
 
-function editArtikel(i){
-    const a = artikel[i] || {};
-    editIndex = i;
-
-    document.getElementById("p_artnr").value    = a.artnr || "";
-    document.getElementById("p_name").value     = a.name || "";
-    document.getElementById("p_menge").value    = a.menge !== undefined ? a.menge : 1;
-    document.getElementById("p_groesse").value  = a.groesse || "";
-    document.getElementById("p_preis").value    = a.preis || 0;
-    document.getElementById("p_ort").value      = a.ort || "";
-    document.getElementById("p_datum").value    = a.datum || "";
-    document.getElementById("p_zustand").value  = a.zustand || "Neu";
-    document.getElementById("p_notiz").value    = a.notiz || "";
-    document.getElementById("p_bild").value = null;
-
-    DOM.popup.style.display = "block";
-    DOM.modalOverlay.style.display = "block";
-}
-
-function saveArtikel(){
-    const input = {
-        artnr:  document.getElementById("p_artnr").value.trim(),
-        name:   document.getElementById("p_name").value.trim(),
-        menge: +document.getElementById("p_menge").value || 0,
-        groesse:document.getElementById("p_groesse").value.trim(),
-        preis: +document.getElementById("p_preis").value || 0,
-        ort:    document.getElementById("p_ort").value.trim(),
-        datum:  document.getElementById("p_datum").value,
-        zustand:document.getElementById("p_zustand").value || "Neu",
-        notiz:  document.getElementById("p_notiz").value.trim(),
-        bild:   null
-    };
-    
-    if (input.name.length === 0) {
-        alert("Der Artikel muss einen Namen haben!");
-        return;
-    }
-
-    const file = document.getElementById("p_bild").files[0];
-    const itemToSave = (editIndex === -1) ? createNewItem(input) : updateExistingItem(input);
-
-    if (file) {
-        const r = new FileReader();
-        r.onload = e => {
-            itemToSave.bild = e.target.result;
-            finalizeSave(itemToSave);
-        };
-        r.readAsDataURL(file);
-    } else {
-        if (editIndex !== -1) {
-            itemToSave.bild = artikel[editIndex].bild;
-        } else {
-            itemToSave.bild = "";
-        }
-        finalizeSave(itemToSave);
-    }
-}
-
-function createNewItem(input) {
-    const nextNr = commitNextArtNr();
-    return {
-        ...input,
-        artnr: input.artnr || nextNr,
-        markiert: false
-    };
-}
-
-function updateExistingItem(input) {
-    const alt = artikel[editIndex];
-    return {
-        ...input,
-        artnr: input.artnr || alt.artnr,
-        markiert: alt.markiert || false
-    };
-}
-
-function finalizeSave(item) {
-    if (editIndex === -1) {
-        artikel.push(item);
-    } else {
-        artikel[editIndex] = item;
-    }
-    localStorage.setItem("lagerData", JSON.stringify(artikel));
-    DOM.popup.style.display = "none";
-    DOM.modalOverlay.style.display = "none";
-    editIndex = -1;
-    renderTable();
-}
-
-function openAddArtikel() {
-    editIndex = -1;
-    document.getElementById("p_artnr").value    = previewNextArtNr();
-    document.getElementById("p_name").value     = "";
-    document.getElementById("p_menge").value    = 1;
-    document.getElementById("p_groesse").value  = "";
-    document.getElementById("p_preis").value    = 0;
-    document.getElementById("p_ort").value      = "";
-    document.getElementById("p_datum").value    = new Date().toISOString().slice(0, 10);
-    document.getElementById("p_zustand").value  = "Neu";
-    document.getElementById("p_notiz").value    = "";
-    document.getElementById("p_bild").value     = null;
-
-    DOM.popup.style.display = "block";
-    DOM.modalOverlay.style.display = "block";
-}
-
-function cancelArtikel(){
-    DOM.popup.style.display = "none";
-    DOM.modalOverlay.style.display = "none";
-    editIndex = -1;
-}
-
-// ====================================================================
-// VERKAUFSLOGIK (UNVERÄNDERT)
-// ====================================================================
+const btnSaleOk      = document.getElementById("btnSaleOk");
+const btnSaleCancel  = document.getElementById("btnSaleCancel");
 
 function nextInvoiceNrLager(){
-    const key = "invoiceCounter";
-    let c = parseInt(localStorage.getItem(key) || "0",10) + 1;
-    localStorage.setItem(key, c);
-    return String(c).padStart(5,"0");
+  const key = "invoiceCounter";
+  let c = parseInt(localStorage.getItem(key) || "0",10) + 1;
+  localStorage.setItem(key, c);
+  return String(c).padStart(5,"0");
 }
+
 
 function sellArtikel(i){
-    currentSaleIndex = i;
-    editSaleIndex    = -1;
-    const a = artikel[i];
-    
-    document.getElementById("s_menge").value        = a.menge || 1;
-    document.getElementById("s_preis").value        = "";
-    document.getElementById("s_versandKunde").value = 0;
-    document.getElementById("s_versandKosten").value= 0;
-    document.getElementById("s_datum").value        = new Date().toISOString().slice(0,10);
-    document.getElementById("s_rechnung").value     = nextInvoiceNrLager();
-    document.getElementById("s_menge").disabled     = false;
-
-    DOM.salePopup.style.display = "block";
-    DOM.modalOverlay.style.display = "block";
+  currentSaleIndex = i;
+  editSaleIndex    = -1;
+  const a = artikel[i];
+  s_menge.value        = a.menge || 1;
+  s_preis.value        = "";
+  s_versandKunde.value = 0; 
+  s_versandKosten.value= 0; 
+  s_datum.value        = new Date().toISOString().slice(0,10);
+  s_rechnung.value = nextInvoiceNrLager();
+  s_menge.disabled = false; 
+  DOM.salePopup.style.display = "block";
+  DOM.modalOverlay.style.display = "block";
 }
 
-function confirmSale(){
-    const mengeV = parseInt(document.getElementById("s_menge").value) || 0;
-    const preisV = parseFloat(document.getElementById("s_preis").value) || 0;
-    const versK  = parseFloat(document.getElementById("s_versandKunde").value) || 0;
-    const versC  = parseFloat(document.getElementById("s_versandKosten").value) || 0;
-    const datV   = document.getElementById("s_datum").value;
-    const rNr    = document.getElementById("s_rechnung").value || "";
+btnSaleCancel.onclick = () => {
+  DOM.salePopup.style.display = "none";
+  DOM.modalOverlay.style.display = "none";
+  currentSaleIndex = -1;
+};
 
-    if (editSaleIndex >= 0) {
-        const s = sales[editSaleIndex];
-        if(!s) return;
-        
-        s.verkaufPreis = preisV;
-        s.versandKunde = versK;
-        s.versandKosten= versC;
-        s.datum        = datV;
-        s.rechnungsnr  = rNr;
+btnSaleOk.onclick = () => {
+  const mengeV = parseInt(s_menge.value) || 0;
+  const preisV = parseFloat(s_preis.value) || 0;
+  const versK  = parseFloat(s_versandKunde.value) || 0;
+  const versC  = parseFloat(s_versandKosten.value) || 0;
+  const datV   = s_datum.value;
+  const rNr    = s_rechnung.value || "";
 
-        const umsatzNeu = s.menge * s.verkaufPreis + s.versandKunde;
-        const einkaufNeu= s.menge * (s.einkaufPreis || 0);
-        s.umsatz = umsatzNeu;
-        s.gewinn = umsatzNeu - einkaufNeu - s.versandKosten;
+  if(editSaleIndex >= 0){
+    const s = sales[editSaleIndex];
+    if(!s) return;
 
-        localStorage.setItem("lagerSales", JSON.stringify(sales));
-        closeSalePopup();
-        openSalesHistory();
-        updateCounters();
-        return;
-
-    } else if (currentSaleIndex !== -1) {
-        const a = artikel[currentSaleIndex];
-
-        if(mengeV <= 0 || mengeV > a.menge){
-            alert("Verkaufte Menge ist ungültig oder übersteigt den Bestand.");
-            return;
-        }
-
-        const umsatz = mengeV * preisV + versK;
-        const einkaufKosten = mengeV * (a.preis || 0);
-        const gewinn = umsatz - einkaufKosten - versC;
-
-        const sale = {
-            artnr: a.artnr,
-            name:  a.name,
-            menge: mengeV,
-            verkaufPreis: preisV,
-            versandKunde: versK,
-            versandKosten: versC,
-            einkaufPreis: a.preis || 0,
-            datum: datV,
-            umsatz,
-            gewinn,
-            rechnungsnr: rNr
-        };
-
-        sales.push(sale);
-        localStorage.setItem("lagerSales", JSON.stringify(sales));
-
-        a.menge -= mengeV;
-        localStorage.setItem("lagerData", JSON.stringify(artikel));
-
-        closeSalePopup();
-        renderTable();
+    if(mengeV <= 0){
+      alert("Menge muss größer 0 sein.");
+      return;
     }
-}
 
-function closeSalePopup(){
+    s.verkaufPreis = preisV;
+    s.versandKunde = versK;
+    s.versandKosten= versC;
+    s.datum        = datV;
+    s.rechnungsnr  = rNr;
+
+    const umsatzNeu = s.menge * s.verkaufPreis + s.versandKunde;
+    const einkaufNeu= s.menge * (s.einkaufPreis || 0);
+    s.umsatz = umsatzNeu;
+    s.gewinn = umsatzNeu - einkaufNeu - s.versandKosten;
+
+    localStorage.setItem("lagerSales", JSON.stringify(sales));
     DOM.salePopup.style.display = "none";
     DOM.modalOverlay.style.display = "none";
-    currentSaleIndex = -1;
     editSaleIndex = -1;
-}
+    currentSaleIndex = -1;
 
-// ====================================================================
-// VERKAUFSHISTORIE & STORNOS (UNVERÄNDERT)
-// ====================================================================
+    openSalesHistory();
+    updateCounters();
+    return;
+  }
 
+  if(currentSaleIndex === -1) return;
+  autoBackup("verkauf");
+  const a = artikel[currentSaleIndex];
+
+  if(mengeV <= 0 || mengeV > a.menge){
+    alert("Verkaufte Menge ist ungültig oder übersteigt den Bestand.");
+    return;
+  }
+
+  const umsatz = mengeV * preisV + versK;
+  const einkaufKosten = mengeV * (a.preis || 0);
+  const gewinn = umsatz - einkaufKosten - versC;
+
+  const sale = {
+    artnr: a.artnr,
+    name:  a.name,
+    menge: mengeV,
+    verkaufPreis: preisV,
+    versandKunde: versK,
+    versandKosten: versC,
+    einkaufPreis: a.preis || 0,
+    datum: datV,
+    umsatz,
+    gewinn,
+    rechnungsnr: rNr
+  };
+
+  sales.push(sale);
+  localStorage.setItem("lagerSales", JSON.stringify(sales));
+
+  // Bestand anpassen
+  a.menge -= mengeV;
+  if(a.menge < 0) a.menge = 0;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+
+  DOM.salePopup.style.display = "none";
+  DOM.modalOverlay.style.display = "none";
+  currentSaleIndex = -1;
+  renderTable();
+  updateCounters();
+};
+
+/* ===== Verkaufs-Historie (FROM USER'S FILE) ===== */
 function openSalesHistory(){
-    renderSalesList(DOM.salesSearch.value);
-    DOM.salesHistoryPopup.style.display = "block";
-    DOM.modalOverlay.style.display = "block";
+  const searchInput = document.getElementById("salesSearch");
+  if(searchInput){
+    renderSalesList(searchInput.value);
+  } else {
+    renderSalesList("");
+  }
+  DOM.salesHistoryPopup.style.display = "block";
+  DOM.modalOverlay.style.display = "block";
 }
 
 function renderSalesList(filter){
-    const tbody = document.getElementById("salesBody");
-    if(!tbody) return;
-    tbody.innerHTML = "";
-    const q = (filter || "").toLowerCase();
+  const tbody = document.getElementById("salesBody");
+  if(!tbody) return;
+  tbody.innerHTML = "";
+  const q = (filter || "").toLowerCase();
 
-    sales.slice().reverse().forEach((s,idx)=>{
-        const originalIndex = sales.length - 1 - idx;
-        const txt = (s.name||"") + " " + (s.artnr||"") + " " + (s.rechnungsnr||"") + " " + (s.datum||"");
-        if(q && !txt.toLowerCase().includes(q)) return;
+  sales.slice().reverse().forEach((s,idx)=>{ 
+    const originalIndex = sales.length - 1 - idx;
+    const txt = (s.name||"") + " " + (s.artnr||"") + " " + (s.rechnungsnr||"") + " " + (s.datum||"");
+    if(q && !txt.toLowerCase().includes(q)) return;
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${s.rechnungsnr || ""}</td>
-            <td>${s.datum ? formatDate(s.datum) : ""}</td>
-            <td>${s.artnr || ""}</td>
-            <td>${s.name || ""}</td>
-            <td>${s.menge || 0}</td>
-            <td>${(s.umsatz||0).toFixed(2)}</td>
-            <td>${(s.gewinn||0).toFixed(2)}</td>
-            <td>
-                <button onclick="editSale(${originalIndex})">✏️</button>
-                <button onclick="stornoSale(${originalIndex})">⤴️</button>
-                <button onclick="deleteSale(${originalIndex})">🗑</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function stornoSale(index){
-    const s = sales[index];
-    if(!s) return;
-    if(!confirm(`Verkauf von ${s.menge}x ${s.name} stornieren und Bestand wieder erhöhen?`)) return;
-
-    const art = artikel.find(a => a.artnr === s.artnr);
-    if(art){
-        art.menge = (art.menge || 0) + (s.menge || 0);
-    }else{
-        artikel.push({
-            artnr: s.artnr,
-            name: s.name,
-            menge: s.menge || 0,
-            preis: s.einkaufPreis || 0,
-            notiz:"Storno-Wiederherstellung",
-            markiert:false
-        });
-    }
-
-    sales.splice(index,1);
-    localStorage.setItem("lagerSales", JSON.stringify(sales));
-    localStorage.setItem("lagerData", JSON.stringify(artikel));
-
-    openSalesHistory();
-    renderTable();
-}
-
-function deleteSale(index){
-    if(!confirm("Verkauf endgültig aus der Liste löschen?")) return;
-    sales.splice(index,1);
-    localStorage.setItem("lagerSales", JSON.stringify(sales));
-    openSalesHistory();
-    updateCounters();
-}
-
-function editSale(index){
-    const s = sales[index];
-    if(!s) return;
-
-    editSaleIndex    = index;
-    currentSaleIndex = -1;
-
-    document.getElementById("s_menge").value        = s.menge || 1;
-    document.getElementById("s_preis").value        = s.verkaufPreis || 0;
-    document.getElementById("s_versandKunde").value = s.versandKunde || 0;
-    document.getElementById("s_versandKosten").value= s.versandKosten || 0;
-    document.getElementById("s_datum").value        = s.datum || new Date().toISOString().slice(0,10);
-    document.getElementById("s_rechnung").value     = s.rechnungsnr || "";
-
-    document.getElementById("s_menge").disabled = true;
-
-    DOM.salePopup.style.display = "block";
-    DOM.modalOverlay.style.display = "block";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${s.rechnungsnr || ""}</td>
+      <td>${s.datum ? formatDate(s.datum) : ""}</td>
+      <td>${s.artnr || ""}</td>
+      <td>${s.name || ""}</td>
+      <td>${s.menge || 0}</td>
+      <td>${(s.umsatz||0).toFixed(2)}</td>
+      <td>${(s.gewinn||0).toFixed(2)}</td>
+      <td>
+        <button onclick="editSale(${originalIndex})">✏️</button>
+        <button onclick="stornoSale(${originalIndex})">⤴️</button>
+        <button onclick="deleteSale(${originalIndex})">🗑</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 function closeSalesHistory(){
-    DOM.salesHistoryPopup.style.display = "none";
-    DOM.modalOverlay.style.display = "none";
+  DOM.salesHistoryPopup.style.display = "none";
+  DOM.modalOverlay.style.display = "none";
 }
 
-// ====================================================================
-// HILFSFUNKTIONEN & EVENTS (UNVERÄNDERT)
-// ====================================================================
+/* Storno: Verkauf rückgängig */
+function stornoSale(index){
+  const s = sales[index];
+  if(!s) return;
+  if(!confirm("Verkauf stornieren und Bestand wieder erhöhen?")) return;
 
-function formatDate(d){
-    if(!d) return "";
-    const [y,m,dd] = d.split("-");
-    return `${dd}-${m}-${y}`;
+  autoBackup("storno");
+
+  const art = artikel.find(a => a.artnr === s.artnr);
+  if(art){
+    art.menge = (art.menge || 0) + (s.menge || 0);
+  }else{
+    artikel.push({
+      artnr: s.artnr,
+      name: s.name,
+      menge: s.menge || 0,
+      groesse:"",
+      preis: s.einkaufPreis || 0,
+      ort:"",
+      datum:s.datum || "",
+      zustand:"Neu",
+      notiz:"Storno automatisch angelegt",
+      bild:"",
+      markiert:false
+    });
+  }
+
+  sales.splice(index,1);
+  localStorage.setItem("lagerSales", JSON.stringify(sales));
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+
+  openSalesHistory(); 
+  renderTable();
 }
 
-function setupEventListeners() {
-    document.getElementById("btnAdd").onclick = openAddArtikel;
-    document.getElementById("btnExport").onclick = () => autoBackup("manuell");
-    document.getElementById("btnImport").onclick = handleImport;
-    document.getElementById("btnSales").onclick = openSalesHistory;
-    
-    document.getElementById("btnSave").onclick = saveArtikel;
-    document.getElementById("btnCancel").onclick = cancelArtikel;
-    
-    document.getElementById("btnSaleOk").onclick = confirmSale;
-    document.getElementById("btnSaleCancel").onclick = closeSalePopup;
+/**
+ * EDIT-SALE-FUNKTION (KRITISCHER FIX ANGEWENDET)
+ */
+function editSale(index){
+  const s = sales[index];
+  if(!s) return;
 
-    DOM.search.oninput = () => {
-        const q = DOM.search.value.toLowerCase();
-        DOM.tableBody.querySelectorAll("tr").forEach(r=>{
-            r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
-        });
+  editSaleIndex    = index;
+  currentSaleIndex = -1;
+
+  s_menge.value        = s.menge || 1;
+  s_preis.value        = s.verkaufPreis || 0;
+  s_versandKunde.value = s.versandKunde || 0;
+  s_versandKosten.value= s.versandKosten || 0;
+  s_datum.value        = s.datum || new Date().toISOString().slice(0,10);
+  s_rechnung.value     = s.rechnungsnr || "";
+
+  // KRITISCHER FIX: Hier war der Fehler 's_menge. = false;'
+  s_menge.disabled = true; 
+
+  DOM.salePopup.style.display = "block";
+  DOM.modalOverlay.style.display = "block";
+}
+
+function deleteSale(index){
+  const s = sales[index];
+  if(!s) return;
+  if(!confirm("Verkauf endgültig aus der Liste löschen?")) return;
+
+  sales.splice(index,1);
+  localStorage.setItem("lagerSales", JSON.stringify(sales));
+  openSalesHistory();
+  updateCounters();
+}
+
+/* ===== Sichern / Laden / Suche (FROM USER'S FILE) ===== */
+const btnImport = document.getElementById("btnImport");
+const searchInp = document.getElementById("search");
+
+btnImport.onclick = () => {
+  const inp = document.createElement("input");
+  inp.type  = "file";
+  inp.accept= "application/json";
+
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const r = new FileReader();
+    r.onload = () => {
+      try{
+        const data = JSON.parse(r.result);
+        if(data.artikel && Array.isArray(data.artikel)){
+          artikel = data.artikel;
+          sales   = data.sales || [];
+        }
+        else if(Array.isArray(data)){
+          artikel = data;
+          sales   = [];
+        }
+        else{
+          alert("Unbekanntes Dateiformat! Bitte eine gültige JSON-Backup-Datei wählen.");
+          return;
+        }
+
+        localStorage.setItem("lagerData", JSON.stringify(artikel));
+        localStorage.setItem("lagerSales", JSON.stringify(sales));
+        initArtNrCounter();
+        renderTable();
+        alert("Daten erfolgreich geladen ✔");
+
+      }catch{
+        alert("Datei konnte nicht gelesen werden!");
+      }
     };
-    
-    DOM.salesSearch.oninput = () => renderSalesList(DOM.salesSearch.value);
+    r.readAsText(file);
+  };
+  inp.click();
+};
 
-    DOM.modalOverlay.onclick = () => {
-        if (DOM.popup.style.display === "block") cancelArtikel();
-        if (DOM.salePopup.style.display === "block") closeSalePopup();
-        if (DOM.salesHistoryPopup.style.display === "block") closeSalesHistory();
-        if (DOM.viewPopup.style.display === "block") closeViewPopup();
-    };
+searchInp.oninput = () => {
+  const q = searchInp.value.toLowerCase();
+  document.querySelectorAll("#tableBody tr").forEach(r=>{
+    r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
+  });
+};
 
-    adjustTableTop();
+/* ===== Zusätzliche Event-Listener (FROM USER'S FILE) ===== */
+function selectRow(i){
+  document.querySelectorAll(".selectedRow").forEach(el => el.classList.remove("selectedRow"));
+  if(selectedRowIndex === i){
+    selectedRowIndex = -1;
+  } else {
+    selectedRowIndex = i;
+    const clickedElement = document.getElementById("tableBody").children[i];
+    if (clickedElement) {
+        clickedElement.classList.add("selectedRow");
+    }
+  }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Verkaufsnummern-Logik (aus deiner Datei)
+  const origBtnSaleOk = btnSaleOk.onclick;
+  btnSaleOk.onclick = function(){
+    if(editSaleIndex === -1 && typeof origBtnSaleOk === "function"){
+      origBtnSaleOk(); 
+      if (currentSaleIndex === -1 && sales.length > 0) {
+        // Logik für neue Verkaufsnummer (aus deiner Datei)
+        const year = new Date().getFullYear();
+        const key = "saleCounter_" + year;
+        let n = parseInt(localStorage.getItem(key) || "0", 10) + 1;
+        localStorage.setItem(key, n);
+        const nextNr = String(n).padStart(3, "0") + "-" + year;
+
+        if(!sales[sales.length - 1].verkaufsnr){
+            sales[sales.length - 1].verkaufsnr = nextNr;
+            localStorage.setItem("lagerSales", JSON.stringify(sales));
+        }
+        renderTable();
+      }
+    } else if (editSaleIndex !== -1 && typeof origBtnSaleOk === "function") {
+      origBtnSaleOk(); 
+    }
+  };
+
+  // Weitere Listener (aus deiner Datei)
+  const btnExport = document.getElementById("btnExport");
+  if (btnExport) {
+    const origExport = btnExport.onclick;
+    btnExport.onclick = () => {
+      if (DOM.popup.style.display === "block" && btnSave) {
+        btnSave.click(); 
+      }
+      if (typeof origExport === "function") {
+        origExport();
+      }
+    };
+  }
+
+  const btnSales = document.getElementById("btnSales");
+  if (btnSales) {
+    btnSales.onclick = () => openSalesHistory();
+  }
+
+  const salesSearchInput = document.getElementById("salesSearch");
+  if(salesSearchInput){
+    salesSearchInput.oninput = () => renderSalesList(salesSearchInput.value);
+  }
+
+  document.addEventListener("click", function(e){
+    if(e.target && e.target.tagName === "INPUT"){
+      e.stopPropagation();
+    }
+  }, true);
+  
+  // Modal Overlay klickt Popups weg
+  const modalOverlay = document.getElementById("modalOverlay");
+    if (modalOverlay) {
+        modalOverlay.onclick = () => {
+            if (DOM.popup.style.display === "block") btnCancel.click();
+            if (DOM.salePopup.style.display === "block") btnSaleCancel.click();
+            if (DOM.salesHistoryPopup.style.display === "block") closeSalesHistory();
+            if (DOM.viewPopup.style.display === "block") closeViewPopup();
+        };
+    }
+
+  renderTable();
+});
 </script>
 </body>
 </html>
