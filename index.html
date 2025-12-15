@@ -1,1058 +1,939 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, user-scalable=no">
-<title>Lager App</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>Lager App (stabil)</title>
 <style>
-body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:hidden;overscroll-behavior:none;}
-#topbar{position:fixed;top:0;left:0;right:0;padding:15px;background:#000;z-index:5000;border-bottom:2px solid #333;}
-#counterWrapper{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
-.counter-box{padding:10px;border:1px solid #444;border-radius:10px;background:#000;}
-.counter-title{font-size:11px;color:#bbb;}
-.counter-value{font-size:18px;font-weight:bold;}
-#searchRow{margin-top:10px;}
-#search{width:100%;padding:10px;border-radius:8px;background:#111;border:1px solid #444;color:white;box-sizing:border-box;}
-#buttonRow{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
-#buttonRow button{flex:1;padding:6px 4px;font-size:10px;color:#bbb;border-radius:8px;background:#000;border:1px solid #444;font-weight:bold;height:32px}
+  :root{
+    --bg:#000;
+    --panel:#0b0b0b;
+    --panel2:#111;
+    --border:#333;
+    --muted:#aaa;
+    --text:#fff;
+    --accent:#2dd4bf;
+    --danger:#b00020;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;overscroll-behavior:none}
+  button,input,textarea,select{font:inherit;color:inherit}
+  button{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer}
+  button:active{transform:scale(0.99)}
+  input,textarea,select{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:100%}
+  .topbar{
+    position:fixed;left:0;right:0;top:0;z-index:5000;
+    background:var(--bg);border-bottom:1px solid var(--border);
+    padding:8px 10px;
+  }
+  .counters{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+  .counter{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:6px 8px}
+  .ct{font-size:11px;color:var(--muted)}
+  .cv{font-size:15px;font-weight:700}
+  .row{display:flex;gap:6px;margin-top:6px}
+  .row > *{flex:1}
+  #search{padding:10px;border-radius:12px}
+  .actions{display:flex;gap:6px;margin-top:6px}
+  .actions button{flex:1;padding:8px 8px;font-size:12px}
+  .content{
+    position:fixed;left:0;right:0;top:0;bottom:0;
+    padding-top:160px; /* wird per JS angepasst */
+    padding-bottom:12px;
+  }
+  #listWrap{
+    height:100%;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:0 10px 14px;
+  }
 
-#tableContainer{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  overflow-y:auto;
-  overflow-x:auto;
-  overscroll-behavior:none;   /* verhindert Gummiband komplett */
-  touch-action:pan-x pan-y;  /* verhindert diagonales Scrollen */
-  background:#000;
-  z-index:100;
-  padding-bottom:calc(env(safe-area-inset-bottom) + 16px); /* ✅ letzter Artikel nicht verdeckt */
-}
+  /* Grid "Tabelle" */
+  .gridHeader, .gridRow{
+    display:grid;
+    grid-template-columns: 64px minmax(160px,1fr) 78px 70px 70px 96px;
+    gap:6px;
+    align-items:center;
+  }
+  .gridHeader{
+    position:sticky;top:0;z-index:10;
+    background:var(--bg);
+    padding:8px 0 6px;
+    border-bottom:1px solid var(--border);
+    font-weight:700;
+  }
+  .gridHeader div{font-size:12px;color:#ddd}
+  .gridRow{
+    padding:8px 0;
+    border-bottom:1px solid #1e1e1e;
+  }
+  .gridRow.zero{background:rgba(176,0,32,0.25)}
+  .nr{color:#ddd;font-weight:700}
+  .name{font-weight:700;line-height:1.2}
+  .sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .miniQty{
+    width:100%;
+    padding:8px 8px;
+    border-radius:10px;
+    text-align:center;
+  }
+  .money{font-size:12px;color:#ddd;text-align:center}
+  .icons{display:flex;gap:6px;justify-content:flex-end}
+  .ico{
+    width:32px;height:32px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--panel2);border:1px solid var(--border);
+    user-select:none;
+  }
+  .ico.disabled{opacity:.30;pointer-events:none}
+  .ico:active{transform:scale(.98)}
+  .ico small{font-size:16px;line-height:1}
 
-table{width:100%;border-collapse:collapse;}
-th{background:#111;position:sticky;top:0;z-index:200;padding:6px;color:#bbb;font-size:9px;white-space:nowrap;}
-td{padding:4px;font-size:9px;border-bottom:1px solid #222;white-space:nowrap;}
-.marked{background:#222;}
-.iconCell span{cursor:pointer;margin-right:8px;}
-.iconCell span.delete{margin-left:18px;}
-input.miniQty{width:42px;background:#111;color:white;border:1px solid #444;border-radius:5px;text-align:center;}
+  /* Popups */
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.75);
+    z-index:9000;display:none;align-items:center;justify-content:center;
+    padding:12px;
+  }
+  .modal{
+    width:min(560px,100%);
+    background:#050505;border:1px solid var(--border);border-radius:14px;
+    padding:12px;
+    max-height:85vh;overflow:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .modal h2{margin:4px 0 10px;font-size:16px}
+  .modal .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .modal .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .modal .mt8{margin-top:8px}
+  .modal .btnRow{display:flex;gap:8px;margin-top:10px}
+  .modal .btnRow button{flex:1}
+  .hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.3}
+  .danger{background:#200; border-color:#600}
+  .primary{border-color:#2a7;}
 
-#popup,#viewPopup,#salePopup,#salesHistoryPopup{
-position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-background:#111;padding:16px;border:2px solid #444;border-radius:12px;
-width:360px;max-width:92vw;overflow:hidden;display:none;z-index:9999;
-}
-.popup-row{margin-bottom:8px;text-align:left;}
-.popup-row input,.popup-row textarea,.popup-row select{
-box-sizing:border-box;
-margin:0 auto;
-display:block;margin:0 auto;}
-.popup-row label{font-size:12px;color:#bbb;display:block;margin-bottom:3px;text-align:center;}
-.popup-row input,.popup-row textarea,.popup-row select{
-box-sizing:border-box;
-margin:0 auto;
-
-width:100%;padding:8px;border-radius:8px;
-border:1px solid #444;background:#1a1a1a;color:white;
-}
-#popupButtons,#saleButtons{display:flex;gap:8px;margin-top:10px;}
-#popupButtons button,#saleButtons button{flex:1;padding:7px;border-radius:8px;background:#000;border:1px solid #444;color:#fff;font-weight:bold;font-size:11px;height:34px}
-img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
-#salesHistoryPopup h3{margin-top:0;font-size:16px;}
-#salesHistoryPopup table{width:100%;border-collapse:collapse;font-size:11px;}
-#salesHistoryPopup th,#salesHistoryPopup td{border:1px solid #444;padding:4px;white-space:nowrap;}
-
-.selectedRow{
-  background:#0b2a4a !important;
-}
-#btnSaleSend{display:none;}
+  /* Verkäufe */
+  .salesHeader{display:flex;gap:8px;align-items:center}
+  #salesSearch{flex:1}
+  .salesTable{
+    margin-top:10px;
+    width:100%;
+    border-collapse:collapse;
+    min-width:760px; /* horizontales scrollen */
+  }
+  .salesWrap{
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    border:1px solid var(--border);
+    border-radius:12px;
+  }
+  .salesTable th,.salesTable td{
+    border-bottom:1px solid #1e1e1e;
+    padding:8px 8px;
+    white-space:nowrap;
+    font-size:12px;
+    text-align:left;
+  }
+  .salesTable th{background:#0c0c0c;position:sticky;top:0;z-index:2}
+  .saleBtns{display:flex;gap:6px}
+  .saleBtns button{padding:6px 8px;border-radius:10px}
 </style>
 
-
 <style>
-.tr-zero-stock{
-  background:#3a0000 !important;
-}
-</style>
-
-
-<style>
-#salesHistoryPopup{
-  overflow-x: auto !important;
-}
-#salesHistoryPopup table{
-  min-width: 900px !important;
-}
-</style>
-
-
-<style>
-.table-header th{
-  background:#111;
-  color:#fff;
-  font-weight:600;
-}
-</style>
-
-
-<style>
-/* ---- TOP BAR KOMPAKTER ---- */
-.topbar,
-.header,
-.counters,
-.buttons {
-  padding: 4px 6px !important;
-}
-
-.topbar h1,
-.header h1 {
-  font-size: 16px !important;
-  margin: 2px 0 !important;
-}
-
-.counter,
-.counter-box {
-  padding: 4px 6px !important;
-  font-size: 12px !important;
-  min-width: 0 !important;
-}
-
-.counter-value {
-  font-size: 14px !important;
-}
-
-button,
-.btn {
-  padding: 4px 8px !important;
-  font-size: 12px !important;
-  height: 30px !important;
-}
-
-button svg,
-button i {
-  width: 14px !important;
-  height: 14px !important;
-}
-
-#tableContainer {
-  margin-top: 4px !important;
-}
-</style>
-
-
-<style>
-/* Artikel-Spalte sauber ausrichten */
-td.article-cell{
-  vertical-align: middle;
-  line-height: 1.3;
-  padding-top: 6px;
-  padding-bottom: 6px;
-  white-space: normal;
-  word-break: break-word;
-}
-</style>
-
-
-<style>
-/* Entfernt jegliche Zusatzbeschriftung über der Artikel-Spalte */
-td.article-cell::before,
-td.article-cell .label,
-td.article-cell .sub,
-td.article-cell .hint {
-  display:none !important;
+/* --- TOPBEREICH NOCH KOMPAKTER --- */
+.topbar{padding:6px 8px}
+.counters{gap:4px}
+.counter{padding:4px 6px;border-radius:10px}
+.ct{font-size:10px}
+.cv{font-size:13px}
+.row{margin-top:4px}
+#search{padding:8px;font-size:12px}
+.actions{gap:4px;margin-top:4px}
+.actions button{
+  padding:6px 6px;
+  font-size:11px;
+  border-radius:10px;
 }
 </style>
 
 </head>
-
 <body>
 
-<div id="topbar">
-  <div id="counterWrapper">
-    <div class="counter-box">
-      <div class="counter-title">Artikel im Bestand</div>
-      <div id="countArtikel" class="counter-value">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Gegenstände insgesamt</div>
-      <div id="countMenge" class="counter-value">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Warenwert aktuell (€)</div>
-      <div id="countWert" class="counter-value">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Warenwert gesamt (€)</div>
-      <div id="countWertTotal" class="counter-value">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Umsatz Jahr (€)</div>
-      <div id="countUmsatzJahr" class="counter-value">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Gewinn gesamt (€)</div>
-      <div id="countGewinn" class="counter-value">0</div>
-    </div>
+<div class="topbar" id="topbar">
+  <div class="counters">
+    <div class="counter"><div class="ct">Warenwert aktuell</div><div class="cv" id="cValue">0 €</div></div>
+    <div class="counter"><div class="ct">Warenwert gesamt</div><div class="cv" id="cTotal">0 €</div></div>
+    <div class="counter"><div class="ct">Umsatz Jahr</div><div class="cv" id="cUmsatz">0 €</div></div>
+    <div class="counter"><div class="ct">Gewinn gesamt</div><div class="cv" id="cGewinn">0 €</div></div>
+    <div class="counter"><div class="ct">Artikel</div><div class="cv" id="cCount">0</div></div>
+    <div class="counter"><div class="ct">Verkäufe</div><div class="cv" id="cSales">0</div></div>
   </div>
 
-  <div id="searchRow"><input id="search" placeholder="Suchen …"></div>
+  <div class="row">
+    <input id="search" placeholder="Suche Artikel / Nr..." />
+  </div>
 
-  <div id="buttonRow">
-    <button id="btnAdd">Artikel</button>
-    <button id="btnExport">Sichern</button>
-    <button id="btnImport">Laden</button>
-    <button id="btnPDF">PDF</button>
+  <div class="actions">
+    <button id="btnAdd" class="primary">+ Artikel</button>
     <button id="btnSales">Verkäufe</button>
-  </div>
-</div>
-
-<div id="tableContainer">
-<table>
-
-<tbody id="tableBody">
-<tr class="table-header">
-  <th>Nr</th>
-  <th>Artikel</th>
-  <th>Menge</th>
-  <th>EK</th>
-  <th>VK</th>
-  <th>Aktion</th>
-</tr>
-</tbody>
-</table>
-</div>
-
-<!-- Artikel-Popup -->
-<div id="popup">
-  <div class="popup-row"><label>Artikelnummer</label><input id="p_artnr"></div>
-  <div class="popup-row"><label>Name</label><input id="p_name"></div>
-  <div class="popup-row"><label>Menge</label><input type="number" id="p_menge" value="1"></div>
-  <div class="popup-row"><label>Größe</label><input id="p_groesse"></div>
-  <div class="popup-row"><label>Preis (Einkauf, pro Stück)</label><input type="number" id="p_preis" step="0.01"></div>
-  <div class="popup-row"><label>Ort</label><input id="p_ort"></div>
-  <div class="popup-row"><label>Datum</label><input type="date" id="p_datum"></div>
-  <div class="popup-row">
-    <label>Zustand</label>
-    <select id="p_zustand">
-      <option value="Neu">Neu</option>
-      <option value="Gebraucht">Gebraucht</option>
-    </select>
-  </div>
-  <div class="popup-row"><label>Bild</label><input type="file" id="p_bild" accept="image/*" capture="environment"></div>
-  <div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
-  <div id="popupButtons">
-    <button id="btnSave">Speichern</button>
-    <button id="btnCancel">Abbrechen</button>
-  </div>
-</div>
-
-<!-- Bild / Notiz Anzeige -->
-<div id="viewPopup"></div>
-
-<!-- Verkaufs-Popup -->
-<div id="salePopup">
-  <div class="popup-row"><label>Rechnungsnummer</label><input id="s_rechnung"></div>
-  <div class="popup-row"><label>Verkaufte Menge</label><input type="number" id="s_menge" min="1"></div>
-  <div class="popup-row"><label>Verkaufspreis pro Stück (€)</label><input type="number" id="s_preis" step="0.01"></div>
-  <div class="popup-row"><label>Versand vom Kunden (€)</label><input type="number" id="s_versandKunde" step="0.01"></div>
-  <div class="popup-row"><label>Eigene Versandkosten (€)</label><input type="number" id="s_versandKosten" step="0.01"></div>
-  <div class="popup-row"><label>Verkaufsdatum</label><input type="date" id="s_datum"></div>
-  <div id="saleButtons">
-    <button id="btnSaleSend">An Rechnung senden</button>
-    <button id="btnSaleOk">Verkaufen</button>
-    <button id="btnSaleCancel">Abbrechen</button>
-  </div>
-</div>
-
-<!-- Verkaufs-Historie -->
-<div id="salesHistoryPopup">
-  <h3>Verkäufe</h3>
-  <input id="salesSearch" placeholder="Suche..." style="width:100%;margin-bottom:8px;">
-  <table>
+    <button id="btnImport">Laden</button>
+    <button id="btnExport">Sichern</button>
+    <button id="btnInventur">Inventur PDF</button>
     
-    <tbody id="salesBody"></tbody>
-  </table>
-  <div style="margin-top:10px;text-align:right;">
-    <button onclick="closeSalesHistory()">Schließen</button>
   </div>
 </div>
+
+<div class="content" id="content">
+  <div id="listWrap">
+    <div class="gridHeader">
+      <div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>VK</div><div>Aktion</div>
+    </div>
+    <div id="rows"></div>
+    <div class="hint">Tipp: Menge direkt ändern. Bestand 0 wird rot markiert und kann manuell gelöscht werden.</div>
+  </div>
+</div>
+
+<!-- Artikel Popup -->
+<div class="overlay" id="articleOv">
+  <div class="modal">
+    <h2 id="articleTitle">Artikel</h2>
+    <div class="grid2">
+      <div>
+        <div class="hint">Artikelnummer</div>
+        <input id="aNr" />
+      </div>
+      <div>
+        <div class="hint">Menge</div>
+        <input id="aQty" type="number" inputmode="numeric" />
+      </div>
+    </div>
+
+    <div class="mt8">
+      <div class="hint">Artikel</div>
+      <input id="aName" />
+    </div>
+
+    <div class="grid2 mt8">
+      <div>
+        <div class="hint">EK (pro Stück)</div>
+        <input id="aEK" type="number" inputmode="decimal" step="0.01" />
+      </div>
+      <div>
+        <div class="hint">VK (Vorschlag)</div>
+        <input id="aVK" type="number" inputmode="decimal" step="0.01" />
+      </div>
+    </div>
+
+    <div class="mt8">
+      <div class="hint">Notiz</div>
+      <textarea id="aNote" rows="3"></textarea>
+    </div>
+
+    <div class="mt8">
+      <div class="hint">Foto (wählen)</div>
+      <!-- WICHTIG: kein capture -> iOS zeigt Auswahl statt Kamera-Zwang -->
+      <input id="aImg" type="file" accept="image/*" />
+      <div class="hint" id="imgInfo"></div>
+    </div>
+
+    <div class="btnRow">
+      <button id="btnCancel">Abbrechen</button>
+      <button id="btnDelete" class="danger" style="display:none">Löschen</button>
+      <button id="btnSave" class="primary">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Verkauf Popup -->
+<div class="overlay" id="saleOv">
+  <div class="modal">
+    <h2>Verkaufen</h2>
+    <div class="hint" id="saleFor"></div>
+
+    <div class="grid3 mt8">
+      <div>
+        <div class="hint">Menge</div>
+        <input id="sQty" type="number" inputmode="numeric" />
+      </div>
+      <div>
+        <div class="hint">Preis (pro Stück)</div>
+        <input id="sPrice" type="number" inputmode="decimal" step="0.01" />
+      </div>
+      <div>
+        <div class="hint">Datum</div>
+        <input id="sDate" type="date" />
+      </div>
+    </div>
+
+    <div class="grid2 mt8">
+      <div>
+        <div class="hint">Versand vom Kunden (€)</div>
+        <input id="sShipCustomer" type="number" inputmode="decimal" step="0.01" />
+      </div>
+      <div>
+        <div class="hint">Eigene Versandkosten (€)</div>
+        <input id="sShipCost" type="number" inputmode="decimal" step="0.01" />
+      </div>
+    </div>
+
+    <div class="grid2 mt8">
+      <div>
+        <div class="hint">Wo verkauft (z.B. ebay, kleinanzeigen)</div>
+        <input id="sWhere" />
+      </div>
+      <div>
+        <div class="hint">Verkaufsnummer (änderbar)</div>
+        <input id="sNo" />
+      </div>
+    </div>
+
+    <div class="hint mt8">
+      Verkaufsnummer: <b>Erster Buchstabe vom Ort</b> wird automatisch als Großbuchstabe vorangestellt (z.B. <b>E001-2025</b>). Du kannst sie trotzdem ändern.
+    </div>
+
+    <div class="btnRow">
+      <button id="btnSaleCancel">Abbrechen</button>
+      <button id="btnSaleOk" class="primary">Verkaufen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Verkäufe Popup -->
+<div class="overlay" id="salesOv">
+  <div class="modal">
+    <div class="salesHeader">
+      <h2 style="margin:4px 0;flex:0 0 auto">Verkäufe</h2>
+      <input id="salesSearch" placeholder="Suche (Nr, Artikel, Ort, Datum)..." />
+      <button id="btnSalesClose">Schließen</button>
+    </div>
+
+    <div class="salesWrap mt8">
+      <table class="salesTable">
+        <thead>
+          <tr>
+            <th>Nr</th>
+            <th>Datum</th>
+            <th>Ort</th>
+            <th>Art.-Nr</th>
+            <th>Artikel</th>
+            <th>Menge</th>
+            <th>Umsatz</th>
+            <th>Gewinn</th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
+        <tbody id="salesBody"></tbody>
+      </table>
+    </div>
+    <div class="hint mt8">Storno bucht die Menge zurück und berechnet Umsatz/Gewinn neu.</div>
+  </div>
+</div>
+
+<input id="filePick" type="file" accept="application/json" style="display:none" />
 
 <script>
+/* ====================== STATE ====================== */
+const LS_ART = "lager_artikel_v5";
+const LS_SALES = "lager_sales_v5";
+const LS_TOTAL_INV = "lager_total_invest_v5";
+// per Jahr
+function yearKey(){ return new Date().getFullYear(); }
+function saleCounterKey(y){ return "lager_sale_counter_" + y; }
 
-function resetFileInput(input){
-  const newInput = input.cloneNode();
-  input.parentNode.replaceChild(newInput, input);
-  return newInput;
+let artikel = [];
+let sales = [];
+let totalInvest = 0; // Warenwert gesamt (EK-Summe der jemals eingelagerten Menge)
+
+/* ====================== HELPERS ====================== */
+const € = (n)=> (Math.round((n||0)*100)/100).toLocaleString("de-DE",{minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+const int = (v)=> { const n = parseInt(v,10); return isNaN(n)?0:n; }
+const num = (v)=> { const n = parseFloat(String(v).replace(",", ".")); return isNaN(n)?0:n; }
+
+function saveAll(){
+  localStorage.setItem(LS_ART, JSON.stringify(artikel));
+  localStorage.setItem(LS_SALES, JSON.stringify(sales));
+  localStorage.setItem(LS_TOTAL_INV, JSON.stringify(totalInvest));
 }
 
-let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
-let sales   = JSON.parse(localStorage.getItem("lagerSales") || "[]");
-let editIndex = -1;
-let currentSaleIndex = -1;
-let selectedRowIndex = -1;
-let editSaleIndex = -1;
-
-/* ===== Artikelnummern-Logik ===== */
-
-function initArtNrCounter(){
-  const jahr = new Date().getFullYear();
-  const key  = "artnrCounter_" + jahr;
-
-  if (localStorage.getItem(key) !== null) return;
-
-  let max = -1;
-  artikel.forEach(a=>{
-    if(!a.artnr) return;
-    const m = a.artnr.match(/^(\d{3})-(\d{4})$/);
-    if(m && Number(m[2]) === jahr){
-      max = Math.max(max, Number(m[1]));
-    }
-  });
-
-  localStorage.setItem(key, max);
+function loadAll(){
+  artikel = JSON.parse(localStorage.getItem(LS_ART) || "[]");
+  sales  = JSON.parse(localStorage.getItem(LS_SALES) || "[]");
+  totalInvest = JSON.parse(localStorage.getItem(LS_TOTAL_INV) || "0");
+  if(!Array.isArray(artikel)) artikel = [];
+  if(!Array.isArray(sales)) sales = [];
+  if(typeof totalInvest !== "number") totalInvest = 0;
 }
 
-function previewNextArtNr(){
-  const jahr = new Date().getFullYear();
-  const key  = "artnrCounter_" + jahr;
-  const val  = Number(localStorage.getItem(key) || -1) + 1;
-  return String(val).padStart(3,"0") + "-" + jahr;
+function calcCounters(){
+  const value = artikel.reduce((s,a)=> s + (int(a.menge) * num(a.ek)), 0);
+  const umsatzYear = sales
+    .filter(s=> (s.jahr === yearKey()))
+    .reduce((sum,s)=> sum + num(s.umsatz), 0);
+  const gewinn = sales.reduce((sum,s)=> sum + num(s.gewinn), 0);
+
+  document.getElementById("cValue").textContent = €(value);
+  document.getElementById("cTotal").textContent = €(totalInvest);
+  document.getElementById("cUmsatz").textContent = €(umsatzYear);
+  document.getElementById("cGewinn").textContent = €(gewinn);
+  document.getElementById("cCount").textContent = artikel.length;
+  document.getElementById("cSales").textContent = sales.length;
 }
 
-function commitNextArtNr(){
-  const jahr = new Date().getFullYear();
-  const key  = "artnrCounter_" + jahr;
-  let counter = Number(localStorage.getItem(key) || -1) + 1;
-  localStorage.setItem(key, counter);
-  return String(counter).padStart(3,"0") + "-" + jahr;
+function nextSaleNumber(whereText){
+  const y = yearKey();
+  const key = saleCounterKey(y);
+  let n = int(localStorage.getItem(key) || "0") + 1;
+  localStorage.setItem(key, String(n));
+  const base = String(n).padStart(3,"0") + "-" + y;
+  const w = (whereText||"").trim();
+  const prefix = w ? w[0].toUpperCase() : "X";
+  return prefix + base; // z.B. E001-2025
 }
 
-initArtNrCounter();
+/* ====================== RENDER LIST ====================== */
+function renderList(){
+  const q = (document.getElementById("search").value || "").trim().toLowerCase();
+  const rows = document.getElementById("rows");
+  rows.innerHTML = "";
 
-/* ===== Layout: Tabelle direkt unter Header ===== */
+  artikel
+    .filter(a => !q || String(a.nr).toLowerCase().includes(q) || String(a.name).toLowerCase().includes(q))
+    .forEach((a, idx) => {
+      const row = document.createElement("div");
+      row.className = "gridRow" + (int(a.menge)===0 ? " zero" : "");
 
-function adjustTableTop(){
-  const header = document.getElementById("topbar");
-  const tableC = document.getElementById("tableContainer");
-  tableC.style.top = header.offsetHeight + "px";
-}
-window.addEventListener("load", adjustTableTop);
-window.addEventListener("resize", adjustTableTop);
+      const camDisabled = !a.img;
+      const noteDisabled = !a.note || !String(a.note).trim();
 
-/* ===== Datum formatieren (TT-MM-JJJJ) ===== */
+      row.innerHTML = `
+        <div class="nr">${escapeHtml(a.nr||"")}</div>
+        <div>
+          <div class="name">${escapeHtml(a.name||"")}</div>
+          <div class="sub">${escapeHtml(a.where||"")}</div>
+        </div>
+        <div><input class="miniQty" type="number" inputmode="numeric" value="${int(a.menge)}" /></div>
+        <div class="money">${escapeHtml((num(a.ek)).toFixed(2))}</div>
+        <div class="money">${escapeHtml((num(a.vk)).toFixed(2))}</div>
+        <div class="icons">
+          <div class="ico ${camDisabled?"disabled":""}" title="Foto"><small>📷</small></div>
+          <div class="ico ${noteDisabled?"disabled":""}" title="Notiz"><small>📝</small></div>
+          <div class="ico" title="Bearbeiten"><small>✏️</small></div>
+          <div class="ico" title="Verkaufen"><small>🛒</small></div>
+        </div>
+      `;
 
-function formatDate(d){
-  if(!d) return "";
-  const [y,m,dd] = d.split("-");
-  return `${dd}-${m}-${y}`;
-}
+      // Menge editierbar (iOS-safe)
+      const qty = row.querySelector(".miniQty");
+      qty.addEventListener("click", (e)=> e.stopPropagation(), true);
+      qty.addEventListener("focus", (e)=> { e.stopPropagation(); qty.select(); }, true);
+      qty.addEventListener("change", ()=> {
+        const neu = int(qty.value);
+        artikel[idx].menge = neu;
+        saveAll();
+        renderList();
+        calcCounters();
+      });
 
-/* ===== Auto-Backup (wie "Sichern") ===== */
+      // Icons
+      const icons = row.querySelectorAll(".ico");
+      const icoCam = icons[0], icoNote = icons[1], icoEdit = icons[2], icoSale = icons[3];
 
-function autoBackup(reason){
-  const data = { artikel, sales };
-  const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
-  const a    = document.createElement("a");
-  a.href     = URL.createObjectURL(blob);
-  a.download = "lager_backup.json";  // immer gleicher Dateiname → iPhone fragt nach Überschreiben
-  a.click();
-}
+      icoCam.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        if(!artikel[idx].img) return;
+        openImageViewer(artikel[idx].img);
+      });
 
-/* ===== Rendern Lager-Tabelle ===== */
+      icoNote.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        if(!artikel[idx].note) return;
+        alert(artikel[idx].note);
+      });
 
-function renderTable(){
-  const tbody = document.getElementById("tableBody");
-  tbody.innerHTML = "";
+      icoEdit.addEventListener("click",(e)=>{ e.stopPropagation(); openArticle(idx); });
+      icoSale.addEventListener("click",(e)=>{ e.stopPropagation(); openSale(idx); });
 
-  artikel.forEach((a,i)=>{
-    if(!a) return; // alle Artikel anzeigen, auch wenn Bestand 0 ist
-
-    const tr = document.createElement("tr");
-    tr.onclick = () => selectRow(i);
-    if(a.markiert) tr.classList.add("marked");
-    if(i === selectedRowIndex) tr.classList.add("selectedRow");
-
-    if(a.menge === 0){
-      tr.classList.add("tr-zero-stock");
-    }
-
-    const gesamt = (a.preis * a.menge).toFixed(2);
-
-    tr.innerHTML = `
-      <td onclick="toggleMark(${i})">${a.markiert ? "⭐" : "☆"}</td>
-      <td>${a.artnr || ""}</td>
-      <td>${a.name || ""}</td>
-      <td>${a.zustand || ""}</td>
-      <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
-      <td>${a.groesse || ""}</td>
-      <td>${isNaN(a.preis) ? "" : a.preis.toFixed(2)}</td>
-      <td>${isNaN(a.preis) ? "" : gesamt}</td>
-      <td>${a.ort || ""}</td>
-      <td>${a.datum ? formatDate(a.datum) : ""}</td>
-      <td class="iconCell">
-        <span onclick="viewImg(${i})">📷</span>
-        <span onclick="viewNote(${i})">📝</span>
-        <span onclick="editArtikel(${i})">✏️</span>
-        <span onclick="sellArtikel(${i})">🛒</span>
-        <span class="delete" onclick="del(${i})">🗑</span>
-      </td>
-    `;
-
-    const cam = tr.querySelector(".iconCell span:nth-child(1)");
-    if(cam){
-      if(!a.bild){
-        cam.style.opacity = "0.3";
-        cam.style.pointerEvents = "none";
-      } else {
-        cam.style.opacity = "1";
-        cam.style.pointerEvents = "auto";
-      }
-    }
-
-    const note = tr.querySelector(".iconCell span:nth-child(2)");
-    if(note){
-      if(!a.notiz){
-        note.style.opacity = "0.3";
-        note.style.pointerEvents = "none";
-      } else {
-        note.style.opacity = "1";
-        note.style.pointerEvents = "auto";
-      }
-    }
-
-    tbody.appendChild(tr);
-  });
-
-  updateCounters();
-  adjustTableTop();
+      rows.appendChild(row);
+    });
 }
 
-/* ===== Zähler ===== */
+/* ====================== ARTICLE MODAL ====================== */
+let editingIndex = -1;
+let pendingImgData = null;
 
-function updateCounters(){
-  let m = 0;
-  let w = 0;
-  artikel.forEach(a=>{
-    m += a.menge || 0;
-    w += (a.menge || 0) * (a.preis || 0);
-  });
-  document.getElementById("countArtikel").textContent   = artikel.filter(a=>a && a.menge>0).length;
-  document.getElementById("countMenge").textContent     = m;
-  document.getElementById("countWert").textContent      = w.toFixed(2);
-  document.getElementById("countWertTotal").textContent = w.toFixed(2);
+function openArticle(i){
+  editingIndex = (typeof i === "number") ? i : -1;
+  pendingImgData = null;
+  document.getElementById("imgInfo").textContent = "";
 
-  // Umsatz & Gewinn aus Verkäufen
-  let umsatzGes = 0;
-  let gewinnGes = 0;
-  let umsatzJahr = 0;
-  const currentYear = new Date().getFullYear();
+  const isEdit = editingIndex >= 0;
+  document.getElementById("articleTitle").textContent = isEdit ? "Artikel ändern" : "Artikel anlegen";
+  document.getElementById("btnDelete").style.display = isEdit ? "block" : "none";
 
-  sales.forEach(s=>{
-    const u = s.umsatz || 0;
-    const g = s.gewinn || 0;
-    umsatzGes += u;
-    gewinnGes += g;
-    if(s.datum){
-      const year = parseInt(s.datum.slice(0,4),10);
-      if(year === currentYear) umsatzJahr += u;
-    }
-  });
-
-  const umsatzElm = document.getElementById("countUmsatzJahr");
-  const gewinnElm = document.getElementById("countGewinn");
-
-  umsatzElm.textContent = umsatzJahr.toFixed(2);
-  gewinnElm.textContent = gewinnGes.toFixed(2);
-
-  // Warnfarben für 25.000-Grenze
-  umsatzElm.style.color = "#bbb";
-  if(umsatzJahr >= 25000){
-    umsatzElm.style.color = "#ff4d4d"; // rot
-  }else if(umsatzJahr >= 22000){
-    umsatzElm.style.color = "#ffae42"; // orange
-  }
-}
-
-/* ===== Menge direkt in Tabelle ===== */
-
-function updateQty(i,val){
-  autoBackup("menge");
-  artikel[i].menge = parseInt(val) || 0;
-  localStorage.setItem("lagerData", JSON.stringify(artikel));
-  renderTable();
-}
-
-/* ===== Markieren (⭐) ===== */
-
-function toggleMark(i){
-  autoBackup("markierung");
-  artikel[i].markiert = !artikel[i].markiert;
-  localStorage.setItem("lagerData", JSON.stringify(artikel));
-  renderTable();
-}
-
-/* ===== Pop-up Logik (Neu + Bearbeiten) ===== */
-
-const btnAdd    = document.getElementById("btnAdd");
-const btnSave   = document.getElementById("btnSave");
-const btnCancel = document.getElementById("btnCancel");
-const popup     = document.getElementById("popup");
-
-btnAdd.onclick = () => {
-  editIndex = -1;
-  p_artnr.value       = previewNextArtNr(); // Vorschau
-  p_name.value        = "";
-  p_menge.value       = 1;
-  p_groesse.value     = "";
-  p_preis.value       = "";
-  p_ort.value         = "";
-  p_datum.value       = "";
-  p_zustand.value     = "Neu";
-  p_bild.value        = "";
-  p_notiz.value       = "";
-  popup.style.display = "block";
-};
-
-btnCancel.onclick = () => {
-  popup.style.display = "none";
-  editIndex = -1;
-};
-
-btnSave.onclick = () => {
-  if (editIndex === -1){
-    // neuer Artikel
-    const nextNr     = commitNextArtNr();
-    const artnrInput = p_artnr.value.trim();
-    const artnrFinal = artnrInput || nextNr;
-
-    const obj = {
-      artnr:  artnrFinal,
-      name:   p_name.value.trim(),
-      menge: +p_menge.value || 0,
-      groesse:p_groesse.value.trim(),
-      preis: +p_preis.value || 0,
-      ort:    p_ort.value.trim(),
-      datum:  p_datum.value,
-      zustand:p_zustand.value || "Neu",
-      notiz:  p_notiz.value.trim(),
-      bild:   "",
-      markiert:false
-    };
-
-    const file = p_bild.files[0];
-    if(file){
-      const r = new FileReader();
-      r.onload = e => { obj.bild = e.target.result; pushNew(obj); };
-      r.readAsDataURL(file);
-    } else {
-      pushNew(obj);
-    }
-
+  if(isEdit){
+    const a = artikel[editingIndex];
+    aNr.value = a.nr||"";
+    aName.value = a.name||"";
+    aQty.value = int(a.menge);
+    aEK.value = num(a.ek);
+    aVK.value = num(a.vk);
+    aNote.value = a.note||"";
   } else {
-    // Bearbeiten
-    const alt = artikel[editIndex];
-    const artnrInput = p_artnr.value.trim();
-    const obj = {
-      artnr:  artnrInput || alt.artnr,
-      name:   p_name.value.trim(),
-      menge: +p_menge.value || 0,
-      groesse:p_groesse.value.trim(),
-      preis: +p_preis.value || 0,
-      ort:    p_ort.value.trim(),
-      datum:  p_datum.value,
-      zustand:p_zustand.value || alt.zustand || "Neu",
-      notiz:  p_notiz.value.trim(),
-      bild:   alt.bild || "",
-      markiert: alt.markiert || false
-    };
-
-    const file = p_bild.files[0];
-    if(file){
-      const r = new FileReader();
-      r.onload = e => { obj.bild = e.target.result; applyEdit(obj); };
-      r.readAsDataURL(file);
-    } else {
-      applyEdit(obj);
-    }
+    aNr.value = "";
+    aName.value = "";
+    aQty.value = 1;
+    aEK.value = "";
+    aVK.value = "";
+    aNote.value = "";
   }
-};
 
-function pushNew(obj){
-  artikel.push(obj);
-  localStorage.setItem("lagerData", JSON.stringify(artikel));
-  popup.style.display = "none";
-  editIndex = -1;
-  renderTable();
+  aImg.value = ""; // reset file input
+  articleOv.style.display = "flex";
 }
 
-function applyEdit(obj){
-  artikel[editIndex] = obj;
-  localStorage.setItem("lagerData", JSON.stringify(artikel));
-  popup.style.display = "none";
-  editIndex = -1;
-  renderTable();
+function closeArticle(){
+  articleOv.style.display = "none";
+  editingIndex = -1;
+  pendingImgData = null;
 }
 
-function editArtikel(i){
-  editIndex       = i;
-  const a         = artikel[i];
-  p_artnr.value   = a.artnr || "";
-  p_name.value    = a.name || "";
-  p_menge.value   = a.menge || 1;
-  p_groesse.value = a.groesse || "";
-  p_preis.value   = a.preis || 0;
-  p_ort.value     = a.ort || "";
-  p_datum.value   = a.datum || "";
-  p_zustand.value = a.zustand || "Neu";
-  p_bild = resetFileInput(p_bild);
-  p_notiz.value   = a.notiz || "";
-  popup.style.display = "block";
+function readFileAsDataURL(file){
+  return new Promise((res, rej)=>{
+    const r = new FileReader();
+    r.onload = ()=> res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
 }
 
-/* ===== Löschen, Bild, Notiz ===== */
+aImg.addEventListener("change", async ()=>{
+  const f = aImg.files && aImg.files[0];
+  if(!f) return;
+  pendingImgData = await readFileAsDataURL(f);
+  document.getElementById("imgInfo").textContent = "Bild ausgewählt ✅";
+});
 
-const viewPopup = document.getElementById("viewPopup");
+btnSave.addEventListener("click", ()=>{
+  const nr = (aNr.value||"").trim();
+  const name = (aName.value||"").trim();
+  const qty = int(aQty.value);
+  const ek = num(aEK.value);
+  const vk = num(aVK.value);
+  const note = (aNote.value||"").trim();
 
-function del(i){
-  if(confirm("Wirklich löschen?")){
-    autoBackup("löschen");
-    artikel.splice(i,1);
-    localStorage.setItem("lagerData", JSON.stringify(artikel));
-    renderTable();
-  }
-}
-
-function viewImg(i){
-  const a = artikel[i];
-  viewPopup.innerHTML = a.bild
-    ? `<img class="preview" src="${a.bild}"><br><button onclick="viewPopup.style.display='none'">Schließen</button>`
-    : `<div>Kein Bild</div><br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
-  viewPopup.style.display = "block";
-}
-
-function viewNote(i){
-  const a = artikel[i];
-  viewPopup.innerHTML = `<div>${a.notiz || "Keine Notiz"}</div>
-  <br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
-  viewPopup.style.display = "block";
-}
-
-/* ===== Verkaufen (Teilmenge möglich) ===== */
-
-const salePopup      = document.getElementById("salePopup");
-const btnSaleOk      = document.getElementById("btnSaleOk");
-const btnSaleCancel  = document.getElementById("btnSaleCancel");
-const s_menge        = document.getElementById("s_menge");
-const s_preis        = document.getElementById("s_preis");
-const s_versandKunde = document.getElementById("s_versandKunde");
-const s_versandKosten= document.getElementById("s_versandKosten");
-const s_datum        = document.getElementById("s_datum");
-
-const btnSaleSend   = document.getElementById("btnSaleSend");
-const s_rechnung    = document.getElementById("s_rechnung");
-
-function nextInvoiceNrLager(){
-  const key = "invoiceCounter";
-  let c = parseInt(localStorage.getItem(key) || "0",10) + 1;
-  localStorage.setItem(key, c);
-  return String(c).padStart(5,"0");
-}
-
-
-function sellArtikel(i){
-  currentSaleIndex = i;
-  editSaleIndex    = -1;
-  const a = artikel[i];
-  s_menge.value        = a.menge || 1;
-  s_preis.value        = "";
-  s_versandKunde.value = "";
-  s_versandKosten.value= "";
-  s_datum.value        = new Date().toISOString().slice(0,10);
-  s_rechnung.value = nextInvoiceNrLager();
-  salePopup.style.display = "block";
-}
-
-btnSaleCancel.onclick = () => {
-  salePopup.style.display = "none";
-  currentSaleIndex = -1;
-};
-
-btnSaleOk.onclick = () => {
-  const mengeV = parseInt(s_menge.value) || 0;
-  const preisV = parseFloat(s_preis.value) || 0;
-  const versK  = parseFloat(s_versandKunde.value) || 0;
-  const versC  = parseFloat(s_versandKosten.value) || 0;
-  const datV   = s_datum.value;
-  const rNr    = s_rechnung.value || "";
-
-  if(editSaleIndex >= 0){
-    const s = sales[editSaleIndex];
-    if(!s) return;
-
-    // Menge im Verkauf nicht ändern, Bestand bleibt über Storno steuerbar
-    if(mengeV <= 0){
-      alert("Menge muss größer 0 sein.");
-      return;
-    }
-
-    s.verkaufPreis = preisV;
-    s.versandKunde = versK;
-    s.versandKosten= versC;
-    s.datum        = datV;
-    s.rechnungsnr  = rNr;
-
-    const umsatzNeu = s.menge * s.verkaufPreis + s.versandKunde;
-    const einkaufNeu= s.menge * (s.einkaufPreis || 0);
-    s.umsatz = umsatzNeu;
-    s.gewinn = umsatzNeu - einkaufNeu - s.versandKosten;
-
-    localStorage.setItem("lagerSales", JSON.stringify(sales));
-    salePopup.style.display = "none";
-    editSaleIndex = -1;
-    currentSaleIndex = -1;
-
-    openSalesHistory();
-    updateCounters();
+  if(!nr || !name){
+    alert("Bitte Artikelnummer und Artikelname eintragen.");
     return;
   }
 
-  if(currentSaleIndex === -1) return;
-  autoBackup("verkauf");
-  const a = artikel[currentSaleIndex];
+  if(editingIndex >= 0){
+    const a = artikel[editingIndex];
+    a.nr = nr;
+    a.name = name;
+    a.menge = qty;
+    a.ek = ek;
+    a.vk = vk;
+    a.note = note;
+    if(pendingImgData) a.img = pendingImgData;
+  } else {
+    const neu = { nr, name, menge: qty, ek, vk, note, img: pendingImgData || "" };
+    artikel.unshift(neu);
 
-  if(mengeV <= 0 || mengeV > a.menge){
-    alert("Verkaufte Menge ist ungültig.");
+    // Warenwert gesamt erhöhen um EK * Menge (nur beim Einlagern)
+    totalInvest += (qty * ek);
+  }
+
+  saveAll();
+  closeArticle();
+  renderList();
+  calcCounters();
+});
+
+btnCancel.addEventListener("click", closeArticle);
+
+btnDelete.addEventListener("click", ()=>{
+  if(editingIndex < 0) return;
+  if(!confirm("Artikel wirklich löschen?")) return;
+  artikel.splice(editingIndex,1);
+  saveAll();
+  closeArticle();
+  renderList();
+  calcCounters();
+});
+
+/* ====================== IMAGE VIEWER (simple) ====================== */
+function openImageViewer(dataUrl){
+  const w = window.open("");
+  if(!w) { alert("Popup blockiert. Bitte in Safari Popups erlauben."); return; }
+  w.document.write('<meta name="viewport" content="width=device-width, initial-scale=1"><title>Foto</title>');
+  w.document.write('<style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center}img{max-width:100vw;max-height:100vh}</style>');
+  w.document.write('<img src="'+dataUrl+'">');
+  w.document.close();
+}
+
+/* ====================== SALE MODAL ====================== */
+let saleIndex = -1;
+
+function openSale(i){
+  saleIndex = i;
+  const a = artikel[i];
+  if(!a) return;
+
+  saleFor.textContent = `${a.nr} – ${a.name} (Bestand: ${int(a.menge)})`;
+
+  sQty.value = 1;
+  sPrice.value = (num(a.vk) || 0).toFixed(2);
+  sShipCustomer.value = "0";
+  sShipCost.value = "0";
+  sWhere.value = "";
+  sDate.valueAsDate = new Date();
+
+  // Nummer sofort vorfüllen (mit X wenn noch kein Ort)
+  sNo.value = nextSaleNumber("");
+
+  saleOv.style.display = "flex";
+}
+
+function closeSale(){
+  saleOv.style.display = "none";
+  saleIndex = -1;
+}
+
+// Ort -> Nummer automatisch updaten (Prefix)
+sWhere.addEventListener("input", ()=>{
+  const txt = (sWhere.value||"").trim();
+  // nur Prefix ändern, Basis beibehalten falls schon da
+  const current = (sNo.value||"").trim();
+  const base = current.replace(/^[A-Z]/, ""); // ohne Prefix
+  const prefix = txt ? txt[0].toUpperCase() : "X";
+  if(base.match(/^\d{3}-\d{4}$/)){
+    sNo.value = prefix + base;
+  } else if(current.match(/^[A-Z]\d{3}-\d{4}$/)){
+    sNo.value = prefix + current.substring(1);
+  } else {
+    // falls user was komplett anderes hat, nicht überschreiben
+  }
+});
+
+btnSaleCancel.addEventListener("click", closeSale);
+
+btnSaleOk.addEventListener("click", ()=>{
+  if(saleIndex < 0) return;
+  const a = artikel[saleIndex];
+  const qty = int(sQty.value);
+  const price = num(sPrice.value);
+  const shipCust = num(sShipCustomer.value);
+  const shipCost = num(sShipCost.value);
+  const where = (sWhere.value||"").trim();
+  const date = (sDate.value||"").trim();
+  let no = (sNo.value||"").trim();
+
+  if(qty <= 0 || qty > int(a.menge)){
+    alert("Ungültige Menge.");
+    return;
+  }
+  if(price <= 0){
+    alert("Bitte Verkaufspreis eintragen.");
     return;
   }
 
-  const umsatz = mengeV * preisV + versK;
-  const einkaufKosten = mengeV * (a.preis || 0);
-  const gewinn = umsatz - einkaufKosten - versC;
+  // wenn Nummer leer -> automatisch
+  if(!no){
+    no = nextSaleNumber(where);
+  } else {
+    // Prefix aus Ort erzwingen, aber editierbar lassen:
+    const prefix = where ? where[0].toUpperCase() : (no[0] ? no[0].toUpperCase() : "X");
+    // wenn Format wie 001-2025 -> Prefix davor
+    if(no.match(/^\d{3}-\d{4}$/)){
+      no = prefix + no;
+    }
+  }
 
-  const sale = {
-    artnr: a.artnr,
-    name:  a.name,
-    menge: mengeV,
-    verkaufPreis: preisV,
-    versandKunde: versK,
-    versandKosten: versC,
-    einkaufPreis: a.preis || 0,
-    datum: datV,
+  // Bestand abziehen
+  a.menge = int(a.menge) - qty;
+  if(a.menge < 0) a.menge = 0;
+
+  // Umsatz & Gewinn
+  const umsatz = qty * price + shipCust;
+  const ekKosten = qty * num(a.ek);
+  const gewinn = umsatz - ekKosten - shipCost;
+
+  const s = {
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
+    verkaufsnr: no,
+    datum: date,
+    ort: where,
+    artnr: a.nr,
+    artikel: a.name,
+    menge: qty,
+    preis: price,
+    versandKunde: shipCust,
+    versandKosten: shipCost,
     umsatz,
     gewinn,
-    rechnungsnr: rNr
+    jahr: yearKey()
   };
 
-  sales.push(sale);
-  localStorage.setItem("lagerSales", JSON.stringify(sales));
+  sales.unshift(s);
+  saveAll();
+  closeSale();
+  renderList();
+  calcCounters();
+});
 
-  // Bestand anpassen
-  a.menge -= mengeV;
-  if(a.menge < 0) a.menge = 0;
-  localStorage.setItem("lagerData", JSON.stringify(artikel));
-
-  salePopup.style.display = "none";
-  currentSaleIndex = -1;
-  renderTable();
-  updateCounters();
-};
-
-function openSalesHistory(){
-  const searchInput = document.getElementById("salesSearch");
-  if(searchInput){
-    renderSalesList(searchInput.value);
-  } else {
-    renderSalesList("");
-  }
-  salesHistoryPopup.style.display = "block";
+/* ====================== SALES HISTORY ====================== */
+function openSales(){
+  salesOv.style.display = "flex";
+  renderSales();
 }
 
-function renderSalesList(filter){
-  const tbody = document.getElementById("salesBody");
-  if(!tbody) return;
-  tbody.innerHTML = "";
-  const q = (filter || "").toLowerCase();
-
-  sales.forEach((s,idx)=>{
-    const txt = (s.name||"") + " " + (s.artnr||"") + " " + (s.rechnungsnr||"") + " " + (s.datum||"");
-    if(q && !txt.toLowerCase().includes(q)) return;
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${s.rechnungsnr || ""}</td>
-      <td>${s.datum ? formatDate(s.datum) : ""}</td>
-      <td>${s.artnr || ""}</td>
-      <td>${s.name || ""}</td>
-      <td>${s.menge || 0}</td>
-      <td>${(s.umsatz||0).toFixed(2)}</td>
-      <td>${(s.gewinn||0).toFixed(2)}</td>
-      <td>
-        <button onclick="editSale(${idx})">✏️</button>
-        <button onclick="stornoSale(${idx})">⤴️</button>
-        <button onclick="deleteSale(${idx})">🗑</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+function closeSales(){
+  salesOv.style.display = "none";
 }
 
-function closeSalesHistory(){
-  salesHistoryPopup.style.display = "none";
-}
+btnSalesClose.addEventListener("click", closeSales);
+btnSales.addEventListener("click", openSales);
 
-/* Storno: Verkauf rückgängig */
-function stornoSale(index){
-  const s = sales[index];
-  if(!s) return;
-  if(!confirm("Verkauf stornieren und Bestand wieder erhöhen?")) return;
+salesSearch.addEventListener("input", renderSales);
 
-  autoBackup("storno");
+function renderSales(){
+  const q = (salesSearch.value||"").trim().toLowerCase();
+  salesBody.innerHTML = "";
 
-  // passenden Artikel suchen (nach Artikelnummer)
-  const art = artikel.find(a => a.artnr === s.artnr);
-  if(art){
-    art.menge = (art.menge || 0) + (s.menge || 0);
-  }else{
-    // falls Artikel nicht mehr existiert, neu anlegen als einfacher Datensatz
-    artikel.push({
-      artnr: s.artnr,
-      name: s.name,
-      menge: s.menge || 0,
-      groesse:"",
-      preis: s.einkaufPreis || 0,
-      ort:"",
-      datum:s.datum || "",
-      zustand:"Neu",
-      notiz:"Storno automatisch angelegt",
-      bild:"",
-      markiert:false
+  sales
+    .filter(s => !q ||
+      String(s.verkaufsnr||"").toLowerCase().includes(q) ||
+      String(s.artnr||"").toLowerCase().includes(q) ||
+      String(s.artikel||"").toLowerCase().includes(q) ||
+      String(s.ort||"").toLowerCase().includes(q) ||
+      String(s.datum||"").toLowerCase().includes(q)
+    )
+    .forEach((s, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(s.verkaufsnr||"")}</td>
+        <td>${escapeHtml(s.datum||"")}</td>
+        <td>${escapeHtml(s.ort||"")}</td>
+        <td>${escapeHtml(s.artnr||"")}</td>
+        <td>${escapeHtml(s.artikel||"")}</td>
+        <td>${int(s.menge)}</td>
+        <td>${€(num(s.umsatz))}</td>
+        <td>${€(num(s.gewinn))}</td>
+        <td>
+          <div class="saleBtns">
+            <button onclick="editSale('${s.id}')">✏️</button>
+            <button onclick="stornoSale('${s.id}')">↩️</button>
+            <button onclick="deleteSale('${s.id}')">🗑</button>
+          </div>
+        </td>
+      `;
+      salesBody.appendChild(tr);
     });
-  }
-
-  // Verkauf aus Historie entfernen
-  sales.splice(index,1);
-  localStorage.setItem("lagerSales", JSON.stringify(sales));
-  localStorage.setItem("lagerData", JSON.stringify(artikel));
-
-  openSalesHistory(); // neu aufbauen
-  renderTable();
 }
 
-function editSale(index){
-  const s = sales[index];
+// Bearbeiten: nur die Verkaufsdaten (nicht Bestand). Für Bestand-Änderung bitte Storno + neu verkaufen.
+window.editSale = function(id){
+  const s = sales.find(x=>x.id===id);
   if(!s) return;
-
-  editSaleIndex    = index;
-  currentSaleIndex = -1;
-
-  s_menge.value        = s.menge || 1;
-  s_preis.value        = s.verkaufPreis || 0;
-  s_versandKunde.value = s.versandKunde || 0;
-  s_versandKosten.value= s.versandKosten || 0;
-  s_datum.value        = s.datum || new Date().toISOString().slice(0,10);
-  s_rechnung.value     = s.rechnungsnr || "";
-
-  // Menge beim Bearbeiten nicht änderbar, Bestand bleibt über Storno korrekt
-  s_menge.disabled = true;
-
-  salePopup.style.display = "block";
-}
-
-function deleteSale(index){
-  const s = sales[index];
-  if(!s) return;
-  if(!confirm("Verkauf endgültig aus der Liste löschen?")) return;
-
-  sales.splice(index,1);
-  localStorage.setItem("lagerSales", JSON.stringify(sales));
-  openSalesHistory();
-  updateCounters();
-}
-
-/* ===== Sichern / Laden / PDF / Suche ===== */
-
-const btnExport = document.getElementById("btnExport");
-const btnImport = document.getElementById("btnImport");
-const btnPDF    = document.getElementById("btnPDF");
-const searchInp = document.getElementById("search");
-
-btnExport.onclick = () => {
-  autoBackup("manuell");
+  const neuOrt = prompt("Ort (wo verkauft):", s.ort||"");
+  if(neuOrt === null) return;
+  const neuNo = prompt("Verkaufsnummer:", s.verkaufsnr||"");
+  if(neuNo === null) return;
+  s.ort = (neuOrt||"").trim();
+  s.verkaufsnr = (neuNo||"").trim();
+  saveAll();
+  renderSales();
 };
 
-btnImport.onclick = () => {
-  const inp = document.createElement("input");
-  inp.type  = "file";
-  inp.accept= "application/json";
+window.deleteSale = function(id){
+  if(!confirm("Verkauf wirklich löschen? (ohne Bestand anzupassen)")) return;
+  sales = sales.filter(x=>x.id!==id);
+  saveAll();
+  renderSales();
+  calcCounters();
+};
 
-  inp.onchange = e => {
-    const file = e.target.files[0];
-    if(!file) return;
+window.stornoSale = function(id){
+  if(!confirm("Verkauf stornieren? Menge wird zurück gebucht.")) return;
+  const s = sales.find(x=>x.id===id);
+  if(!s) return;
 
-    const r = new FileReader();
-    r.onload = () => {
-      try{
-        const data = JSON.parse(r.result);
+  // Bestand zurück
+  const a = artikel.find(x=>x.nr===s.artnr);
+  if(a){
+    a.menge = int(a.menge) + int(s.menge);
+  }
 
-        if(data.artikel && Array.isArray(data.artikel)){
-          artikel = data.artikel;
-          sales   = data.sales || [];
-        }
-        else if(Array.isArray(data)){
-          artikel = data;
-          sales   = [];
-        }
-        else{
-          alert("Unbekanntes Dateiformat!");
-          return;
-        }
+  // Verkauf entfernen
+  sales = sales.filter(x=>x.id!==id);
+  saveAll();
 
-        localStorage.setItem("lagerData", JSON.stringify(artikel));
-        localStorage.setItem("lagerSales", JSON.stringify(sales));
+  renderList();
+  renderSales();
+  calcCounters();
+};
 
-        initArtNrCounter();
-        renderTable();
-
-        alert("Daten erfolgreich geladen ✔");
-
-      }catch{
-        alert("Datei konnte nicht gelesen werden!");
-      }
-    };
-
-    r.readAsText(file);
+/* ====================== IMPORT / EXPORT ====================== */
+btnExport.addEventListener("click", ()=>{
+  // Immer zuerst speichern
+  saveAll();
+  const data = {
+    version: "v5",
+    exportedAt: new Date().toISOString(),
+    artikel,
+    sales,
+    totalInvest
   };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "lager_backup.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+});
 
-  inp.click();
-};
+btnImport.addEventListener("click", ()=> filePick.click());
 
-btnPDF.onclick = () => {
-  let w = window.open("","_blank");
-  let html = `<table border="1" cellpadding="4">
-  <tr><th>Nr</th><th>Name</th><th>Menge</th><th>Notiz</th></tr>`;
-  artikel.forEach(a=>{
-    if(!a || a.menge <= 0) return;
-    html += `<tr><td>${a.artnr||""}</td><td>${a.name||""}</td><td>${a.menge||0}</td><td>${a.notiz||""}</td></tr>`;
-  });
-  html += `</table>`;
-  w.document.write(html);
-  w.print();
-};
-
-searchInp.oninput = () => {
-  const q = searchInp.value.toLowerCase();
-  document.querySelectorAll("#tableBody tr").forEach(r=>{
-    r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
-  });
-};
-
-/* ===== Start ===== */
-renderTable();
-
-// ✅ Blau-Markierung: nur visuell, nicht gespeichert
-function selectRow(i){
-  if(selectedRowIndex === i){
-    selectedRowIndex = -1;
-  } else {
-    selectedRowIndex = i;
+filePick.addEventListener("change", async ()=>{
+  const f = filePick.files && filePick.files[0];
+  if(!f) return;
+  try{
+    const txt = await f.text();
+    const obj = JSON.parse(txt);
+    if(obj && Array.isArray(obj.artikel)){
+      artikel = obj.artikel;
+      sales = Array.isArray(obj.sales) ? obj.sales : [];
+      totalInvest = typeof obj.totalInvest === "number" ? obj.totalInvest : 0;
+      saveAll();
+      renderList();
+      calcCounters();
+      alert("Datei geladen ✅");
+    } else {
+      alert("Ungültige Datei.");
+    }
+  }catch(e){
+    alert("Datei konnte nicht gelesen werden.");
+  } finally {
+    filePick.value = "";
   }
-  renderTable();
+});
+
+  localStorage.removeItem(LS_SALES);
+  localStorage.removeItem(LS_TOTAL_INV);
+  // Sale counter pro Jahr lassen wir, sonst Nummern springen
+  loadAll();
+  renderList();
+  calcCounters();
+});
+
+btnAdd.addEventListener("click", ()=> openArticle(-1));
+search.addEventListener("input", renderList);
+
+/* ====================== ESCAPE ====================== */
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
-btnSaleSend.onclick = () => {
-  if(currentSaleIndex === -1) return;
-  const a = artikel[currentSaleIndex];
-  const mengeV = parseInt(s_menge.value) || 0;
-  const preisV = parseFloat(s_preis.value) || 0;
+/* ====================== INIT ====================== */
+(function init(){
+  loadAll();
 
-  if(mengeV <= 0 || preisV <= 0){
-    alert("Bitte Menge und Preis korrekt eingeben.");
+  // Topbar kompakt padding-top automatisch
+  const tb = document.getElementById("topbar");
+  const content = document.getElementById("content");
+  function resize(){
+    const h = tb.getBoundingClientRect().height;
+    content.style.paddingTop = (h + 8) + "px";
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  renderList();
+  calcCounters();
+})();
+
+/* ====================== INVENTUR PDF ====================== */
+btnInventur.addEventListener("click", ()=>{
+  if(artikel.length === 0){
+    alert("Keine Artikel vorhanden.");
     return;
   }
 
-  const pending = {
-    name: a.name,
-    menge: mengeV,
-    preis: preisV
-  };
-
-  localStorage.setItem("pendingInvoiceData", JSON.stringify(pending));
-
-  salePopup.style.display = "none";
-  
-};
-
-</script>
-
-
-
-
-
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const fileInput = document.getElementById("fileInput");
-  if(fileInput){
-    fileInput.onchange = e => {
-      const file = e.target.files[0];
-      if(!file) return;
-      const r = new FileReader();
-      r.onload = ev => {
-        try{
-          artikel = JSON.parse(ev.target.result) || [];
-          localStorage.setItem("lagerData", JSON.stringify(artikel));
-          renderTable();
-          alert("Datei erfolgreich geladen ✅");
-        }catch(err){
-          alert("Datei konnte nicht geladen werden");
-        }
-      };
-      r.readAsText(file);
-    };
+  const win = window.open("", "_blank");
+  if(!win){
+    alert("Popup blockiert. Bitte Popups erlauben.");
+    return;
   }
+
+  const rows = artikel.map(a => `
+    <tr>
+      <td>${escapeHtml(a.nr)}</td>
+      <td>${escapeHtml(a.name)}</td>
+      <td style="text-align:right">${int(a.menge)}</td>
+      <td style="text-align:right">${num(a.ek).toFixed(2)} €</td>
+      <td style="text-align:right">${(int(a.menge)*num(a.ek)).toFixed(2)} €</td>
+    </tr>
+  `).join("");
+
+  win.document.write(`
+    <html>
+    <head>
+      <title>Inventur</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        body{font-family:Arial,sans-serif;padding:20px}
+        h1{font-size:18px}
+        table{width:100%;border-collapse:collapse;margin-top:12px}
+        th,td{border:1px solid #000;padding:6px;font-size:12px}
+        th{background:#eee}
+      </style>
+    
+<style>
+/* --- TOPBEREICH NOCH KOMPAKTER --- */
+.topbar{padding:6px 8px}
+.counters{gap:4px}
+.counter{padding:4px 6px;border-radius:10px}
+.ct{font-size:10px}
+.cv{font-size:13px}
+.row{margin-top:4px}
+#search{padding:8px;font-size:12px}
+.actions{gap:4px;margin-top:4px}
+.actions button{
+  padding:6px 6px;
+  font-size:11px;
+  border-radius:10px;
+}
+</style>
+
+</head>
+    <body>
+      <h1>Inventur – Stand ${new Date().toLocaleDateString("de-DE")}</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Nr</th>
+            <th>Artikel</th>
+            <th>Menge</th>
+            <th>EK</th>
+            <th>Wert</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      <script>window.print();</script>
+    </body>
+    </html>
+  `);
+  win.document.close();
 });
+
 </script>
-
-
-
-
-
-
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const btnExport = document.getElementById("btnExport");
-  const btnSave   = document.getElementById("btnSave");
-  const popup     = document.getElementById("popup");
-
-  if (btnExport) {
-    const origExport = btnExport.onclick;
-    btnExport.onclick = () => {
-      if (popup && popup.style.display === "block" && btnSave) {
-        btnSave.click(); // always save article first
-      }
-      if (typeof origExport === "function") {
-        origExport();
-      }
-    };
-  }
-
-  const btnSales = document.getElementById("btnSales");
-  if (btnSales && typeof openSalesHistory === "function") {
-    btnSales.onclick = () => openSalesHistory();
-  }
-});
-</script>
-
 </body>
 </html>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const searchInput = document.getElementById("salesSearch");
-  if(searchInput){
-    searchInput.oninput = () => renderSalesList(searchInput.value);
-  }
-});
-</script>
