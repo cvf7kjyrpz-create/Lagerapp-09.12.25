@@ -3,971 +3,133 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-<title>Lager App (stabil)</title>
+<title>Lager App – Artikel Logik v1</title>
 <style>
-  :root{
-    --bg:#000;
-    --panel:#0b0b0b;
-    --panel2:#111;
-    --border:#333;
-    --muted:#aaa;
-    --text:#fff;
-    --accent:#2dd4bf;
-    --danger:#b00020;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;overscroll-behavior:none}
-  button,input,textarea,select{font:inherit;color:inherit}
-  button{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer}
-  button:active{transform:scale(0.99)}
-  input,textarea,select{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:100%}
-  .topbar{
-    position:fixed;left:0;right:0;top:0;z-index:5000;
-    background:var(--bg);border-bottom:1px solid var(--border);
-    padding:8px 10px;
-  }
-  .counters{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-  .counter{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:6px 8px}
-  .ct{font-size:11px;color:var(--muted)}
-  .cv{font-size:15px;font-weight:700}
-  .row{display:flex;gap:6px;margin-top:6px}
-  .row > *{flex:1}
-  #search{padding:10px;border-radius:12px}
-  .actions{display:flex;gap:6px;margin-top:6px}
-  .actions button{flex:1;padding:8px 8px;font-size:12px}
-  .content{
-    position:fixed;left:0;right:0;top:0;bottom:0;
-    padding-top:160px; /* wird per JS angepasst */
-    padding-bottom:12px;
-  }
-  #listWrap{
-    height:100%;
-    overflow:auto;
-    -webkit-overflow-scrolling:touch;
-    padding:0 10px 14px;
-  }
+:root{--bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;padding-top:0}
+button,input{font:inherit;color:inherit}
+button{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:5px 6px;font-size:10px}
+input{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:4px 6px;color:#fff}
 
-  /* Grid "Tabelle" */
-  .gridHeader, .gridRow{
-    display:grid;
-    grid-template-columns: 64px minmax(160px,1fr) 78px 70px 70px 96px;
-    gap:6px;
-    align-items:center;
-  }
-  .gridHeader{
-    position:sticky;top:0;z-index:10;
-    background:var(--bg);
-    padding:8px 0 6px;
-    border-bottom:1px solid var(--border);
-    font-weight:700;
-  }
-  .gridHeader div{font-size:12px;color:#ddd}
-  .gridRow{
-    padding:8px 0;
-    border-bottom:1px solid #1e1e1e;
-  }
-  .gridRow.zero{background:rgba(176,0,32,0.25)}
-  .nr{color:#ddd;font-weight:700}
-  .name{font-weight:700;line-height:1.2}
-  .sub{font-size:11px;color:var(--muted);margin-top:2px}
-  .miniQty{
-    width:100%;
-    padding:8px 8px;
-    border-radius:10px;
-    text-align:center;
-  }
-  .money{font-size:12px;color:#ddd;text-align:center}
-  .icons{display:flex;gap:6px;justify-content:flex-end}
-  .ico{
-    width:32px;height:32px;border-radius:10px;
-    display:flex;align-items:center;justify-content:center;
-    background:var(--panel2);border:1px solid var(--border);
-    user-select:none;
-  }
-  .ico.disabled{opacity:.30;pointer-events:none}
-  .ico:active{transform:scale(.98)}
-  .ico small{font-size:16px;line-height:1}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:5000;background:#000;border-bottom:1px solid #333;padding:6px 8px}
+.actions{display:flex;gap:4px}
+.actions button{flex:1}
 
-  /* Popups */
-  .overlay{
-    position:fixed;inset:0;background:rgba(0,0,0,.75);
-    z-index:9000;display:none;align-items:center;justify-content:center;
-    padding:12px;
-  }
-  .modal{
-    width:min(560px,100%);
-    background:#050505;border:1px solid var(--border);border-radius:14px;
-    padding:12px;
-    max-height:85vh;overflow:auto;
-    -webkit-overflow-scrolling:touch;
-  }
-  .modal h2{margin:4px 0 10px;font-size:16px}
-  .modal .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .modal .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-  .modal .mt8{margin-top:8px}
-  .modal .btnRow{display:flex;gap:8px;margin-top:10px}
-  .modal .btnRow button{flex:1}
-  .hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.3}
-  .danger{background:#200; border-color:#600}
-  .primary{border-color:#2a7;}
+.content{padding:8px}
 
-  /* Verkäufe */
-  .salesHeader{display:flex;gap:8px;align-items:center}
-  #salesSearch{flex:1}
-  .salesTable{
-    margin-top:10px;
-    width:100%;
-    border-collapse:collapse;
-    min-width:760px; /* horizontales scrollen */
-  }
-  .salesWrap{
-    overflow:auto;
-    -webkit-overflow-scrolling:touch;
-    border:1px solid var(--border);
-    border-radius:12px;
-  }
-  .salesTable th,.salesTable td{
-    border-bottom:1px solid #1e1e1e;
-    padding:8px 8px;
-    white-space:nowrap;
-    font-size:12px;
-    text-align:left;
-  }
-  .salesTable th{background:#0c0c0c;position:sticky;top:0;z-index:2}
-  .saleBtns{display:flex;gap:6px}
-  .saleBtns button{padding:6px 8px;border-radius:10px}
+.gridHeader,.gridRow{
+ display:grid;
+ grid-template-columns:60px 1fr 50px 60px 60px 80px;
+ gap:4px;align-items:center
+}
+.gridHeader{
+ position:sticky;
+ top:58px;
+ background:#000;
+ border-bottom:1px solid #333;
+ font-size:10px;
+}
+.gridRow{padding:2px 0;border-bottom:1px solid #222;font-size:10px}
+.name{font-size:10px}
+.qty{width:44px;text-align:center}
+.ico{width:20px;height:20px;border:1px solid #333;border-radius:6px;display:flex;align-items:center;justify-content:center}
+
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000}
+#modalBox{background:#0b0b0b;border:1px solid #333;border-radius:12px;width:90%;max-width:420px;margin:12vh auto;padding:10px}
 </style>
-
-<style>
-/* --- TOPBEREICH NOCH KOMPAKTER --- */
-.topbar{padding:6px 8px}
-.counters{gap:4px}
-.counter{padding:4px 6px;border-radius:10px}
-.ct{font-size:10px}
-.cv{font-size:13px}
-.row{margin-top:4px}
-#search{padding:8px;font-size:12px}
-.actions{gap:4px;margin-top:4px}
-.actions button{
-  padding:6px 6px;
-  font-size:11px;
-  border-radius:10px;
-}
-</style>
-
-
-<style>
-/* --- CLICK FIX: Buttons immer klickbar --- */
-.topbar,
-.topbar *{
-  pointer-events:auto !important;
-}
-
-.content{
-  pointer-events:auto;
-}
-
-.overlay{
-  pointer-events:auto;
-}
-</style>
-
 </head>
 <body>
 
 <div class="topbar" id="topbar">
-  <div class="counters">
-    <div class="counter"><div class="ct">Warenwert aktuell</div><div class="cv" id="cValue">0 €</div></div>
-    <div class="counter"><div class="ct">Warenwert gesamt</div><div class="cv" id="cTotal">0 €</div></div>
-    <div class="counter"><div class="ct">Umsatz Jahr</div><div class="cv" id="cUmsatz">0 €</div></div>
-    <div class="counter"><div class="ct">Gewinn gesamt</div><div class="cv" id="cGewinn">0 €</div></div>
-    <div class="counter"><div class="ct">Artikel</div><div class="cv" id="cCount">0</div></div>
-    <div class="counter"><div class="ct">Verkäufe</div><div class="cv" id="cSales">0</div></div>
-  </div>
-
-  <div class="row">
-    <input id="search" placeholder="Suche Artikel / Nr..." />
-  </div>
-
   <div class="actions">
-    <button id="btnAdd" class="primary">+ Artikel</button>
-    <button id="btnSales">Verkäufe</button>
-    <button id="btnImport">Laden</button>
-    <button id="btnExport">Sichern</button>
-    <button id="btnInventur">Inventur PDF</button>
-    
+    <button id="btnAdd">+ Artikel</button>
+    <button id="btnSave">Sichern</button>
+    <button id="btnLoad">Laden</button>
+    <button>PDF</button>
   </div>
 </div>
 
-<div class="content" id="content">
-  <div id="listWrap">
-    <div class="gridHeader">
-      <div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>VK</div><div>Aktion</div>
-    </div>
-    <div id="rows"></div>
-    <div class="hint">Tipp: Menge direkt ändern. Bestand 0 wird rot markiert und kann manuell gelöscht werden.</div>
+<div class="content">
+  <div class="gridHeader">
+    <div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>VK</div><div>Aktion</div>
   </div>
+  <div id="table"></div>
 </div>
 
-<!-- Artikel Popup -->
-<div class="overlay" id="articleOv">
-  <div class="modal">
-    <h2 id="articleTitle">Artikel</h2>
-    <div class="grid2">
-      <div>
-        <div class="hint">Artikelnummer</div>
-        <input id="aNr" />
-      </div>
-      <div>
-        <div class="hint">Menge</div>
-        <input id="aQty" type="number" inputmode="numeric" />
-      </div>
-    </div>
-
-    <div class="mt8">
-      <div class="hint">Artikel</div>
-      <input id="aName" />
-    </div>
-
-    <div class="grid2 mt8">
-      <div>
-        <div class="hint">EK (pro Stück)</div>
-        <input id="aEK" type="number" inputmode="decimal" step="0.01" />
-      </div>
-      <div>
-        <div class="hint">VK (Vorschlag)</div>
-        <input id="aVK" type="number" inputmode="decimal" step="0.01" />
-      </div>
-    </div>
-
-    <div class="mt8">
-      <div class="hint">Notiz</div>
-      <textarea id="aNote" rows="3"></textarea>
-    </div>
-
-    <div class="mt8">
-      <div class="hint">Foto (wählen)</div>
-      <!-- WICHTIG: kein capture -> iOS zeigt Auswahl statt Kamera-Zwang -->
-      <input id="aImg" type="file" accept="image/*" />
-      <div class="hint" id="imgInfo"></div>
-    </div>
-
-    <div class="btnRow">
-      <button id="btnCancel">Abbrechen</button>
-      <button id="btnDelete" class="danger" style="display:none">Löschen</button>
-      <button id="btnSave" class="primary">Speichern</button>
-    </div>
+<div id="modal">
+ <div id="modalBox">
+  <h3 style="margin:0 0 6px;font-size:13px">Artikel anlegen</h3>
+  <input id="mName" placeholder="Name" style="margin-bottom:6px">
+  <input id="mQty" type="number" value="1" placeholder="Menge" style="margin-bottom:6px">
+  <input id="mEK" type="number" value="0" placeholder="EK" style="margin-bottom:6px">
+  <input id="mVK" type="number" value="0" placeholder="VK" style="margin-bottom:8px">
+  <div style="display:flex;gap:6px">
+    <button id="mSave" style="flex:1">Speichern</button>
+    <button id="mCancel" style="flex:1">Abbrechen</button>
   </div>
+ </div>
 </div>
-
-<!-- Verkauf Popup -->
-<div class="overlay" id="saleOv">
-  <div class="modal">
-    <h2>Verkaufen</h2>
-    <div class="hint" id="saleFor"></div>
-
-    <div class="grid3 mt8">
-      <div>
-        <div class="hint">Menge</div>
-        <input id="sQty" type="number" inputmode="numeric" />
-      </div>
-      <div>
-        <div class="hint">Preis (pro Stück)</div>
-        <input id="sPrice" type="number" inputmode="decimal" step="0.01" />
-      </div>
-      <div>
-        <div class="hint">Datum</div>
-        <input id="sDate" type="date" />
-      </div>
-    </div>
-
-    <div class="grid2 mt8">
-      <div>
-        <div class="hint">Versand vom Kunden (€)</div>
-        <input id="sShipCustomer" type="number" inputmode="decimal" step="0.01" />
-      </div>
-      <div>
-        <div class="hint">Eigene Versandkosten (€)</div>
-        <input id="sShipCost" type="number" inputmode="decimal" step="0.01" />
-      </div>
-    </div>
-
-    <div class="grid2 mt8">
-      <div>
-        <div class="hint">Wo verkauft (z.B. ebay, kleinanzeigen)</div>
-        <input id="sWhere" />
-      </div>
-      <div>
-        <div class="hint">Verkaufsnummer (änderbar)</div>
-        <input id="sNo" />
-      </div>
-    </div>
-
-    <div class="hint mt8">
-      Verkaufsnummer: <b>Erster Buchstabe vom Ort</b> wird automatisch als Großbuchstabe vorangestellt (z.B. <b>E001-2025</b>). Du kannst sie trotzdem ändern.
-    </div>
-
-    <div class="btnRow">
-      <button id="btnSaleCancel">Abbrechen</button>
-      <button id="btnSaleOk" class="primary">Verkaufen</button>
-    </div>
-  </div>
-</div>
-
-<!-- Verkäufe Popup -->
-<div class="overlay" id="salesOv">
-  <div class="modal">
-    <div class="salesHeader">
-      <h2 style="margin:4px 0;flex:0 0 auto">Verkäufe</h2>
-      <input id="salesSearch" placeholder="Suche (Nr, Artikel, Ort, Datum)..." />
-      <button id="btnSalesClose">Schließen</button>
-    </div>
-
-    <div class="salesWrap mt8">
-      <table class="salesTable">
-        <thead>
-          <tr>
-            <th>Nr</th>
-            <th>Datum</th>
-            <th>Ort</th>
-            <th>Art.-Nr</th>
-            <th>Artikel</th>
-            <th>Menge</th>
-            <th>Umsatz</th>
-            <th>Gewinn</th>
-            <th>Aktion</th>
-          </tr>
-        </thead>
-        <tbody id="salesBody"></tbody>
-      </table>
-    </div>
-    <div class="hint mt8">Storno bucht die Menge zurück und berechnet Umsatz/Gewinn neu.</div>
-  </div>
-</div>
-
-<input id="filePick" type="file" accept="application/json" style="display:none" />
 
 <script>
-/* ====================== STATE ====================== */
-const LS_ART = "lager_artikel_v5";
-const LS_SALES = "lager_sales_v5";
-const LS_TOTAL_INV = "lager_total_invest_v5";
-// per Jahr
-function yearKey(){ return new Date().getFullYear(); }
-function saleCounterKey(y){ return "lager_sale_counter_" + y; }
+let items = [];
+const table = document.getElementById("table");
 
-let artikel = [];
-let sales = [];
-let totalInvest = 0; // Warenwert gesamt (EK-Summe der jemals eingelagerten Menge)
-
-/* ====================== HELPERS ====================== */
-const € = (n)=> (Math.round((n||0)*100)/100).toLocaleString("de-DE",{minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
-const int = (v)=> { const n = parseInt(v,10); return isNaN(n)?0:n; }
-const num = (v)=> { const n = parseFloat(String(v).replace(",", ".")); return isNaN(n)?0:n; }
-
-function saveAll(){
-  localStorage.setItem(LS_ART, JSON.stringify(artikel));
-  localStorage.setItem(LS_SALES, JSON.stringify(sales));
-  localStorage.setItem(LS_TOTAL_INV, JSON.stringify(totalInvest));
+function render(){
+ table.innerHTML="";
+ items.forEach((a,i)=>{
+  const r=document.createElement("div");
+  r.className="gridRow";
+  r.innerHTML=`
+   <div>${String(i+1).padStart(3,"0")}</div>
+   <div class="name">${a.name}</div>
+   <div><input class="qty" type="number" value="${a.qty}" onchange="items[${i}].qty=this.value"></div>
+   <div>${a.ek}</div>
+   <div>${a.vk}</div>
+   <div class="ico">✏️</div>`;
+  table.appendChild(r);
+ });
 }
 
-function loadAll(){
-  artikel = JSON.parse(localStorage.getItem(LS_ART) || "[]");
-  sales  = JSON.parse(localStorage.getItem(LS_SALES) || "[]");
-  totalInvest = JSON.parse(localStorage.getItem(LS_TOTAL_INV) || "0");
-  if(!Array.isArray(artikel)) artikel = [];
-  if(!Array.isArray(sales)) sales = [];
-  if(typeof totalInvest !== "number") totalInvest = 0;
-}
-
-function calcCounters(){
-  const value = artikel.reduce((s,a)=> s + (int(a.menge) * num(a.ek)), 0);
-  const umsatzYear = sales
-    .filter(s=> (s.jahr === yearKey()))
-    .reduce((sum,s)=> sum + num(s.umsatz), 0);
-  const gewinn = sales.reduce((sum,s)=> sum + num(s.gewinn), 0);
-
-  document.getElementById("cValue").textContent = €(value);
-  document.getElementById("cTotal").textContent = €(totalInvest);
-  document.getElementById("cUmsatz").textContent = €(umsatzYear);
-  document.getElementById("cGewinn").textContent = €(gewinn);
-  document.getElementById("cCount").textContent = artikel.length;
-  document.getElementById("cSales").textContent = sales.length;
-}
-
-function nextSaleNumber(whereText){
-  const y = yearKey();
-  const key = saleCounterKey(y);
-  let n = int(localStorage.getItem(key) || "0") + 1;
-  localStorage.setItem(key, String(n));
-  const base = String(n).padStart(3,"0") + "-" + y;
-  const w = (whereText||"").trim();
-  const prefix = w ? w[0].toUpperCase() : "X";
-  return prefix + base; // z.B. E001-2025
-}
-
-/* ====================== RENDER LIST ====================== */
-function renderList(){
-  const q = (document.getElementById("search").value || "").trim().toLowerCase();
-  const rows = document.getElementById("rows");
-  rows.innerHTML = "";
-
-  artikel
-    .filter(a => !q || String(a.nr).toLowerCase().includes(q) || String(a.name).toLowerCase().includes(q))
-    .forEach((a, idx) => {
-      const row = document.createElement("div");
-      row.className = "gridRow" + (int(a.menge)===0 ? " zero" : "");
-
-      const camDisabled = !a.img;
-      const noteDisabled = !a.note || !String(a.note).trim();
-
-      row.innerHTML = `
-        <div class="nr">${escapeHtml(a.nr||"")}</div>
-        <div>
-          <div class="name">${escapeHtml(a.name||"")}</div>
-          <div class="sub">${escapeHtml(a.where||"")}</div>
-        </div>
-        <div><input class="miniQty" type="number" inputmode="numeric" value="${int(a.menge)}" /></div>
-        <div class="money">${escapeHtml((num(a.ek)).toFixed(2))}</div>
-        <div class="money">${escapeHtml((num(a.vk)).toFixed(2))}</div>
-        <div class="icons">
-          <div class="ico ${camDisabled?"disabled":""}" title="Foto"><small>📷</small></div>
-          <div class="ico ${noteDisabled?"disabled":""}" title="Notiz"><small>📝</small></div>
-          <div class="ico" title="Bearbeiten"><small>✏️</small></div>
-          <div class="ico" title="Verkaufen"><small>🛒</small></div>
-        </div>
-      `;
-
-      // Menge editierbar (iOS-safe)
-      const qty = row.querySelector(".miniQty");
-      qty.addEventListener("click", (e)=> e.stopPropagation(), true);
-      qty.addEventListener("focus", (e)=> { e.stopPropagation(); qty.select(); }, true);
-      qty.addEventListener("change", ()=> {
-        const neu = int(qty.value);
-        artikel[idx].menge = neu;
-        saveAll();
-        renderList();
-        calcCounters();
-      });
-
-      // Icons
-      const icons = row.querySelectorAll(".ico");
-      const icoCam = icons[0], icoNote = icons[1], icoEdit = icons[2], icoSale = icons[3];
-
-      icoCam.addEventListener("click", (e)=>{
-        e.stopPropagation();
-        if(!artikel[idx].img) return;
-        openImageViewer(artikel[idx].img);
-      });
-
-      icoNote.addEventListener("click", (e)=>{
-        e.stopPropagation();
-        if(!artikel[idx].note) return;
-        alert(artikel[idx].note);
-      });
-
-      icoEdit.addEventListener("click",(e)=>{ e.stopPropagation(); openArticle(idx); });
-      icoSale.addEventListener("click",(e)=>{ e.stopPropagation(); openSale(idx); });
-
-      rows.appendChild(row);
-    });
-}
-
-/* ====================== ARTICLE MODAL ====================== */
-let editingIndex = -1;
-let pendingImgData = null;
-
-function openArticle(i){
-  editingIndex = (typeof i === "number") ? i : -1;
-  pendingImgData = null;
-  document.getElementById("imgInfo").textContent = "";
-
-  const isEdit = editingIndex >= 0;
-  document.getElementById("articleTitle").textContent = isEdit ? "Artikel ändern" : "Artikel anlegen";
-  document.getElementById("btnDelete").style.display = isEdit ? "block" : "none";
-
-  if(isEdit){
-    const a = artikel[editingIndex];
-    aNr.value = a.nr||"";
-    aName.value = a.name||"";
-    aQty.value = int(a.menge);
-    aEK.value = num(a.ek);
-    aVK.value = num(a.vk);
-    aNote.value = a.note||"";
-  } else {
-    aNr.value = "";
-    aName.value = "";
-    aQty.value = 1;
-    aEK.value = "";
-    aVK.value = "";
-    aNote.value = "";
-  }
-
-  aImg.value = ""; // reset file input
-  articleOv.style.display = "flex";
-}
-
-function closeArticle(){
-  articleOv.style.display = "none";
-  editingIndex = -1;
-  pendingImgData = null;
-}
-
-function readFileAsDataURL(file){
-  return new Promise((res, rej)=>{
-    const r = new FileReader();
-    r.onload = ()=> res(r.result);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-}
-
-aImg.addEventListener("change", async ()=>{
-  const f = aImg.files && aImg.files[0];
-  if(!f) return;
-  pendingImgData = await readFileAsDataURL(f);
-  document.getElementById("imgInfo").textContent = "Bild ausgewählt ✅";
-});
-
-btnSave.addEventListener("click", ()=>{
-  const nr = (aNr.value||"").trim();
-  const name = (aName.value||"").trim();
-  const qty = int(aQty.value);
-  const ek = num(aEK.value);
-  const vk = num(aVK.value);
-  const note = (aNote.value||"").trim();
-
-  if(!nr || !name){
-    alert("Bitte Artikelnummer und Artikelname eintragen.");
-    return;
-  }
-
-  if(editingIndex >= 0){
-    const a = artikel[editingIndex];
-    a.nr = nr;
-    a.name = name;
-    a.menge = qty;
-    a.ek = ek;
-    a.vk = vk;
-    a.note = note;
-    if(pendingImgData) a.img = pendingImgData;
-  } else {
-    const neu = { nr, name, menge: qty, ek, vk, note, img: pendingImgData || "" };
-    artikel.unshift(neu);
-
-    // Warenwert gesamt erhöhen um EK * Menge (nur beim Einlagern)
-    totalInvest += (qty * ek);
-  }
-
-  saveAll();
-  closeArticle();
-  renderList();
-  calcCounters();
-});
-
-btnCancel.addEventListener("click", closeArticle);
-
-btnDelete.addEventListener("click", ()=>{
-  if(editingIndex < 0) return;
-  if(!confirm("Artikel wirklich löschen?")) return;
-  artikel.splice(editingIndex,1);
-  saveAll();
-  closeArticle();
-  renderList();
-  calcCounters();
-});
-
-/* ====================== IMAGE VIEWER (simple) ====================== */
-function openImageViewer(dataUrl){
-  const w = window.open("");
-  if(!w) { alert("Popup blockiert. Bitte in Safari Popups erlauben."); return; }
-  w.document.write('<meta name="viewport" content="width=device-width, initial-scale=1"><title>Foto</title>');
-  w.document.write('<style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center}img{max-width:100vw;max-height:100vh}</style>');
-  w.document.write('<img src="'+dataUrl+'">');
-  w.document.close();
-}
-
-/* ====================== SALE MODAL ====================== */
-let saleIndex = -1;
-
-function openSale(i){
-  saleIndex = i;
-  const a = artikel[i];
-  if(!a) return;
-
-  saleFor.textContent = `${a.nr} – ${a.name} (Bestand: ${int(a.menge)})`;
-
-  sQty.value = 1;
-  sPrice.value = (num(a.vk) || 0).toFixed(2);
-  sShipCustomer.value = "0";
-  sShipCost.value = "0";
-  sWhere.value = "";
-  sDate.valueAsDate = new Date();
-
-  // Nummer sofort vorfüllen (mit X wenn noch kein Ort)
-  sNo.value = nextSaleNumber("");
-
-  saleOv.style.display = "flex";
-}
-
-function closeSale(){
-  saleOv.style.display = "none";
-  saleIndex = -1;
-}
-
-// Ort -> Nummer automatisch updaten (Prefix)
-sWhere.addEventListener("input", ()=>{
-  const txt = (sWhere.value||"").trim();
-  // nur Prefix ändern, Basis beibehalten falls schon da
-  const current = (sNo.value||"").trim();
-  const base = current.replace(/^[A-Z]/, ""); // ohne Prefix
-  const prefix = txt ? txt[0].toUpperCase() : "X";
-  if(base.match(/^\d{3}-\d{4}$/)){
-    sNo.value = prefix + base;
-  } else if(current.match(/^[A-Z]\d{3}-\d{4}$/)){
-    sNo.value = prefix + current.substring(1);
-  } else {
-    // falls user was komplett anderes hat, nicht überschreiben
-  }
-});
-
-btnSaleCancel.addEventListener("click", closeSale);
-
-btnSaleOk.addEventListener("click", ()=>{
-  if(saleIndex < 0) return;
-  const a = artikel[saleIndex];
-  const qty = int(sQty.value);
-  const price = num(sPrice.value);
-  const shipCust = num(sShipCustomer.value);
-  const shipCost = num(sShipCost.value);
-  const where = (sWhere.value||"").trim();
-  const date = (sDate.value||"").trim();
-  let no = (sNo.value||"").trim();
-
-  if(qty <= 0 || qty > int(a.menge)){
-    alert("Ungültige Menge.");
-    return;
-  }
-  if(price <= 0){
-    alert("Bitte Verkaufspreis eintragen.");
-    return;
-  }
-
-  // wenn Nummer leer -> automatisch
-  if(!no){
-    no = nextSaleNumber(where);
-  } else {
-    // Prefix aus Ort erzwingen, aber editierbar lassen:
-    const prefix = where ? where[0].toUpperCase() : (no[0] ? no[0].toUpperCase() : "X");
-    // wenn Format wie 001-2025 -> Prefix davor
-    if(no.match(/^\d{3}-\d{4}$/)){
-      no = prefix + no;
-    }
-  }
-
-  // Bestand abziehen
-  a.menge = int(a.menge) - qty;
-  if(a.menge < 0) a.menge = 0;
-
-  // Umsatz & Gewinn
-  const umsatz = qty * price + shipCust;
-  const ekKosten = qty * num(a.ek);
-  const gewinn = umsatz - ekKosten - shipCost;
-
-  const s = {
-    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
-    verkaufsnr: no,
-    datum: date,
-    ort: where,
-    artnr: a.nr,
-    artikel: a.name,
-    menge: qty,
-    preis: price,
-    versandKunde: shipCust,
-    versandKosten: shipCost,
-    umsatz,
-    gewinn,
-    jahr: yearKey()
-  };
-
-  sales.unshift(s);
-  saveAll();
-  closeSale();
-  renderList();
-  calcCounters();
-});
-
-/* ====================== SALES HISTORY ====================== */
-function openSales(){
-  salesOv.style.display = "flex";
-  renderSales();
-}
-
-function closeSales(){
-  salesOv.style.display = "none";
-}
-
-btnSalesClose.addEventListener("click", closeSales);
-btnSales.addEventListener("click", openSales);
-
-salesSearch.addEventListener("input", renderSales);
-
-function renderSales(){
-  const q = (salesSearch.value||"").trim().toLowerCase();
-  salesBody.innerHTML = "";
-
-  sales
-    .filter(s => !q ||
-      String(s.verkaufsnr||"").toLowerCase().includes(q) ||
-      String(s.artnr||"").toLowerCase().includes(q) ||
-      String(s.artikel||"").toLowerCase().includes(q) ||
-      String(s.ort||"").toLowerCase().includes(q) ||
-      String(s.datum||"").toLowerCase().includes(q)
-    )
-    .forEach((s, idx) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${escapeHtml(s.verkaufsnr||"")}</td>
-        <td>${escapeHtml(s.datum||"")}</td>
-        <td>${escapeHtml(s.ort||"")}</td>
-        <td>${escapeHtml(s.artnr||"")}</td>
-        <td>${escapeHtml(s.artikel||"")}</td>
-        <td>${int(s.menge)}</td>
-        <td>${€(num(s.umsatz))}</td>
-        <td>${€(num(s.gewinn))}</td>
-        <td>
-          <div class="saleBtns">
-            <button onclick="editSale('${s.id}')">✏️</button>
-            <button onclick="stornoSale('${s.id}')">↩️</button>
-            <button onclick="deleteSale('${s.id}')">🗑</button>
-          </div>
-        </td>
-      `;
-      salesBody.appendChild(tr);
-    });
-}
-
-// Bearbeiten: nur die Verkaufsdaten (nicht Bestand). Für Bestand-Änderung bitte Storno + neu verkaufen.
-window.editSale = function(id){
-  const s = sales.find(x=>x.id===id);
-  if(!s) return;
-  const neuOrt = prompt("Ort (wo verkauft):", s.ort||"");
-  if(neuOrt === null) return;
-  const neuNo = prompt("Verkaufsnummer:", s.verkaufsnr||"");
-  if(neuNo === null) return;
-  s.ort = (neuOrt||"").trim();
-  s.verkaufsnr = (neuNo||"").trim();
-  saveAll();
-  renderSales();
+btnAdd.onclick=()=>modal.style.display="block";
+mCancel.onclick=()=>modal.style.display="none";
+mSave.onclick=()=>{
+ items.push({
+  name:mName.value,
+  qty:Number(mQty.value),
+  ek:Number(mEK.value),
+  vk:Number(mVK.value)
+ });
+ modal.style.display="none";
+ mName.value="";mQty.value=1;mEK.value=0;mVK.value=0;
+ render();
 };
 
-window.deleteSale = function(id){
-  if(!confirm("Verkauf wirklich löschen? (ohne Bestand anzupassen)")) return;
-  sales = sales.filter(x=>x.id!==id);
-  saveAll();
-  renderSales();
-  calcCounters();
+btnSave.onclick=()=>{
+ const blob=new Blob([JSON.stringify(items)],{type:"application/json"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="lager_backup.json";
+ a.click();
 };
 
-window.stornoSale = function(id){
-  if(!confirm("Verkauf stornieren? Menge wird zurück gebucht.")) return;
-  const s = sales.find(x=>x.id===id);
-  if(!s) return;
-
-  // Bestand zurück
-  const a = artikel.find(x=>x.nr===s.artnr);
-  if(a){
-    a.menge = int(a.menge) + int(s.menge);
-  }
-
-  // Verkauf entfernen
-  sales = sales.filter(x=>x.id!==id);
-  saveAll();
-
-  renderList();
-  renderSales();
-  calcCounters();
+btnLoad.onclick=()=>{
+ const i=document.createElement("input");
+ i.type="file";
+ i.onchange=e=>{
+  const f=e.target.files[0];
+  const r=new FileReader();
+  r.onload=()=>{items=JSON.parse(r.result);render()};
+  r.readAsText(f);
+ };
+ i.click();
 };
 
-/* ====================== IMPORT / EXPORT ====================== */
-btnExport.addEventListener("click", ()=>{
-  // Immer zuerst speichern
-  saveAll();
-  const data = {
-    version: "v5",
-    exportedAt: new Date().toISOString(),
-    artikel,
-    sales,
-    totalInvest
-  };
-  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "lager_backup.json";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-});
-
-btnImport.addEventListener("click", ()=> filePick.click());
-
-filePick.addEventListener("change", async ()=>{
-  const f = filePick.files && filePick.files[0];
-  if(!f) return;
-  try{
-    const txt = await f.text();
-    const obj = JSON.parse(txt);
-    if(obj && Array.isArray(obj.artikel)){
-      artikel = obj.artikel;
-      sales = Array.isArray(obj.sales) ? obj.sales : [];
-      totalInvest = typeof obj.totalInvest === "number" ? obj.totalInvest : 0;
-      saveAll();
-      renderList();
-      calcCounters();
-      alert("Datei geladen ✅");
-    } else {
-      alert("Ungültige Datei.");
-    }
-  }catch(e){
-    alert("Datei konnte nicht gelesen werden.");
-  } finally {
-    filePick.value = "";
-  }
-});
-
-  localStorage.removeItem(LS_SALES);
-  localStorage.removeItem(LS_TOTAL_INV);
-  // Sale counter pro Jahr lassen wir, sonst Nummern springen
-  loadAll();
-  renderList();
-  calcCounters();
-});
-
-btnAdd.addEventListener("click", ()=> openArticle(-1));
-search.addEventListener("input", renderList);
-
-/* ====================== ESCAPE ====================== */
-function escapeHtml(str){
-  return String(str ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+function adjust(){
+ document.body.style.paddingTop=(document.getElementById("topbar").offsetHeight+6)+"px";
 }
-
-/* ====================== INIT ====================== */
-(function init(){
-  loadAll();
-
-  // Topbar kompakt padding-top automatisch
-  const tb = document.getElementById("topbar");
-  const content = document.getElementById("content");
-  function resize(){
-    const h = tb.getBoundingClientRect().height;
-    content.style.paddingTop = (h + 8) + "px";
-  }
-  window.addEventListener("resize", resize);
-  resize();
-
-  renderList();
-  calcCounters();
-})();
-
-/* ====================== INVENTUR PDF ====================== */
-btnInventur.addEventListener("click", ()=>{
-  if(artikel.length === 0){
-    alert("Keine Artikel vorhanden.");
-    return;
-  }
-
-  const win = window.open("", "_blank");
-  if(!win){
-    alert("Popup blockiert. Bitte Popups erlauben.");
-    return;
-  }
-
-  const rows = artikel.map(a => `
-    <tr>
-      <td>${escapeHtml(a.nr)}</td>
-      <td>${escapeHtml(a.name)}</td>
-      <td style="text-align:right">${int(a.menge)}</td>
-      <td style="text-align:right">${num(a.ek).toFixed(2)} €</td>
-      <td style="text-align:right">${(int(a.menge)*num(a.ek)).toFixed(2)} €</td>
-    </tr>
-  `).join("");
-
-  win.document.write(`
-    <html>
-    <head>
-      <title>Inventur</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>
-        body{font-family:Arial,sans-serif;padding:20px}
-        h1{font-size:18px}
-        table{width:100%;border-collapse:collapse;margin-top:12px}
-        th,td{border:1px solid #000;padding:6px;font-size:12px}
-        th{background:#eee}
-      </style>
-    
-<style>
-/* --- TOPBEREICH NOCH KOMPAKTER --- */
-.topbar{padding:6px 8px}
-.counters{gap:4px}
-.counter{padding:4px 6px;border-radius:10px}
-.ct{font-size:10px}
-.cv{font-size:13px}
-.row{margin-top:4px}
-#search{padding:8px;font-size:12px}
-.actions{gap:4px;margin-top:4px}
-.actions button{
-  padding:6px 6px;
-  font-size:11px;
-  border-radius:10px;
-}
-</style>
-
-
-<style>
-/* --- CLICK FIX: Buttons immer klickbar --- */
-.topbar,
-.topbar *{
-  pointer-events:auto !important;
-}
-
-.content{
-  pointer-events:auto;
-}
-
-.overlay{
-  pointer-events:auto;
-}
-</style>
-
-</head>
-    <body>
-      <h1>Inventur – Stand ${new Date().toLocaleDateString("de-DE")}</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Nr</th>
-            <th>Artikel</th>
-            <th>Menge</th>
-            <th>EK</th>
-            <th>Wert</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows}
-        </tbody>
-      </table>
-      <script>window.print();</script>
-    </body>
-    </html>
-  `);
-  win.document.close();
-});
-
+window.onresize=adjust;adjust();
 </script>
+
 </body>
 </html>
