@@ -82,7 +82,8 @@ textarea{min-height:80px;resize:vertical}
 #modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000}
 .box{
   background:#0b0b0b;border:1px solid #333;border-radius:12px;
-  width:92%;max-width:480px;margin:7vh auto;padding:10px
+  width:92%;max-width:480px;margin:7vh auto;padding:10px;
+  max-height:82vh; overflow:auto; -webkit-overflow-scrolling:touch;
 }
 .box h3{margin:0 0 6px;font-size:12px}
 .box label{font-size:9px;color:#aaa;margin-top:6px;display:block}
@@ -97,7 +98,7 @@ textarea{min-height:80px;resize:vertical}
   overflow:hidden;
   display:none;
 }
-.preview img{display:block;width:100%;height:auto}
+.preview img{display:block;width:100%;height:auto;max-height:180px;object-fit:contain}
 
 .hint{color:var(--muted);font-size:9px;line-height:1.25;margin-top:8px}
 </style>
@@ -507,12 +508,16 @@ function adjust(){
   document.getElementById("gridHeader").style.top = top + "px";
 }
 window.addEventListener("resize", adjust);
+window.addEventListener("orientationchange", ()=>setTimeout(adjust, 80));
 
 /* Init */
 loadLocal();
 loadSalesLocal();
 render();
 adjust();
+// iOS: nach Layout/Fonts nochmal nachziehen
+setTimeout(adjust, 0);
+setTimeout(adjust, 250);
 </script>
 
 
