@@ -67,7 +67,7 @@ textarea{min-height:80px;resize:vertical}
 .name{font-size:9px;line-height:1.0;overflow:hidden;text-overflow:ellipsis}
 .qty{width:34px;text-align:center;padding:1px 3px;font-size:9px;border-radius:7px}
 .small{font-size:9px;color:#ddd;overflow:hidden;text-overflow:ellipsis}
-.icoBar{display:flex;gap:3px;justify-content:flex-end}
+.icoBar{display:flex;gap:7px;justify-content:flex-end}
 .ico{
   width:20px;height:20px;border:1px solid #333;border-radius:6px;
   display:flex;align-items:center;justify-content:center;
@@ -77,7 +77,7 @@ textarea{min-height:80px;resize:vertical}
 .ico.muted{opacity:.35}
 
 /* Modals */
-#modal,#saleModal,#salesModal{
+#modal,#saleModal,#salesModal,#viewPhotoModal,#viewNoteModal{
   display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;overflow:hidden
 }
 .box{
@@ -92,6 +92,12 @@ textarea{min-height:80px;resize:vertical}
 .btnRow button{flex:1}
 .preview{margin-top:8px;border:1px solid #333;border-radius:10px;overflow:hidden;display:none}
 .preview img{display:block;width:100%;height:auto;max-height:180px;object-fit:contain}
+
+/* Status */
+.gridRow.zero{background:rgba(180,0,0,.18)}
+.ico.danger{border-color:#5a2222}
+.ico.danger:active{transform:scale(.98)}
+
 </style>
 </head>
 
@@ -117,6 +123,9 @@ textarea{min-height:80px;resize:vertical}
 <div id="modal">
   <div class="box">
     <h3 id="modalTitle">Artikel anlegen</h3>
+
+    <label>Artikelnummer</label>
+    <input id="mArtNo" autocomplete="off" placeholder="z.B. 001-2026">
 
     <label>Artikelname</label>
     <input id="mName" autocomplete="off">
@@ -187,9 +196,10 @@ textarea{min-height:80px;resize:vertical}
 <div id="salesModal">
   <div class="box" style="max-width:760px">
     <h3 style="margin:0 0 6px;font-size:12px">Verkäufe</h3>
+<input id="salesSearch" placeholder="Suchen…" style="width:100%;margin:6px 0 10px 0;font-size:10px;padding:6px 8px;border-radius:10px;border:1px solid #333;background:#111;color:#fff">
     <div style="overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #333;border-radius:10px;padding:6px;max-height:55vh">
-      <div style="display:grid;grid-template-columns:90px 86px 1fr 52px 70px 120px;gap:4px;font-size:9px;color:#ddd;border-bottom:1px solid #333;padding-bottom:4px;white-space:nowrap">
-        <div>V-Nr</div><div>Datum</div><div>Artikel</div><div>Menge</div><div>Preis</div><div>Ort</div>
+      <div style="display:grid;grid-template-columns:90px 86px 1fr 52px 70px 120px 78px;gap:4px;font-size:9px;color:#ddd;border-bottom:1px solid #333;padding-bottom:4px;white-space:nowrap">
+        <div>V-Nr</div><div>Datum</div><div>Artikel</div><div>Menge</div><div>Preis</div><div>Ort</div><div>Aktion</div>
       </div>
       <div id="salesList" style="margin-top:4px"></div>
     </div>
@@ -209,7 +219,40 @@ let items = [];
 let sales = [];
 let editIndex = null;
 let saleIndex = null;
+let editSaleId = null;
 let modalPhotoData = "";
+
+
+function extractItemsFromHTMLText(text){
+  // Best-effort: try to find something like "items = [ ... ]" in older HTML versions.
+  const candidates = ["items","artikel","inventory","lagerItems","lager_items"];
+  for(const key of candidates){
+    const idx = text.indexOf(key);
+    if(idx === -1) continue;
+    const startBracket = text.indexOf("[", idx);
+    if(startBracket === -1) continue;
+    // bracket matching
+    let depth = 0;
+    for(let i=startBracket;i<text.length;i++){
+      const ch = text[i];
+      if(ch === "[") depth++;
+      else if(ch === "]"){
+        depth--;
+        if(depth === 0){
+          const snippet = text.slice(startBracket, i+1);
+          try{
+            const parsed = JSON.parse(snippet);
+            if(Array.isArray(parsed)) return parsed;
+          }catch(e){
+            // ignore and continue
+          }
+          break;
+        }
+      }
+    }
+  }
+  return null;
+}
 
 function extractItems(parsed){
   if(Array.isArray(parsed)) return parsed;
@@ -230,15 +273,17 @@ function extractItems(parsed){
 
 function normalizeItems(arr){
   return arr.map(x=>({
+    id: String(x.id || x._id || x.uuid || (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2)))) ,
     name: String(x.name ?? x.artikel ?? ""),
     qty: Number(x.qty ?? x.menge ?? 0),
-    ek: Number(x.ek ?? x.einkauf ?? 0),
-    date: String(x.date ?? x.kaufdatum ?? ""),
-    shop: String(x.shop ?? x.wo ?? ""),
+    ek: Number(x.ek ?? x.einkauf ?? x.preis ?? 0),
+    date: String(x.date ?? x.kaufdatum ?? x.datum ?? ""),
+    shop: String(x.shop ?? x.wo ?? x.ort ?? ""),
     size: String(x.size ?? x.groesse ?? ""),
     state: String(x.state ?? x.zustand ?? "Neu"),
     note: String(x.note ?? x.notiz ?? ""),
-    photo: String(x.photo ?? x.foto ?? "")
+    photo: String(x.photo ?? x.foto ?? x.bild ?? ""),
+    artNo: String(x.artNo ?? x.nr ?? x.artikelnummer ?? x.artikelNr ?? x.artnr ?? x.artikel_nr ?? x.articleNo ?? x.article_nr ?? x.articleNumber ?? "")
   }));
 }
 
@@ -289,9 +334,9 @@ function render(){
     const hasPhoto = (a.photo||"").trim().length>0;
 
     const row = document.createElement("div");
-    row.className = "gridRow";
+    row.className = "gridRow" + ((Number(a.qty)||0)<=0 ? " zero" : "");
     row.innerHTML = `
-      <div>${String(i+1).padStart(3,"0")}</div>
+      <div>${esc(a.artNo || String(i+1).padStart(3,"0"))}</div>
       <div class="name" title="${esc(a.name)}">${esc(a.name)}</div>
       <div><input class="qty" data-i="${i}" type="number" inputmode="numeric" value="${Number(a.qty)||0}"></div>
       <div class="small" title="${(Number(a.ek)||0).toFixed(2)}">${(Number(a.ek)||0).toFixed(2)}</div>
@@ -304,6 +349,7 @@ function render(){
         <div class="ico ${hasNote?'':'muted'}" data-act="note" data-i="${i}" title="Notiz">📝</div>
         <div class="ico" data-act="sale" data-i="${i}" title="Verkaufen">🛒</div>
         <div class="ico" data-act="edit" data-i="${i}" title="Bearbeiten">✏️</div>
+        <div class="ico danger" data-act="delItem" data-i="${i}" title="Löschen">🗑️</div>
       </div>
     `;
     table.appendChild(row);
@@ -321,8 +367,11 @@ function render(){
     ico.addEventListener("click", ()=>{
       const idx = Number(ico.dataset.i);
       const act = ico.dataset.act;
-      if(act==="sale") openSale(idx);
-      else openEdit(idx, act);
+      if(act==="sale") { openSale(idx); return; }
+      if(act==="delItem") { deleteItem(idx); return; }
+      if(act==="photo") { openPhotoView(idx); return; }
+      if(act==="note") { openNoteView(idx); return; }
+      openEdit(idx, act);
     });
   });
 }
@@ -343,6 +392,7 @@ function openEdit(i, act){
   editIndex = i;
   const a = items[i];
   $("modalTitle").textContent = "Artikel bearbeiten";
+  $("mArtNo").value = a.artNo || "";
   $("mName").value = a.name||"";
   $("mQty").value = Number(a.qty)||0;
   $("mEK").value = Number(a.ek)||0;
@@ -358,9 +408,22 @@ function openEdit(i, act){
   if(act==="photo") setTimeout(()=>$("mPhoto").scrollIntoView({behavior:"smooth",block:"center"}), 80);
 }
 
+function deleteItem(i){
+  const a = items[i];
+  if(!a) return;
+  if(confirm("Artikel wirklich löschen?")){
+    items.splice(i,1);
+    saveLocal();
+    render();
+  }
+}
+
+
 $("btnAdd").addEventListener("click", ()=>{
   editIndex = null;
   $("modalTitle").textContent = "Artikel anlegen";
+  const y = String(new Date().getFullYear());
+  $("mArtNo").value = nextItemNumber(y);
   $("mName").value=""; $("mQty").value=1; $("mEK").value=0;
   $("mDate").value=""; $("mShop").value=""; $("mSize").value=""; $("mState").value="Neu";
   $("mNote").value="";
@@ -381,6 +444,8 @@ $("mPhoto").addEventListener("change", (e)=>{
 
 $("mSave").addEventListener("click", ()=>{
   const obj = {
+    id: (editIndex===null ? (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2))) : (items[editIndex].id || (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2))))),
+    artNo: ($("mArtNo").value||"").trim(),
     name: ($("mName").value||"").trim(),
     qty: Number($("mQty").value||0),
     ek: Number($("mEK").value||0),
@@ -392,6 +457,10 @@ $("mSave").addEventListener("click", ()=>{
     photo: modalPhotoData||""
   };
   if(!obj.name){ alert("Bitte Artikelname eingeben."); return; }
+  if(!obj.artNo){
+    const y = parseYearFromDate(obj.date) || String(new Date().getFullYear());
+    obj.artNo = nextItemNumber(y);
+  }
   if(editIndex===null) items.push(obj);
   else items[editIndex] = obj;
   saveLocal();
@@ -399,7 +468,74 @@ $("mSave").addEventListener("click", ()=>{
   render();
 });
 
+
+function openPhotoView(i){
+  const a = items[i];
+  if(!a || !(a.photo||"").trim()){
+    alert("Kein Foto hinterlegt.");
+    return;
+  }
+  $("viewPhotoImg").src = a.photo;
+  $("viewPhotoModal").style.display = "block";
+}
+function openNoteView(i){
+  const a = items[i];
+  if(!a || !(a.note||"").trim()){
+    alert("Keine Notiz hinterlegt.");
+    return;
+  }
+  $("viewNoteText").textContent = a.note;
+  $("viewNoteModal").style.display = "block";
+}
+$("viewPhotoClose").addEventListener("click", ()=>{ $("viewPhotoModal").style.display="none"; });
+$("viewNoteClose").addEventListener("click", ()=>{ $("viewNoteModal").style.display="none"; });
+
+
 /* ===== Verkauf ===== */
+
+function findItemById(id){
+  return items.find(x=>x.id===id);
+}
+function openSaleEdit(saleId){
+  const s = sales.find(x=>x.id===saleId);
+  if(!s) return;
+  editSaleId = saleId;
+
+  // Item may be missing (deleted)
+  const item = findItemById(s.itemId);
+  saleIndex = item ? items.indexOf(item) : null;
+
+  $("saleTitle").textContent = "Verkauf bearbeiten" + (item ? (" – " + (item.name||"")) : " – (Artikel fehlt)");
+  $("sDate").value = s.date || todayISO();
+  $("sNumber").value = s.number || "";
+  $("sPlace").value = s.place || "";
+  $("sQty").value = Number(s.qty||0);
+  $("sPrice").value = Number(s.price||0);
+  $("sShip").value = Number(s.ship||0);
+  $("sHint").textContent = item ? ("Bestand aktuell: " + (Number(item.qty)||0) + " (Bearbeiten passt Bestand an)") : "Artikel wurde gelöscht – Bestand kann nicht angepasst werden.";
+  $("saleModal").style.display = "block";
+}
+
+function parseYearFromDate(str){
+  const m = String(str||"").match(/^(\d{4})/);
+  return m ? m[1] : null;
+}
+function nextItemNumber(year){
+  const y = String(year||new Date().getFullYear());
+  // finde höchste laufende Nummer im Jahr
+  let max = 0;
+  for(const it of items){
+    const no = String(it.artNo||"");
+    const mm = no.match(/^(\d{3,})-(\d{4})$/);
+    if(mm && mm[2]===y){
+      const n = Number(mm[1]);
+      if(Number.isFinite(n) && n>max) max = n;
+    }
+  }
+  const next = String(max+1).padStart(3,"0");
+  return next + "-" + y;
+}
+
 function todayISO(){
   const d = new Date();
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -410,6 +546,7 @@ function nextSaleNumber(dateStr){
   return String(count).padStart(3,"0")+"-"+year;
 }
 function openSale(i){
+  editSaleId = null;
   saleIndex = i;
   const a = items[i];
   const d = todayISO();
@@ -426,14 +563,60 @@ function openSale(i){
 $("sCancel").addEventListener("click", ()=>{ $("saleModal").style.display="none"; });
 
 $("sSave").addEventListener("click", ()=>{
-  if(saleIndex===null) return;
-  const a = items[saleIndex];
   const qty = Number($("sQty").value||0);
   if(!qty || qty<=0){ alert("Bitte Menge > 0 eingeben."); return; }
+
+  // EDIT MODE
+  if(editSaleId){
+    const idxSale = sales.findIndex(x=>x.id===editSaleId);
+    if(idxSale===-1){ alert("Verkauf nicht gefunden."); return; }
+    const old = sales[idxSale];
+    if(old.storno){ alert("Stornierte Verkäufe können nicht bearbeitet werden."); return; }
+
+    const item = findItemById(old.itemId);
+    // Bestand: zuerst alten Verkauf zurück, dann neuen abziehen (wenn Artikel existiert)
+    if(item){
+      const oldQty = Number(old.qty||0);
+      item.qty = Number(item.qty||0) + oldQty;
+
+      const current = Number(item.qty||0);
+      if(qty>current){
+        // rollback old restore? actually we already restored; just show error and keep restored -> revert back to old state
+        item.qty = current - oldQty;
+        alert("Menge zu hoch. Bestand: " + (current));
+        return;
+      }
+      item.qty = current - qty;
+      saveLocal();
+    }
+
+    sales[idxSale] = {
+      ...old,
+      number: ($("sNumber").value||"").trim() || old.number,
+      date: $("sDate").value || old.date || todayISO(),
+      place: ($("sPlace").value||"").trim(),
+      qty: qty,
+      price: Number($("sPrice").value||0),
+      ship: Number($("sShip").value||0)
+    };
+    saveSales();
+    $("saleModal").style.display="none";
+    editSaleId = null;
+    render();
+    renderSales();
+    return;
+  }
+
+  // NEW SALE MODE
+  if(saleIndex===null){ alert("Artikel nicht gefunden."); return; }
+  const a = items[saleIndex];
   const current = Number(a.qty||0);
   if(qty>current){ alert("Menge zu hoch. Bestand: "+current); return; }
 
   const rec = {
+    id: (crypto.randomUUID ? crypto.randomUUID() : ("sid_"+Math.random().toString(16).slice(2))),
+    itemId: a.id,
+    storno: false,
     number: ($("sNumber").value||"").trim() || nextSaleNumber($("sDate").value||todayISO()),
     date: $("sDate").value || todayISO(),
     place: ($("sPlace").value||"").trim(),
@@ -450,35 +633,106 @@ $("sSave").addEventListener("click", ()=>{
   render();
 });
 
+
 /* ===== Verkäufe Übersicht ===== */
 function renderSales(){
   const el = $("salesList");
+  const q = ($("salesSearch")?.value || "").trim().toLowerCase();
   el.innerHTML = "";
   if(!sales.length){
     el.innerHTML = '<div style="color:#aaa;font-size:9px;padding:6px">Noch keine Verkäufe gespeichert.</div>';
     return;
   }
-  const arr = [...sales].slice().reverse();
+  const arr = [...sales].slice().reverse().filter(s=>{
+    if(!q) return true;
+    const hay = (String(s.number||"")+" "+String(s.date||"")+" "+String(s.itemName||"")+" "+String(s.place||"")).toLowerCase();
+    return hay.includes(q);
+  });
+
+  if(!arr.length){
+    el.innerHTML = '<div style="color:#aaa;font-size:9px;padding:6px">Keine Treffer.</div>';
+    return;
+  }
+
   arr.forEach(s=>{
     const row = document.createElement("div");
     row.style.display="grid";
-    row.style.gridTemplateColumns="90px 86px 1fr 52px 70px 120px";
+    row.style.gridTemplateColumns="90px 86px 1fr 52px 70px 120px 78px";
     row.style.gap="4px";
     row.style.fontSize="9px";
     row.style.whiteSpace="nowrap";
     row.style.padding="3px 0";
     row.style.borderBottom="1px solid #222";
+
+    const status = s.storno ? " (Storno)" : "";
     row.innerHTML = `
-      <div>${esc(s.number||"")}</div>
+      <div>${esc(s.number||"")}${status}</div>
       <div>${esc(s.date||"")}</div>
       <div title="${esc(s.itemName||"")}">${esc(s.itemName||"")}</div>
       <div>${Number(s.qty||0)}</div>
       <div>${(Number(s.price||0)).toFixed(2)}</div>
       <div title="${esc(s.place||"")}">${esc(s.place||"")}</div>
+      <div style="display:flex;gap:4px;justify-content:flex-end">
+        <div class="ico" data-sact="edit" data-sid="${esc(s.id)}" title="Bearbeiten">✏️</div>
+        <div class="ico" data-sact="storno" data-sid="${esc(s.id)}" title="Storno">↩️</div>
+        <div class="ico danger" data-sact="del" data-sid="${esc(s.id)}" title="Löschen">🗑️</div>
+      </div>
     `;
     el.appendChild(row);
   });
+
+  // actions
+  el.querySelectorAll(".ico").forEach(btn=>{
+    const act = btn.getAttribute("data-sact");
+    const sid = btn.getAttribute("data-sid");
+    if(!act || !sid) return;
+    btn.addEventListener("click", (ev)=>{
+      ev.stopPropagation();
+      if(act==="edit"){ openSaleEdit(sid); return; }
+      if(act==="storno"){ stornoSale(sid); return; }
+      if(act==="del"){ deleteSale(sid); return; }
+    });
+  });
 }
+
+function stornoSale(sid){
+  const idx = sales.findIndex(x=>x.id===sid);
+  if(idx===-1) return;
+  const s = sales[idx];
+  if(s.storno) return;
+
+  const item = findItemById(s.itemId);
+  if(item){
+    item.qty = Number(item.qty||0) + Number(s.qty||0);
+    saveLocal();
+  }
+  s.storno = true;
+  saveSales();
+  render();
+  renderSales();
+}
+
+function deleteSale(sid){
+  const idx = sales.findIndex(x=>x.id===sid);
+  if(idx===-1) return;
+  const s = sales[idx];
+  if(confirm("Verkauf wirklich löschen?")){
+    if(!s.storno){
+      const item = findItemById(s.itemId);
+      if(item){
+        item.qty = Number(item.qty||0) + Number(s.qty||0);
+        saveLocal();
+      }
+    }
+    sales.splice(idx,1);
+    saveSales();
+    render();
+    renderSales();
+  }
+}
+
+$("salesSearch").addEventListener("input", ()=>renderSales());
+
 $("btnSalesTop").addEventListener("click", ()=>{ renderSales(); $("salesModal").style.display="block"; });
 $("salesClose").addEventListener("click", ()=>{ $("salesModal").style.display="none"; });
 
@@ -493,21 +747,37 @@ $("btnSave").addEventListener("click", ()=>{
 
 $("btnLoad").addEventListener("click", ()=>{
   const inp = document.createElement("input");
-  inp.type="file"; inp.accept="application/json";
+  inp.type = "file";
+  // JSON Backups (empfohlen) oder alte HTML-Versionen (best-effort)
+  inp.accept = ".json,application/json,.html,text/html";
   inp.onchange = (e)=>{
     const f = e.target.files && e.target.files[0];
     if(!f) return;
+
+    const name = (f.name || "").toLowerCase();
     const r = new FileReader();
     r.onload = ()=>{
       try{
-        const parsed = JSON.parse(r.result);
-        const arr = extractItems(parsed);
-        if(!arr) throw new Error("Format falsch");
+        const text = String(r.result || "");
+
+        let arr = null;
+
+        if(name.endsWith(".html")){
+          // Versuche, ein Items-Array direkt aus dem HTML zu ziehen
+          arr = extractItemsFromHTMLText(text);
+          if(!arr) throw new Error("HTML-Import: kein Items-Array gefunden");
+        }else{
+          const parsed = JSON.parse(text);
+          arr = extractItems(parsed);
+          if(!arr) throw new Error("Format falsch");
+        }
+
+        // Wichtig: vorhandene Artikelnummern werden übernommen (artNo/nr/artikelnummer/...)
         items = normalizeItems(arr);
         saveLocal();
         render();
       }catch(err){
-        alert("Datei konnte nicht gelesen werden.");
+        alert("Datei konnte nicht gelesen werden. Tipp: Bitte aus der alten App als JSON exportieren und hier laden.");
       }
     };
     r.readAsText(f);
@@ -522,10 +792,51 @@ $("btnPDF").addEventListener("click", ()=>{
 /* Init */
 loadLocal();
 loadSales();
+// Migration: IDs + Artikelnummern nachziehen (aus alten Backups)
+items = items.map(x=>({
+  id: x.id || (crypto.randomUUID?crypto.randomUUID():('id_'+Math.random().toString(16).slice(2))),
+  ...x
+}));
+
+// fehlende Artikelnummern: pro Jahr fortlaufend vergeben (jahr aus Kaufdatum, sonst aktuelles Jahr)
+const yearCounters = {};
+for(const it of items){
+  if(!it.artNo){
+    const y = parseYearFromDate(it.date) || String(new Date().getFullYear());
+    yearCounters[y] = (yearCounters[y]||0) + 1;
+    it.artNo = String(yearCounters[y]).padStart(3,"0") + "-" + y;
+  }
+}
+saveLocal();
 render();
 adjust();
 setTimeout(adjust, 0);
 setTimeout(adjust, 250);
 </script>
+
+<!-- Foto ansehen -->
+<div id="viewPhotoModal">
+  <div class="box">
+    <h3 style="margin:0 0 6px;font-size:12px">Foto</h3>
+    <div class="preview" id="viewPhotoPreview" style="display:block">
+      <img id="viewPhotoImg" alt="Foto">
+    </div>
+    <div class="btnRow">
+      <button id="viewPhotoClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notiz ansehen -->
+<div id="viewNoteModal">
+  <div class="box">
+    <h3 style="margin:0 0 6px;font-size:12px">Notiz</h3>
+    <div style="border:1px solid #333;border-radius:10px;padding:8px;background:#111;font-size:10px;white-space:pre-wrap" id="viewNoteText"></div>
+    <div class="btnRow">
+      <button id="viewNoteClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
