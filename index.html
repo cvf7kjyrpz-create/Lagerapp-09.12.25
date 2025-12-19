@@ -3,29 +3,104 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>Lager App – Artikel anlegen & bearbeiten</title>
+<title>Lager App – Stabil (Artikel + Persistenz + Foto/Notiz)</title>
 <style>
 :root{--bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;padding-top:0}
-button,input,select{font:inherit;color:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;padding-top:0;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
 button{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:5px 6px;font-size:10px}
-input,select{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;color:#fff;width:100%}
+input,select,textarea{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;color:#fff;width:100%}
+textarea{min-height:90px;resize:vertical}
+
 .topbar{position:fixed;top:0;left:0;right:0;z-index:5000;background:#000;border-bottom:1px solid #333;padding:6px 8px}
 .actions{display:flex;gap:4px}
 .actions button{flex:1}
+
 .content{padding:8px}
-.gridHeader,.gridRow{display:grid;grid-template-columns:50px 1fr 40px 45px 45px 60px;gap:4px;align-items:center}
-.gridHeader{position:sticky;top:52px;background:#000;border-bottom:1px solid #333;font-size:9px}
-.gridRow{padding:2px 0;border-bottom:1px solid #2a2a2a;font-size:9px}
-.name{font-size:9px}
-.qty{width:36px;text-align:center}
-.ico{width:18px;height:18px;border:1px solid #333;border-radius:5px;display:flex;align-items:center;justify-content:center}
-#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000}
-#modalBox{background:#0b0b0b;border:1px solid #333;border-radius:12px;width:92%;max-width:420px;margin:10vh auto;padding:10px}
-#modalBox label{font-size:9px;color:#aaa;margin-top:6px;display:block}
+
+/* Horizontal scroll wrapper so long texts don't break layout */
+.tableWrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* Grid table (extrem kompakt) */
+.gridHeader,.gridRow{
+  display:grid;
+  grid-template-columns:
+    46px
+    minmax(220px,1fr)
+    40px
+    46px
+    86px
+    120px
+    70px
+    86px
+    54px;
+  gap:4px;
+  align-items:center;
+}
+
+.gridHeader{
+  position:sticky;
+  top:52px;              /* wird per JS an Topbar angepasst */
+  z-index:10;
+  background:#000;
+  border-bottom:1px solid #333;
+  font-size:9px;
+  padding:2px 0;
+  white-space:nowrap;
+}
+
+.gridRow{
+  padding:1px 0;
+  border-bottom:1px solid #2a2a2a;
+  font-size:9px;
+  white-space:nowrap; /* KEIN Umbruch -> Layout bleibt schmal */
+}
+
+.name{
+  font-size:9px;
+  line-height:1.0;
+  overflow:hidden;
+  text-overflow:ellipsis; /* bleibt 1 Zeile; zum Lesen: horizontal scrollen */
+}
+
+.qty{width:36px;text-align:center;padding:1px 3px;font-size:9px;border-radius:7px}
+.ek{width:46px;text-align:center}
+.small{font-size:9px;color:#ddd;overflow:hidden;text-overflow:ellipsis}
+.icoBar{display:flex;gap:3px;justify-content:flex-end}
+.ico{
+  width:20px;height:20px;border:1px solid #333;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.ico:active{transform:scale(.98)}
+.ico.muted{opacity:.35}
+
+#modal,#noteModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000}
+.box{
+  background:#0b0b0b;border:1px solid #333;border-radius:12px;
+  width:92%;max-width:460px;margin:9vh auto;padding:10px
+}
+.box h3{margin:0 0 6px;font-size:12px}
+.box label{font-size:9px;color:#aaa;margin-top:6px;display:block}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.btnRow{display:flex;gap:6px;margin-top:10px}
+.btnRow button{flex:1}
+.preview{
+  margin-top:8px;
+  border:1px solid #333;border-radius:10px;
+  overflow:hidden;
+  display:none;
+}
+.preview img{display:block;width:100%;height:auto}
+.hint{color:var(--muted);font-size:9px;line-height:1.25;margin-top:8px}
 </style>
 </head>
+
 <body>
 
 <div class="topbar" id="topbar">
@@ -33,85 +108,352 @@ input,select{background:var(--panel2);border:1px solid var(--border);border-radi
     <button id="btnAdd">+ Artikel</button>
     <button id="btnSave">Sichern</button>
     <button id="btnLoad">Laden</button>
-    <button>PDF</button>
+    <button id="btnPDF">PDF</button>
   </div>
 </div>
 
 <div class="content">
-  <div class="gridHeader">
-    <div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>VK</div><div>Aktion</div>
+  <div class="tableWrap" id="tableWrap">
+    <div class="gridHeader" id="gridHeader">
+      <div>Nr</div>
+      <div>Artikel</div>
+      <div>Menge</div>
+      <div>EK</div>
+      <div>Kaufdatum</div>
+      <div>Wo gekauft</div>
+      <div>Größe</div>
+      <div>Zustand</div>
+      <div>Info</div>
+    </div>
+    <div id="table"></div>
   </div>
-  <div id="table"></div>
+  <div class="hint">Tipp: Lange Artikel/Wo gekauft bleiben 1-zeilig. Wenn etwas abgeschnitten ist, kannst du die Tabelle seitlich scrollen.</div>
 </div>
 
+<!-- Artikel anlegen/bearbeiten -->
 <div id="modal">
- <div id="modalBox">
-  <h3 id="modalTitle" style="margin:0 0 6px;font-size:12px">Artikel anlegen</h3>
-  <label>Artikelname</label><input id="mName">
-  <label>Menge</label><input id="mQty" type="number" value="1">
-  <label>EK</label><input id="mEK" type="number" value="0">
-  <label>VK</label><input id="mVK" type="number" value="0">
-  <label>Kaufdatum</label><input id="mDate" type="date">
-  <label>Wo gekauft</label><input id="mShop">
-  <label>Größe</label><input id="mSize">
-  <label>Zustand</label>
-  <select id="mState"><option>Neu</option><option>Neuwertig</option><option>Gebraucht</option></select>
-  <div style="display:flex;gap:6px;margin-top:10px">
-    <button id="mSave" style="flex:1">Speichern</button>
-    <button id="mCancel" style="flex:1">Abbrechen</button>
+ <div class="box">
+  <h3 id="modalTitle">Artikel anlegen</h3>
+
+  <label>Artikelname</label>
+  <input id="mName" autocomplete="off">
+
+  <div class="row2">
+    <div>
+      <label>Menge</label>
+      <input id="mQty" type="number" inputmode="numeric" value="1">
+    </div>
+    <div>
+      <label>EK</label>
+      <input id="mEK" type="number" inputmode="decimal" value="0">
+    </div>
+  </div>
+
+  <label>Kaufdatum</label>
+  <input id="mDate" type="date">
+
+  <label>Wo gekauft</label>
+  <input id="mShop" autocomplete="off">
+
+  <div class="row2">
+    <div>
+      <label>Größe</label>
+      <input id="mSize" autocomplete="off">
+    </div>
+    <div>
+      <label>Zustand</label>
+      <select id="mState">
+        <option>Neu</option>
+        <option>Neuwertig</option>
+        <option>Gebraucht</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="btnRow">
+    <button id="mSave">Speichern</button>
+    <button id="mCancel">Abbrechen</button>
+  </div>
+ </div>
+</div>
+
+<!-- Notiz/Foto Popup -->
+<div id="noteModal">
+ <div class="box">
+  <h3 id="noteTitle">Notiz / Foto</h3>
+
+  <label>Notiz</label>
+  <textarea id="nNote" placeholder="Notiz…"></textarea>
+
+  <label style="margin-top:10px">Foto</label>
+  <input id="nPhoto" type="file" accept="image/*">
+
+  <div class="preview" id="photoPreview"><img id="photoImg" alt="Foto Vorschau"></div>
+
+  <div class="btnRow">
+    <button id="nSave">Speichern</button>
+    <button id="nCancel">Schließen</button>
   </div>
  </div>
 </div>
 
 <script>
-let items=[],editIndex=null;
-const table=document.getElementById("table");
+/* ===================== DATEN + PERSISTENZ ===================== */
+const LS_KEY = "lager_items_v1";
+let items = [];
+let editIndex = null;
+let noteIndex = null;
+
+const table = document.getElementById("table");
+
+function saveLocal(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(items));
+  }catch(e){
+    alert("Speichern im Gerät nicht möglich (Speicher voll?).");
+  }
+}
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)) items = normalizeItems(parsed);
+    }
+  }catch(e){}
+}
+
+function normalizeItems(arr){
+  return arr.map(x=>({
+    name: String(x.name ?? ""),
+    qty: Number(x.qty ?? 0),
+    ek: Number(x.ek ?? 0),
+    date: String(x.date ?? ""),
+    shop: String(x.shop ?? ""),
+    size: String(x.size ?? ""),
+    state: String(x.state ?? "Neu"),
+    note: String(x.note ?? ""),
+    photo: String(x.photo ?? "")
+  }));
+}
+
+/* ===================== RENDER ===================== */
+function esc(s){
+  return String(s).replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+}
 
 function render(){
- table.innerHTML="";
- items.forEach((a,i)=>{
-  const r=document.createElement("div");
-  r.className="gridRow";
-  r.innerHTML=`<div>${String(i+1).padStart(3,"0")}</div>
-   <div class="name">${a.name}</div>
-   <div><input class="qty" type="number" value="${a.qty}" onchange="items[${i}].qty=this.value"></div>
-   <div>${a.ek}</div><div>${a.vk}</div>
-   <div class="ico" onclick="edit(${i})">✏️</div>`;
-  table.appendChild(r);
- });
+  table.innerHTML = "";
+  items.forEach((a,i)=>{
+    const row = document.createElement("div");
+    row.className = "gridRow";
+
+    const hasNote = (a.note || "").trim().length > 0;
+    const hasPhoto = (a.photo || "").trim().length > 0;
+
+    row.innerHTML = `
+      <div>${String(i+1).padStart(3,"0")}</div>
+      <div class="name" title="${esc(a.name)}">${esc(a.name)}</div>
+      <div><input class="qty" data-i="${i}" type="number" inputmode="numeric" value="${Number(a.qty)||0}"></div>
+      <div class="small ek">${(Number(a.ek)||0).toFixed(2)}</div>
+      <div class="small" title="${esc(a.date)}">${esc(a.date)}</div>
+      <div class="small" title="${esc(a.shop)}">${esc(a.shop)}</div>
+      <div class="small" title="${esc(a.size)}">${esc(a.size)}</div>
+      <div class="small" title="${esc(a.state)}">${esc(a.state)}</div>
+      <div class="icoBar">
+        <div class="ico ${hasPhoto? "" : "muted"}" data-act="photo" data-i="${i}" title="Foto">📷</div>
+        <div class="ico ${hasNote? "" : "muted"}" data-act="note" data-i="${i}" title="Notiz">📝</div>
+        <div class="ico" data-act="edit" data-i="${i}" title="Bearbeiten">✏️</div>
+      </div>
+    `;
+    table.appendChild(row);
+  });
+
+  table.querySelectorAll("input.qty").forEach(inp=>{
+    inp.addEventListener("change", (e)=>{
+      const idx = Number(e.target.dataset.i);
+      items[idx].qty = Number(e.target.value || 0);
+      saveLocal();
+    });
+  });
+
+  table.querySelectorAll(".ico").forEach(ico=>{
+    ico.addEventListener("click", ()=>{
+      const idx = Number(ico.dataset.i);
+      const act = ico.dataset.act;
+      if(act === "edit") openEdit(idx);
+      else if(act === "note" || act === "photo") openNotePhoto(idx);
+    });
+  });
 }
 
-function edit(i){
- editIndex=i;
- const a=items[i];
- modalTitle.textContent="Artikel bearbeiten";
- mName.value=a.name;mQty.value=a.qty;mEK.value=a.ek;mVK.value=a.vk;
- mDate.value=a.date||"";mShop.value=a.shop||"";mSize.value=a.size||"";mState.value=a.state||"Neu";
- modal.style.display="block";
+/* ===================== ARTIKEL MODAL ===================== */
+const modal = document.getElementById("modal");
+const modalTitle = document.getElementById("modalTitle");
+const mName = document.getElementById("mName");
+const mQty  = document.getElementById("mQty");
+const mEK   = document.getElementById("mEK");
+const mDate = document.getElementById("mDate");
+const mShop = document.getElementById("mShop");
+const mSize = document.getElementById("mSize");
+const mState= document.getElementById("mState");
+
+document.getElementById("btnAdd").addEventListener("click", ()=>{
+  editIndex = null;
+  modalTitle.textContent = "Artikel anlegen";
+  mName.value = "";
+  mQty.value  = 1;
+  mEK.value   = 0;
+  mDate.value = "";
+  mShop.value = "";
+  mSize.value = "";
+  mState.value= "Neu";
+  modal.style.display = "block";
+});
+
+document.getElementById("mCancel").addEventListener("click", ()=>{
+  modal.style.display = "none";
+});
+
+function openEdit(i){
+  editIndex = i;
+  const a = items[i];
+  modalTitle.textContent = "Artikel bearbeiten";
+  mName.value = a.name || "";
+  mQty.value  = Number(a.qty)||0;
+  mEK.value   = Number(a.ek)||0;
+  mDate.value = a.date || "";
+  mShop.value = a.shop || "";
+  mSize.value = a.size || "";
+  mState.value= a.state || "Neu";
+  modal.style.display = "block";
 }
 
-btnAdd.onclick=()=>{editIndex=null;modalTitle.textContent="Artikel anlegen";mName.value="";mQty.value=1;mEK.value=0;mVK.value=0;mDate.value="";mShop.value="";mSize.value="";mState.value="Neu";modal.style.display="block"};
-mCancel.onclick=()=>modal.style.display="none";
+document.getElementById("mSave").addEventListener("click", ()=>{
+  const obj = {
+    name: (mName.value||"").trim(),
+    qty: Number(mQty.value||0),
+    ek: Number(mEK.value||0),
+    date: mDate.value || "",
+    shop: (mShop.value||"").trim(),
+    size: (mSize.value||"").trim(),
+    state: mState.value || "Neu",
+    note: (editIndex!==null ? (items[editIndex].note||"") : ""),
+    photo:(editIndex!==null ? (items[editIndex].photo||"") : "")
+  };
 
-mSave.onclick=()=>{
- const o={name:mName.value,qty:+mQty.value,ek:+mEK.value,vk:+mVK.value,date:mDate.value,shop:mShop.value,size:mSize.value,state:mState.value};
- editIndex===null?items.push(o):items[editIndex]=o;
- modal.style.display="none";render();
-};
+  if(!obj.name){
+    alert("Bitte Artikelname eingeben.");
+    return;
+  }
 
-btnSave.onclick=()=>{
- const blob=new Blob([JSON.stringify(items,null,2)],{type:"application/json"});
- const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="lager_backup.json";a.click();
-};
+  if(editIndex === null) items.push(obj);
+  else items[editIndex] = {...items[editIndex], ...obj};
 
-btnLoad.onclick=()=>{
- const i=document.createElement("input");i.type="file";
- i.onchange=e=>{const r=new FileReader();r.onload=()=>{items=JSON.parse(r.result);render()};r.readAsText(e.target.files[0])};
- i.click();
-};
+  saveLocal();
+  modal.style.display = "none";
+  render();
+});
 
-function adjust(){document.body.style.paddingTop=(topbar.offsetHeight+6)+"px"}
-window.onresize=adjust;adjust();
+/* ===================== NOTIZ / FOTO MODAL ===================== */
+const noteModal = document.getElementById("noteModal");
+const noteTitle = document.getElementById("noteTitle");
+const nNote = document.getElementById("nNote");
+const nPhoto = document.getElementById("nPhoto");
+const photoPreview = document.getElementById("photoPreview");
+const photoImg = document.getElementById("photoImg");
+
+function openNotePhoto(i){
+  noteIndex = i;
+  const a = items[i];
+  noteTitle.textContent = "Notiz / Foto – " + String(i+1).padStart(3,"0");
+  nNote.value = a.note || "";
+  nPhoto.value = "";
+  if(a.photo){
+    photoImg.src = a.photo;
+    photoPreview.style.display = "block";
+  }else{
+    photoPreview.style.display = "none";
+  }
+  noteModal.style.display = "block";
+}
+
+document.getElementById("nCancel").addEventListener("click", ()=>{
+  noteModal.style.display = "none";
+});
+
+nPhoto.addEventListener("change", (e)=>{
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    photoImg.src = r.result;
+    photoPreview.style.display = "block";
+  };
+  r.readAsDataURL(file);
+});
+
+document.getElementById("nSave").addEventListener("click", ()=>{
+  if(noteIndex === null) return;
+  items[noteIndex].note = (nNote.value||"").trim();
+  const file = nPhoto.files && nPhoto.files[0];
+  if(file){
+    items[noteIndex].photo = photoImg.src || "";
+  }
+  saveLocal();
+  noteModal.style.display = "none";
+  render();
+});
+
+/* ===================== IMPORT / EXPORT ===================== */
+document.getElementById("btnSave").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(items, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "lager_backup.json";
+  a.click();
+});
+
+document.getElementById("btnLoad").addEventListener("click", ()=>{
+  const i = document.createElement("input");
+  i.type = "file";
+  i.accept = "application/json";
+  i.onchange = (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=>{
+      try{
+        const parsed = JSON.parse(r.result);
+        if(!Array.isArray(parsed)) throw new Error("Format falsch");
+        items = normalizeItems(parsed);
+        saveLocal();
+        render();
+      }catch(err){
+        alert("Datei konnte nicht gelesen werden.");
+      }
+    };
+    r.readAsText(f);
+  };
+  i.click();
+});
+
+/* ===================== PDF (noch später) ===================== */
+document.getElementById("btnPDF").addEventListener("click", ()=>{
+  alert("PDF kommt als nächster Schritt. (Button funktioniert)");
+});
+
+/* ===================== LAYOUT OFFSET ===================== */
+function adjust(){
+  document.body.style.paddingTop = (topbar.offsetHeight + 6) + "px";
+  document.getElementById("gridHeader").style.top = (topbar.offsetHeight + 6) + "px";
+}
+window.addEventListener("resize", adjust);
+
+/* Init */
+loadLocal();
+render();
+adjust();
 </script>
 
 </body>
