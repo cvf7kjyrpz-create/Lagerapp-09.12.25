@@ -13,7 +13,7 @@ button{background:var(--panel2);border:1px solid var(--border);border-radius:8px
 input,select,textarea{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;color:#fff;width:100%}
 textarea{min-height:80px;resize:vertical}
 
-.topbar{position:fixed;top:0;left:0;right:0;z-index:5000;background:#000;border-bottom:1px solid #333;padding:6px 8px}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:5000;background:#000;border-bottom:1px solid #333;padding:6px 8px;padding-top:calc(6px + env(safe-area-inset-top));}
 .actions{display:flex;gap:4px}
 .actions button{flex:1}
 
@@ -133,10 +133,7 @@ textarea{min-height:80px;resize:vertical}
   white-space:nowrap;
   will-change: transform;
 }
-.rowsInner .gridRow,
-.rowsInner .gridHeader{display:none;} /* ensure no leftover */
-
-.gridRow{
+..gridRow{
   display:grid;
   grid-template-columns: var(--cols);
   gap: var(--gap);
@@ -559,7 +556,8 @@ document.getElementById("btnPDF").addEventListener("click", ()=>{
 
 /* ===================== LAYOUT OFFSET ===================== */
 function adjust(){
-  const top = topbar.offsetHeight + 6;
+  const rect = topbar.getBoundingClientRect();
+  const top = Math.ceil(rect.height) + 6;
   document.body.style.paddingTop = top + "px";
   document.documentElement.style.setProperty("--topOffset", top + "px");
 }
