@@ -114,16 +114,18 @@ textarea{min-height:80px;resize:vertical}
   --topOffset: 58px; /* will be set by JS */
 }
 .gridHeaderSticky{
-  position:sticky;
+  position:fixed;
+  left:0; right:0;
   top: var(--topOffset);
-  z-index: 4000;
+  z-index: 4500;           /* unter Topbar (5000), über Zeilen */
   background:#000;
   border-bottom:1px solid #333;
-  padding:2px 0;
+  padding:2px 8px;         /* links/rechts wie Content */
   overflow:hidden;
-  pointer-events:none;
+  pointer-events:none;     /* Scroll-Gesten nicht blockieren */
 }
 .gridHeaderInner{pointer-events:none;
+pointer-events:none;
 
   display:grid;
   grid-template-columns: var(--cols);
