@@ -98,7 +98,6 @@ textarea{min-height:80px;resize:vertical}
 }
 .preview img{display:block;width:100%;height:auto;max-height:180px;object-fit:contain}
 
-.hint{color:var(--muted);font-size:9px;line-height:1.25;margin-top:8px}
 
 /* --- TABLE LAYOUT (STABIL: Sticky Header + Horizontal Scroll Sync) --- */
 .tableOuter{}
@@ -185,10 +184,7 @@ pointer-events:none;
       <div id="table" class="rowsInner"></div>
     </div>
   </div>
-  <div class="hint">Lange Artikel / „Wo gekauft“ bleiben 1-zeilig. Wenn etwas abgeschnitten ist: Tabelle seitlich scrollen.</div>
-</div>
-
-
+  </div>
 <!-- Artikel anlegen/bearbeiten (inkl. Notiz & Foto) -->
 <div id="modal">
  <div class="box">
@@ -447,6 +443,7 @@ document.getElementById("mSave").addEventListener("click", ()=>{
   modal.style.display="none";
   render();
   adjust();
+  adjust();
 });
 
 
@@ -518,6 +515,7 @@ document.getElementById("sSave").addEventListener("click", ()=>{
   try{ if(document.getElementById('salesModal') && document.getElementById('salesModal').style.display==='block'){ renderSales(); } }catch(e){}
   saleModal.style.display = "none";
   render();
+  adjust();
   adjust();
 });
 
