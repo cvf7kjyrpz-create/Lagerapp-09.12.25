@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-<title>Lager App – Stabil</title>
+<title>Lager App – Stabil (Header im Scroll-Container)</title>
 <style>
 :root{
   --bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff;
-  --stickyTop:64px;
+  --wrapTop:80px;
   --gap:2px;
   --cols: 44px 220px 38px 44px 78px 110px 58px 70px 72px;
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;-webkit-text-size-adjust:100%;overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
 button{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:5px 6px;font-size:10px}
 input,select,textarea{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;color:#fff;width:100%}
@@ -27,11 +27,27 @@ textarea{min-height:80px;resize:vertical}
 .actions{display:flex;gap:4px}
 .actions button{flex:1}
 
-.content{padding:8px}
-
+/* Einziger Scroll-Bereich unter der Topbar */
 .tableWrap{
-  overflow-x:auto;
+  position:fixed;
+  left:0; right:0; bottom:0;
+  top: var(--wrapTop);
+  overflow:auto;
   -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding:0 8px 12px 8px;
+  background:#000;
+}
+
+/* Header ist im Flow und sticky innerhalb tableWrap => KEIN Überlappen möglich */
+.gridHeader{
+  position:sticky;
+  top:0;
+  z-index:10;
+  background:#000;
+  border-bottom:1px solid #333;
+  padding:2px 0;
+  font-size:9px;
 }
 
 .gridHeader,.gridRow{
@@ -42,17 +58,6 @@ textarea{min-height:80px;resize:vertical}
   min-width: calc(44px + 220px + 38px + 44px + 78px + 110px + 58px + 70px + 72px + (8 * var(--gap)));
   white-space:nowrap;
 }
-
-.gridHeader{
-  position:sticky;
-  top: var(--stickyTop);
-  z-index:4000;          /* über Zeilen, unter Topbar */
-  background:#000;
-  border-bottom:1px solid #333;
-  font-size:9px;
-  padding:2px 0;
-}
-
 .gridRow{
   padding:1px 0;
   border-bottom:1px solid #2a2a2a;
@@ -101,13 +106,11 @@ textarea{min-height:80px;resize:vertical}
   </div>
 </div>
 
-<div class="content">
-  <div class="tableWrap" id="tableWrap">
-    <div class="gridHeader" id="gridHeader">
-      <div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>Kaufdatum</div><div>Wo gekauft</div><div>Größe</div><div>Zustand</div><div>Info</div>
-    </div>
-    <div id="table"></div>
+<div class="tableWrap" id="tableWrap">
+  <div class="gridHeader" id="gridHeader">
+    <div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>Kaufdatum</div><div>Wo gekauft</div><div>Größe</div><div>Zustand</div><div>Info</div>
   </div>
+  <div id="table"></div>
 </div>
 
 <!-- Artikel anlegen/bearbeiten -->
@@ -197,6 +200,8 @@ textarea{min-height:80px;resize:vertical}
 </div>
 
 <script>
+const $ = (id)=>document.getElementById(id);
+
 /* ===== Persistenz ===== */
 const LS_ITEMS = "lager_items_v3";
 const LS_SALES = "lager_sales_v2";
@@ -205,8 +210,6 @@ let sales = [];
 let editIndex = null;
 let saleIndex = null;
 let modalPhotoData = "";
-
-const $ = (id)=>document.getElementById(id);
 
 function extractItems(parsed){
   if(Array.isArray(parsed)) return parsed;
@@ -268,18 +271,16 @@ function esc(s){
   return String(s).replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 }
 
-/* ===== Layout: sticky header direkt unter Topbar ===== */
+/* ===== Layout ===== */
 function adjust(){
   const topbar = $("topbar");
-  const rect = topbar.getBoundingClientRect();
-  const top = Math.ceil(rect.height) + 6;
-  document.body.style.paddingTop = top + "px";
-  document.documentElement.style.setProperty("--stickyTop", top + "px");
+  const h = Math.ceil(topbar.getBoundingClientRect().height) + 6;
+  document.documentElement.style.setProperty("--wrapTop", h + "px");
 }
 window.addEventListener("resize", adjust);
 window.addEventListener("orientationchange", ()=>setTimeout(adjust, 80));
 
-/* ===== Render Tabelle ===== */
+/* ===== Render ===== */
 function render(){
   const table = $("table");
   table.innerHTML = "";
@@ -396,7 +397,6 @@ $("mSave").addEventListener("click", ()=>{
   saveLocal();
   $("modal").style.display="none";
   render();
-  adjust();
 });
 
 /* ===== Verkauf ===== */
@@ -476,7 +476,7 @@ function renderSales(){
       <div>${(Number(s.price||0)).toFixed(2)}</div>
       <div title="${esc(s.place||"")}">${esc(s.place||"")}</div>
     `;
-    $("salesList").appendChild(row);
+    el.appendChild(row);
   });
 }
 $("btnSalesTop").addEventListener("click", ()=>{ renderSales(); $("salesModal").style.display="block"; });
@@ -506,7 +506,6 @@ $("btnLoad").addEventListener("click", ()=>{
         items = normalizeItems(arr);
         saveLocal();
         render();
-        adjust();
       }catch(err){
         alert("Datei konnte nicht gelesen werden.");
       }
