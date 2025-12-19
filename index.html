@@ -446,6 +446,7 @@ document.getElementById("mSave").addEventListener("click", ()=>{
   saveLocal();
   modal.style.display="none";
   render();
+  adjust();
 });
 
 
@@ -517,6 +518,7 @@ document.getElementById("sSave").addEventListener("click", ()=>{
   try{ if(document.getElementById('salesModal') && document.getElementById('salesModal').style.display==='block'){ renderSales(); } }catch(e){}
   saleModal.style.display = "none";
   render();
+  adjust();
 });
 
 /* ===================== IMPORT / EXPORT ===================== */
@@ -542,6 +544,7 @@ document.getElementById("btnLoad").addEventListener("click", ()=>{
         items = normalizeItems(parsed);
         saveLocal();
         render();
+        adjust();
       }catch(err){
         alert("Datei konnte nicht gelesen werden.");
       }
