@@ -1,42 +1,29 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-<title>Lager App – Artikel Logik v1</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Lager App – Artikel anlegen & bearbeiten</title>
 <style>
 :root{--bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;padding-top:0}
-button,input{font:inherit;color:inherit}
-button{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:5px 6px;font-size:10px}
-input{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:4px 6px;color:#fff}
-
+button,input,select{font:inherit;color:inherit}
+button{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:5px 6px;font-size:10px}
+input,select{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;color:#fff;width:100%}
 .topbar{position:fixed;top:0;left:0;right:0;z-index:5000;background:#000;border-bottom:1px solid #333;padding:6px 8px}
 .actions{display:flex;gap:4px}
 .actions button{flex:1}
-
 .content{padding:8px}
-
-.gridHeader,.gridRow{
- display:grid;
- grid-template-columns:60px 1fr 50px 60px 60px 80px;
- gap:4px;align-items:center
-}
-.gridHeader{
- position:sticky;
- top:58px;
- background:#000;
- border-bottom:1px solid #333;
- font-size:10px;
-}
-.gridRow{padding:2px 0;border-bottom:1px solid #222;font-size:10px}
-.name{font-size:10px}
-.qty{width:44px;text-align:center}
-.ico{width:20px;height:20px;border:1px solid #333;border-radius:6px;display:flex;align-items:center;justify-content:center}
-
+.gridHeader,.gridRow{display:grid;grid-template-columns:50px 1fr 40px 45px 45px 60px;gap:4px;align-items:center}
+.gridHeader{position:sticky;top:52px;background:#000;border-bottom:1px solid #333;font-size:9px}
+.gridRow{padding:2px 0;border-bottom:1px solid #2a2a2a;font-size:9px}
+.name{font-size:9px}
+.qty{width:36px;text-align:center}
+.ico{width:18px;height:18px;border:1px solid #333;border-radius:5px;display:flex;align-items:center;justify-content:center}
 #modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000}
-#modalBox{background:#0b0b0b;border:1px solid #333;border-radius:12px;width:90%;max-width:420px;margin:12vh auto;padding:10px}
+#modalBox{background:#0b0b0b;border:1px solid #333;border-radius:12px;width:92%;max-width:420px;margin:10vh auto;padding:10px}
+#modalBox label{font-size:9px;color:#aaa;margin-top:6px;display:block}
 </style>
 </head>
 <body>
@@ -59,12 +46,17 @@ input{background:var(--panel2);border:1px solid var(--border);border-radius:9px;
 
 <div id="modal">
  <div id="modalBox">
-  <h3 style="margin:0 0 6px;font-size:13px">Artikel anlegen</h3>
-  <input id="mName" placeholder="Name" style="margin-bottom:6px">
-  <input id="mQty" type="number" value="1" placeholder="Menge" style="margin-bottom:6px">
-  <input id="mEK" type="number" value="0" placeholder="EK" style="margin-bottom:6px">
-  <input id="mVK" type="number" value="0" placeholder="VK" style="margin-bottom:8px">
-  <div style="display:flex;gap:6px">
+  <h3 id="modalTitle" style="margin:0 0 6px;font-size:12px">Artikel anlegen</h3>
+  <label>Artikelname</label><input id="mName">
+  <label>Menge</label><input id="mQty" type="number" value="1">
+  <label>EK</label><input id="mEK" type="number" value="0">
+  <label>VK</label><input id="mVK" type="number" value="0">
+  <label>Kaufdatum</label><input id="mDate" type="date">
+  <label>Wo gekauft</label><input id="mShop">
+  <label>Größe</label><input id="mSize">
+  <label>Zustand</label>
+  <select id="mState"><option>Neu</option><option>Neuwertig</option><option>Gebraucht</option></select>
+  <div style="display:flex;gap:6px;margin-top:10px">
     <button id="mSave" style="flex:1">Speichern</button>
     <button id="mCancel" style="flex:1">Abbrechen</button>
   </div>
@@ -72,62 +64,53 @@ input{background:var(--panel2);border:1px solid var(--border);border-radius:9px;
 </div>
 
 <script>
-let items = [];
-const table = document.getElementById("table");
+let items=[],editIndex=null;
+const table=document.getElementById("table");
 
 function render(){
  table.innerHTML="";
  items.forEach((a,i)=>{
   const r=document.createElement("div");
   r.className="gridRow";
-  r.innerHTML=`
-   <div>${String(i+1).padStart(3,"0")}</div>
+  r.innerHTML=`<div>${String(i+1).padStart(3,"0")}</div>
    <div class="name">${a.name}</div>
    <div><input class="qty" type="number" value="${a.qty}" onchange="items[${i}].qty=this.value"></div>
-   <div>${a.ek}</div>
-   <div>${a.vk}</div>
-   <div class="ico">✏️</div>`;
+   <div>${a.ek}</div><div>${a.vk}</div>
+   <div class="ico" onclick="edit(${i})">✏️</div>`;
   table.appendChild(r);
  });
 }
 
-btnAdd.onclick=()=>modal.style.display="block";
+function edit(i){
+ editIndex=i;
+ const a=items[i];
+ modalTitle.textContent="Artikel bearbeiten";
+ mName.value=a.name;mQty.value=a.qty;mEK.value=a.ek;mVK.value=a.vk;
+ mDate.value=a.date||"";mShop.value=a.shop||"";mSize.value=a.size||"";mState.value=a.state||"Neu";
+ modal.style.display="block";
+}
+
+btnAdd.onclick=()=>{editIndex=null;modalTitle.textContent="Artikel anlegen";mName.value="";mQty.value=1;mEK.value=0;mVK.value=0;mDate.value="";mShop.value="";mSize.value="";mState.value="Neu";modal.style.display="block"};
 mCancel.onclick=()=>modal.style.display="none";
+
 mSave.onclick=()=>{
- items.push({
-  name:mName.value,
-  qty:Number(mQty.value),
-  ek:Number(mEK.value),
-  vk:Number(mVK.value)
- });
- modal.style.display="none";
- mName.value="";mQty.value=1;mEK.value=0;mVK.value=0;
- render();
+ const o={name:mName.value,qty:+mQty.value,ek:+mEK.value,vk:+mVK.value,date:mDate.value,shop:mShop.value,size:mSize.value,state:mState.value};
+ editIndex===null?items.push(o):items[editIndex]=o;
+ modal.style.display="none";render();
 };
 
 btnSave.onclick=()=>{
- const blob=new Blob([JSON.stringify(items)],{type:"application/json"});
- const a=document.createElement("a");
- a.href=URL.createObjectURL(blob);
- a.download="lager_backup.json";
- a.click();
+ const blob=new Blob([JSON.stringify(items,null,2)],{type:"application/json"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="lager_backup.json";a.click();
 };
 
 btnLoad.onclick=()=>{
- const i=document.createElement("input");
- i.type="file";
- i.onchange=e=>{
-  const f=e.target.files[0];
-  const r=new FileReader();
-  r.onload=()=>{items=JSON.parse(r.result);render()};
-  r.readAsText(f);
- };
+ const i=document.createElement("input");i.type="file";
+ i.onchange=e=>{const r=new FileReader();r.onload=()=>{items=JSON.parse(r.result);render()};r.readAsText(e.target.files[0])};
  i.click();
 };
 
-function adjust(){
- document.body.style.paddingTop=(document.getElementById("topbar").offsetHeight+6)+"px";
-}
+function adjust(){document.body.style.paddingTop=(topbar.offsetHeight+6)+"px"}
 window.onresize=adjust;adjust();
 </script>
 
