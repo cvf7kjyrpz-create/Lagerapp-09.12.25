@@ -26,7 +26,7 @@ textarea{min-height:90px;resize:vertical}
   padding:6px 8px;
   padding-top:calc(6px + env(safe-area-inset-top));
 }
-.actions{display:flex;gap:6px}
+.actions{display:flex;gap:6px;margin-top:4px}
 .actions button{flex:1}
 
 .tableWrap{padding: calc(var(--topbarH,64px) + 8px) 8px 8px 8px;}
@@ -102,18 +102,68 @@ textarea{min-height:90px;resize:vertical}
 .salesHeader{display:grid;grid-template-columns:90px 86px 1fr 52px 70px 120px 78px;gap:6px;font-size:10px;color:#ddd;border-bottom:1px solid #333;padding:0 0 6px 0;white-space:nowrap}
 .salesRow{display:grid;grid-template-columns:90px 86px 1fr 52px 70px 120px 78px;gap:6px;font-size:10px;white-space:nowrap;padding:6px 0;border-bottom:1px solid #222}
 .salesActions{display:flex;gap:6px;justify-content:flex-end}
+
+/* Zähler oben */
+.stats{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:6px;
+  margin-top:6px;
+  padding-bottom:6px;
+}
+.stat{
+  min-width:0;
+  background:#0b0b0b;
+  border:1px solid #222;
+  border-radius:12px;
+  padding:6px 8px;
+  min-height:44px;
+}
+.stat .k{font-size:9px;color:#aaa;line-height:1.1}
+.stat .v{font-size:12px;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+
+@media (max-width: 420px){
+  .stats{grid-template-columns: repeat(2, minmax(0, 1fr));}
+  .stat{padding:5px 6px; min-height:40px;}
+  .stat .v{font-size:11px;}
+  .actions button{font-size:10px;padding:6px 6px;}
+}
+
+
+/* Suche unter den Zählern */
+.mainSearchWrap{margin-top:6px}
+#mainSearch{
+  width:100%;
+  font-size:11px;
+  padding:8px 10px;
+  border-radius:12px;
+  border:1px solid #333;
+  background:#111;
+  color:#fff;
+}
+
 </style>
 </head>
 <body>
 <div class="app" id="app">
   <div class="topbar" id="topbar">
-    <div class="actions">
+    <div class="stats" id="stats">
+      <div class="stat"><div class="k">Artikel</div>
+<div class="actions">
       <button id="btnAdd">Artikel</button>
       <button id="btnSalesTop">Verkäufe</button>
       <button id="btnSave">Sichern</button>
       <button id="btnLoad">Laden</button>
       <button id="btnPDF">PDF</button>
+    </div><div class="v" id="stArtikel">0</div></div>
+      <div class="stat"><div class="k">Gegenstände</div><div class="v" id="stStueck">0</div></div>
+      <div class="stat"><div class="k">Warenwert</div><div class="v" id="stWarenwert">0,00</div></div>
+      <div class="stat"><div class="k" id="stIVLabel">IV</div><div class="v" id="stIV">0,00</div></div>
+      <div class="stat"><div class="k">Umsatz</div><div class="v" id="stUmsatz">0,00</div></div>
+      <div class="stat"><div class="k">Gewinn</div><div class="v" id="stGewinn">0,00</div></div>
     </div>
+
   </div>
 
   <div class="tableWrap">
@@ -242,6 +292,8 @@ textarea{min-height:90px;resize:vertical}
 </div>
 
 <script>
+
+
 const $ = (id)=>document.getElementById(id);
 
 function bindTap(el, handler){
@@ -278,6 +330,7 @@ let editSaleId = null;
 let modalPhotoData = "";
 let selectedItemId = null; // nur UI
 let currentNoteItemId = null;
+let mainQuery = "";
 
 function parseYearFromDate(str){
   const m = String(str||"").match(/^(\\d{4})/);
@@ -353,6 +406,64 @@ function toDEDate(iso){
 }
 function fmt2(n){ return (Number(n||0)).toFixed(2); }
 
+function euro(n){
+  const v = Number(n||0);
+  return v.toLocaleString("de-DE", {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function updateStats(){
+  const artikel = items.length;
+  let stueck = 0;
+  let warenwert = 0;
+  for(const it of items){
+    const q = Number(it.qty||0);
+    const ek = Number(it.ek||0);
+    stueck += q;
+    warenwert += q * ek;
+  }
+
+  // IV = Gesamtwert, der jemals im Lager war (aktueller Bestand + verkaufte Menge), nach Kaufjahr (aktuelles Jahr anzeigen)
+  const year = String(new Date().getFullYear());
+  let iv = 0;
+  // sold qty per item (ohne Storno)
+  const soldMap = new Map();
+  for(const s of sales){
+    if(s && !s.storno){
+      const id = s.itemId;
+      soldMap.set(id, (soldMap.get(id)||0) + Number(s.qty||0));
+    }
+  }
+  for(const it of items){
+    const y = (String(it.date||"").match(/^(\d{4})/)||[])[1] || year;
+    if(y !== year) continue;
+    const qEver = Number(it.qty||0) + (soldMap.get(it.id)||0);
+    iv += qEver * Number(it.ek||0);
+  }
+
+  // Umsatz & Gewinn (ohne Storno)
+  let umsatz = 0;
+  let gewinn = 0;
+  for(const s of sales){
+    if(!s || s.storno) continue;
+    const q = Number(s.qty||0);
+    const price = Number(s.price||0);
+    const ship = Number(s.ship||0);
+    const ek = Number(s.ek||0);
+    // Umsatz = Preis + Versand (wenn du Versand als Einnahme nutzt, passt das; wenn Versand Kosten sind, ist Gewinn konservativer)
+    umsatz += price + ship;
+    // Gewinn = (Preis + Versand) - EK*qty - Versand (als Kosten) => konservativ: Versand mindert Gewinn
+    gewinn += (price + ship) - (ek*q) - ship;
+  }
+
+  const set = (id, val)=>{ const el=$(id); if(el) el.textContent = val; };
+  set("stArtikel", String(artikel));
+  set("stStueck", String(stueck));
+  set("stWarenwert", euro(warenwert));
+  const ivLabel = $("stIVLabel"); if(ivLabel) ivLabel.textContent = "IV " + year;
+  set("stIV", euro(iv));
+  set("stUmsatz", euro(umsatz));
+  set("stGewinn", euro(gewinn));
+}
+
 /* ===== Layout ===== */
 function adjust(){
   const topbar = $("topbar");
@@ -362,11 +473,22 @@ function adjust(){
 window.addEventListener("resize", adjust);
 window.addEventListener("orientationchange", ()=>setTimeout(adjust, 80));
 
+const _mainSearch = $("mainSearch");
+if(_mainSearch){ _mainSearch.addEventListener("input", ()=>{ mainQuery = String(_mainSearch.value||"").trim().toLowerCase(); render(); }); }
+
+
 /* ===== Render ===== */
 function render(){
   const table = $("table");
   table.innerHTML = "";
-  items.forEach((a,i)=>{
+  const list = items.map((it,idx)=>({it,idx}))
+    .filter(o=>{
+      if(!mainQuery) return true;
+      const a=o.it;
+      const hay = (String(a.artNo||"")+" "+String(a.name||"")+" "+String(a.size||"")+" "+String(a.shop||"")+" "+String(a.state||"")).toLowerCase();
+      return hay.includes(mainQuery);
+    });
+  list.forEach(({it:a,idx:i})=>{
     const hasNote = (a.note||"").trim().length>0;
     const hasPhoto = (a.photo||"").trim().length>0;
     const ekSum = (Number(a.qty)||0) * (Number(a.ek)||0);
@@ -433,6 +555,7 @@ function render(){
       if(act==="star") { toggleStar(idx); return; }
     });
   });
+  updateStats();
 }
 
 function toggleStar(i){
@@ -761,6 +884,7 @@ function renderSales(){
       else if(act==="del") deleteSale(sid);
     });
   });
+  updateStats();
 }
 
 bindTap($("btnSalesTop"), ()=>{ renderSales(); showModal("salesModal"); });
@@ -838,6 +962,8 @@ adjust();
 setTimeout(adjust, 0);
 setTimeout(adjust, 200);
 setTimeout(adjust, 600);
+
+
 </script>
 </body>
 </html>
