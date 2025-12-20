@@ -9,8 +9,8 @@
   --bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff;
   --gap:2px;
   --topbarH:64px;
-  --cols: 82px 206px 38px 50px 86px 120px 58px 74px 62px 86px;
-  /* Nr | Artikel | Menge | EK | EK Σ | Datum | Wo | Größe | Zustand | Aktionen */
+  --cols: 30px 82px 206px 38px 50px 86px 120px 58px 74px 62px 160px;
+  /* ★ | Nr | Artikel | Menge | EK | EK Σ | Datum | Wo | Größe | Zustand | Aktionen */
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;-webkit-text-size-adjust:100%;overflow:hidden}
@@ -21,7 +21,7 @@ textarea{min-height:90px;resize:vertical}
 
 .app{position:fixed;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:#000}
 .topbar{
-  position:sticky;top:0;z-index:9999;
+  position:fixed;top:0;left:0;right:0;z-index:9999;
   background:#000;border-bottom:1px solid #333;
   padding:6px 8px;
   padding-top:calc(6px + env(safe-area-inset-top));
@@ -29,11 +29,11 @@ textarea{min-height:90px;resize:vertical}
 .actions{display:flex;gap:6px}
 .actions button{flex:1}
 
-.tableWrap{padding:8px}
+.tableWrap{padding: calc(var(--topbarH,64px) + 8px) 8px 8px 8px}
 .tableX{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #222;border-radius:12px}
 .gridHeader{
   position:sticky;
-  top: var(--topbarH);
+  top: 0;
   z-index:50;
   background:#000;
   border-bottom:1px solid #333;
@@ -64,7 +64,7 @@ textarea{min-height:90px;resize:vertical}
 .gridRow.selected{background:rgba(0,110,255,.22)}
 .gridRow.starred{box-shadow: inset 0 0 0 9999px rgba(255,200,0,.12)}
 
-.icoBar{display:flex;gap:10px;justify-content:flex-end}
+.icoBar{display:flex;gap:10px;justify-content:flex-end;overflow:hidden}
 .ico{
   width:22px;height:22px;border:1px solid #333;border-radius:8px;
   display:flex;align-items:center;justify-content:center;
@@ -114,7 +114,7 @@ textarea{min-height:90px;resize:vertical}
   <div class="tableWrap">
     <div class="tableX" id="tableX">
       <div class="gridHeader" id="gridHeader">
-        <div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>EK Σ</div><div>Datum</div><div>Wo</div><div>Größe</div><div>Zustand</div><div>Aktion</div>
+        <div>★</div><div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>EK Σ</div><div>Datum</div><div>Wo</div><div>Größe</div><div>Zustand</div><div>Aktion</div>
       </div>
       <div id="table"></div>
     </div>
@@ -380,6 +380,7 @@ function render(){
     const ekSum = (Number(a.qty)||0) * (Number(a.ek)||0);
 
     row.innerHTML = `
+      <div class="ico" data-act="star" data-i="${i}" title="Stern">${a.star ? "★" : "☆"}</div>
       <div class="cellNo" title="${esc(a.artNo||"")}">${esc(a.artNo || String(i+1).padStart(3,"0"))}</div>
       <div class="name cellName" title="${esc(a.name)}">${esc(a.name)}</div>
       <div><input class="qty" data-i="${i}" type="number" inputmode="numeric" value="${Number(a.qty)||0}"></div>
@@ -390,7 +391,6 @@ function render(){
       <div class="small" title="${esc(a.size)}">${esc(a.size)}</div>
       <div class="small" title="${esc(a.state)}">${esc(a.state)}</div>
       <div class="icoBar">
-        <div class="ico" data-act="star" data-i="${i}" title="Stern">${a.star ? "★" : "☆"}</div>
         <div class="ico ${hasPhoto?'':'muted'}" data-act="photo" data-i="${i}" title="Foto">📷</div>
         <div class="ico ${hasNote?'':'muted'}" data-act="note" data-i="${i}" title="Notiz">📝</div>
         <div class="ico" data-act="sale" data-i="${i}" title="Verkaufen">🛒</div>
