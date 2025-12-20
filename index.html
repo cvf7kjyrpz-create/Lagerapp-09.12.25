@@ -153,7 +153,7 @@ textarea{min-height:90px;resize:vertical}
       <div class="stat"><div class="k">Artikel</div><div class="v" id="stArtikel">0</div></div>
       <div class="stat"><div class="k">Gegenstände</div><div class="v" id="stStueck">0</div></div>
       <div class="stat"><div class="k">Warenwert</div><div class="v" id="stWarenwert">0,00</div></div>
-      <div class="stat"><div class="k" id="stIVLabel">IV</div><div class="v" id="stIV">0,00</div></div>
+      <div class="stat"><div class="k" id="stIVLabel">Warenwert Gesamt</div><div class="v" id="stIV">0,00</div></div>
       <div class="stat"><div class="k">Umsatz</div><div class="v" id="stUmsatz">0,00</div></div>
       <div class="stat"><div class="k">Gewinn</div><div class="v" id="stGewinn">0,00</div></div>
     </div>
@@ -299,6 +299,7 @@ textarea{min-height:90px;resize:vertical}
 
 <script>
 
+
 const $ = (id)=>document.getElementById(id);
 
 function bindTap(el, handler){
@@ -378,8 +379,8 @@ function normalizeItems(arr){
     id: String(x.id || x._id || x.uuid || (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2)))),
     artNo: String(x.artNo ?? x.artnr ?? x.nr ?? x.artikelnummer ?? x.artikelNr ?? x.artikel_nr ?? x.articleNo ?? x.articleNumber ?? ""),
     name: String(x.name ?? x.artikelname ?? x.artikel ?? x.bezeichnung ?? ""),
-    qty: Number(x.qty ?? x.menge ?? 0),
-    ek: Number(x.ek ?? x.einkauf ?? x.preis ?? 0),
+    qty: toNum(x.qty ?? x.menge ?? 0),
+    ek: toNum(x.ek ?? x.einkauf ?? x.preis ?? 0),
     date: String(x.date ?? x.kaufdatum ?? x.datum ?? ""),
     shop: String(x.shop ?? x.wo ?? x.ort ?? ""),
     size: String(x.size ?? x.groesse ?? ""),
@@ -410,6 +411,16 @@ function toDEDate(iso){
   return m[3]+"."+m[2]+"."+m[1];
 }
 function fmt2(n){ return (Number(n||0)).toFixed(2); 
+function toNum(v){
+  if(v===null || v===undefined) return 0;
+  if(typeof v === "number") return Number.isFinite(v) ? v : 0;
+  let s = String(v).trim();
+  if(!s) return 0;
+  // allow German comma decimals
+  s = s.replace(/\./g, "").replace(/,/g, ".");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
 function euro(n){
   const v = Number(n||0);
   return v.toLocaleString("de-DE", {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -420,8 +431,8 @@ function updateStats(){
   let stueck = 0;
   let warenwert = 0;
   for(const it of items){
-    const q = Number(it.qty||0);
-    const ek = Number(it.ek||0);
+    const q = toNum(it.qty);
+    const ek = toNum(it.ek);
     stueck += q;
     warenwert += q * ek;
   }
@@ -431,15 +442,15 @@ function updateStats(){
   const soldMap = new Map();
   for(const s of sales){
     if(s && !s.storno){
-      soldMap.set(s.itemId, (soldMap.get(s.itemId)||0) + Number(s.qty||0));
+      soldMap.set(s.itemId, (soldMap.get(s.itemId)||0) + toNum(s.qty));
     }
   }
   let iv = 0;
   for(const it of items){
     const y = (String(it.date||"").match(/^(\d{4})/)||[])[1] || year;
     if(y !== year) continue;
-    const qEver = Number(it.qty||0) + (soldMap.get(it.id)||0);
-    iv += qEver * Number(it.ek||0);
+    const qEver = toNum(it.qty) + (soldMap.get(it.id)||0);
+    iv += qEver * toNum(it.ek);
   }
 
   // Umsatz & Gewinn (ohne Storno)
@@ -447,10 +458,10 @@ function updateStats(){
   let gewinn = 0;
   for(const s of sales){
     if(!s || s.storno) continue;
-    const q = Number(s.qty||0);
-    const price = Number(s.price||0);
-    const ship = Number(s.ship||0);
-    const ek = Number(s.ek||0);
+    const q = toNum(s.qty);
+    const price = toNum(s.price);
+    const ship = toNum(s.ship);
+    const ek = toNum(s.ek);
     umsatz += price + ship;
     gewinn += price - (ek*q); // Versand neutral
   }
@@ -459,7 +470,7 @@ function updateStats(){
   set("stArtikel", String(artikel));
   set("stStueck", String(stueck));
   set("stWarenwert", euro(warenwert));
-  const ivLabel = $("stIVLabel"); if(ivLabel) ivLabel.textContent = "IV " + year;
+  const ivLabel = $("stIVLabel"); if(ivLabel) ivLabel.textContent = "Warenwert Gesamt " + year;
   set("stIV", euro(iv));
   set("stUmsatz", euro(umsatz));
   set("stGewinn", euro(gewinn));
@@ -479,6 +490,7 @@ if(_mainSearch){
   _mainSearch.addEventListener("input", ()=>{
     mainQuery = String(_mainSearch.value||"").trim().toLowerCase();
     render();
+        updateStats();
   });
 }
 
@@ -496,7 +508,7 @@ function render(){
   list.forEach(({it:a,idx:i})=>{
     const hasNote = (a.note||"").trim().length>0;
     const hasPhoto = (a.photo||"").trim().length>0;
-    const ekSum = (Number(a.qty)||0) * (Number(a.ek)||0);
+    const ekSum = toNum(a.qty) * toNum(a.ek);
 
     const row = document.createElement("div");
     row.className =
@@ -540,7 +552,7 @@ function render(){
     inp.addEventListener("click", (ev)=>ev.stopPropagation());
     inp.addEventListener("change", (e)=>{
       const idx = Number(e.target.dataset.i);
-      items[idx].qty = Number(e.target.value||0);
+      items[idx].qty = toNum(e.target.value);
       saveLocal();
       render();
     });
@@ -591,8 +603,8 @@ function resetPhotoUI(){
   }
 }
 function recalcEKSum(){
-  const qty = Number($("mQty").value||0);
-  const ek = Number($("mEK").value||0);
+  const qty = toNum($("mQty").value);
+  const ek = toNum($("mEK").value);
   $("mEKSum").value = fmt2(qty*ek);
 }
 $("mQty").addEventListener("input", recalcEKSum);
@@ -644,8 +656,8 @@ bindTap($("mSave"), ()=>{
     id: (editIndex===null ? (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2))) : (items[editIndex].id || (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2))))),
     artNo: ($("mArtNo").value||"").trim(),
     name: ($("mName").value||"").trim(),
-    qty: Number($("mQty").value||0),
-    ek: Number($("mEK").value||0),
+    qty: toNum($("mQty").value),
+    ek: toNum($("mEK").value),
     date: $("mDate").value||"",
     shop: ($("mShop").value||"").trim(),
     size: ($("mSize").value||"").trim(),
@@ -738,7 +750,7 @@ function openSaleEdit(saleId){
 }
 
 bindTap($("sSave"), ()=>{
-  const qty = Number($("sQty").value||0);
+  const qty = toNum($("sQty").value);
   if(!qty || qty<=0){ alert("Bitte Menge > 0 eingeben."); return; }
 
   if(editSaleId){
@@ -780,7 +792,7 @@ bindTap($("sSave"), ()=>{
 
   if(saleIndex===null){ alert("Artikel nicht gefunden."); return; }
   const a = items[saleIndex];
-  const current = Number(a.qty||0);
+  const current = toNum(a.qty);
   if(qty>current){ alert("Menge zu hoch. Bestand: "+current); return; }
 
   const rec = {
@@ -966,6 +978,7 @@ adjust();
 setTimeout(adjust, 0);
 setTimeout(adjust, 200);
 setTimeout(adjust, 600);
+
 
 </script>
 </body>
