@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 <title>Lager App – Stabil (Header im Scroll-Container)</title>
 <style>
+.app{position:fixed;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:#000}
+
 :root{
   --bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff;
   --wrapTop:80px;
@@ -19,7 +21,7 @@ input,select,textarea{background:var(--panel2);border:1px solid var(--border);bo
 textarea{min-height:80px;resize:vertical}
 
 .topbar{
-  position:fixed;top:0;left:0;right:0;z-index:5000;
+  position:sticky;top:0;z-index:5000;
   background:#000;border-bottom:1px solid #333;
   padding:6px 8px;
   padding-top:calc(6px + env(safe-area-inset-top));
@@ -29,9 +31,6 @@ textarea{min-height:80px;resize:vertical}
 
 /* Einziger Scroll-Bereich unter der Topbar */
 .tableWrap{
-  position:fixed;
-  left:0; right:0; bottom:0;
-  top: var(--wrapTop);
   overflow:auto;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
@@ -42,7 +41,7 @@ textarea{min-height:80px;resize:vertical}
 /* Header ist im Flow und sticky innerhalb tableWrap => KEIN Überlappen möglich */
 .gridHeader{
   position:sticky;
-  top:0;
+  top: var(--topbarH, 64px);
   z-index:10;
   background:#000;
   border-bottom:1px solid #333;
@@ -102,6 +101,7 @@ textarea{min-height:80px;resize:vertical}
 </head>
 
 <body>
+<div class="app" id="app">
 <div class="topbar" id="topbar">
   <div class="actions">
     <button id="btnAdd">+ Artikel</button>
@@ -319,8 +319,9 @@ function esc(s){
 /* ===== Layout ===== */
 function adjust(){
   const topbar = $("topbar");
-  const h = Math.ceil(topbar.getBoundingClientRect().height) + 6;
-  document.documentElement.style.setProperty("--wrapTop", h + "px");
+  const h = Math.ceil(topbar.getBoundingClientRect().height);
+  // gridHeader klebt direkt unter der Topbar
+  document.documentElement.style.setProperty("--topbarH", (h) + "px");
 }
 window.addEventListener("resize", adjust);
 window.addEventListener("orientationchange", ()=>setTimeout(adjust, 80));
@@ -811,7 +812,8 @@ saveLocal();
 render();
 adjust();
 setTimeout(adjust, 0);
-setTimeout(adjust, 250);
+setTimeout(adjust, 200);
+setTimeout(adjust, 600);
 </script>
 
 <!-- Foto ansehen -->
