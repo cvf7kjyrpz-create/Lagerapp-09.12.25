@@ -22,11 +22,14 @@ textarea{min-height:90px;resize:vertical}
 .app{position:fixed;inset:0;overflow:hidden;background:#000}
 .topbar{
   position:fixed;top:0;left:0;right:0;z-index:9999;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
   background:#000;border-bottom:1px solid #333;
   padding:6px 8px;
   padding-top:calc(6px + env(safe-area-inset-top));
 }
-.actions{display:flex;gap:6px;margin-top:4px}
+.actions{display:flex;gap:6px}
 .actions button{flex:1}
 
 .tableWrap{padding: calc(var(--topbarH,64px) + 8px) 8px 8px 8px;}
@@ -105,6 +108,7 @@ textarea{min-height:90px;resize:vertical}
 
 /* Zähler oben */
 .stats{
+  margin:0;
   display:grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap:6px;
@@ -132,7 +136,7 @@ textarea{min-height:90px;resize:vertical}
 
 
 /* Suche unter den Zählern */
-.mainSearchWrap{margin-top:6px}
+.mainSearchWrap{margin:0}
 #mainSearch{
   width:100%;
   font-size:11px;
