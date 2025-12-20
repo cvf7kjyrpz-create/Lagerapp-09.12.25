@@ -19,7 +19,7 @@ button{background:var(--panel2);border:1px solid var(--border);border-radius:10p
 input,select,textarea{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:6px 8px;color:#fff;width:100%}
 textarea{min-height:90px;resize:vertical}
 
-.app{position:fixed;inset:0;overflow:hidden;background:#000}
+.app{position:fixed;inset:0;overflow:hidden;background:#000;overscroll-behavior:none}
 .topbar{
   position:fixed;top:0;left:0;right:0;z-index:9999;
   background:#000;border-bottom:1px solid #333;
@@ -32,6 +32,9 @@ textarea{min-height:90px;resize:vertical}
 .tableWrap{padding: calc(var(--topbarH,64px) + 8px) 8px 8px 8px;}
 .tableX{
   overflow:auto;
+  overscroll-behavior:contain;
+  overscroll-behavior-x:contain;
+  overscroll-behavior-y:contain;
   -webkit-overflow-scrolling:touch;
   border:1px solid #222;border-radius:12px;
   max-height:calc(100vh - var(--topbarH,64px) - 18px);
@@ -241,6 +244,7 @@ textarea{min-height:90px;resize:vertical}
 </div>
 
 <script>
+
 const $ = (id)=>document.getElementById(id);
 
 function bindTap(el, handler){
@@ -360,6 +364,42 @@ function adjust(){
 }
 window.addEventListener("resize", adjust);
 window.addEventListener("orientationchange", ()=>setTimeout(adjust, 80));
+
+
+function bindNoOverscroll(){
+  const sc = $("tableX");
+  if(!sc) return;
+
+  let startX=0,startY=0,startLeft=0,startTop=0;
+
+  sc.addEventListener("touchstart", (e)=>{
+    if(!e.touches || e.touches.length!==1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    startLeft = sc.scrollLeft;
+    startTop = sc.scrollTop;
+  }, {passive:true});
+
+  sc.addEventListener("touchmove", (e)=>{
+    if(!e.touches || e.touches.length!==1) return;
+
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    const dx = x - startX;
+    const dy = y - startY;
+
+    const atTop = sc.scrollTop <= 0;
+    const atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
+    const atLeft = sc.scrollLeft <= 0;
+    const atRight = sc.scrollLeft + sc.clientWidth >= sc.scrollWidth - 1;
+
+    // Wenn am Rand und in die "falsche" Richtung gezogen wird -> verhindern (kein Überziehen)
+    if((atTop && dy > 0) || (atBottom && dy < 0) || (atLeft && dx > 0) || (atRight && dx < 0)){
+      e.preventDefault();
+    }
+  }, {passive:false});
+}
+
 
 /* ===== Render ===== */
 function render(){
@@ -833,10 +873,12 @@ loadSales();
 items = items.map(x=>({id: x.id || (crypto.randomUUID?crypto.randomUUID():('id_'+Math.random().toString(16).slice(2))), ...x}));
 saveLocal();
 render();
+bindNoOverscroll();
 adjust();
 setTimeout(adjust, 0);
 setTimeout(adjust, 200);
 setTimeout(adjust, 600);
+
 </script>
 </body>
 </html>
