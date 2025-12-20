@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 <title>Lager App – Stabil (Header im Scroll-Container)</title>
 <style>
-.app{position:fixed;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:#000}
-
 :root{
   --bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff;
   --wrapTop:80px;
@@ -21,7 +19,7 @@ input,select,textarea{background:var(--panel2);border:1px solid var(--border);bo
 textarea{min-height:80px;resize:vertical}
 
 .topbar{
-  position:sticky;top:0;z-index:5000;
+  position:fixed;top:0;left:0;right:0;z-index:5000;
   background:#000;border-bottom:1px solid #333;
   padding:6px 8px;
   padding-top:calc(6px + env(safe-area-inset-top));
@@ -31,6 +29,9 @@ textarea{min-height:80px;resize:vertical}
 
 /* Einziger Scroll-Bereich unter der Topbar */
 .tableWrap{
+  position:fixed;
+  left:0; right:0; bottom:0;
+  top: var(--wrapTop);
   overflow:auto;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
@@ -41,7 +42,7 @@ textarea{min-height:80px;resize:vertical}
 /* Header ist im Flow und sticky innerhalb tableWrap => KEIN Überlappen möglich */
 .gridHeader{
   position:sticky;
-  top: var(--topbarH, 64px);
+  top:0;
   z-index:10;
   background:#000;
   border-bottom:1px solid #333;
@@ -101,7 +102,6 @@ textarea{min-height:80px;resize:vertical}
 </head>
 
 <body>
-<div class="app" id="app">
 <div class="topbar" id="topbar">
   <div class="actions">
     <button id="btnAdd">+ Artikel</button>
@@ -210,6 +210,7 @@ textarea{min-height:80px;resize:vertical}
 </div>
 
 <script>
+
 const $ = (id)=>document.getElementById(id);
 
 /* ===== Persistenz ===== */
@@ -319,9 +320,8 @@ function esc(s){
 /* ===== Layout ===== */
 function adjust(){
   const topbar = $("topbar");
-  const h = Math.ceil(topbar.getBoundingClientRect().height);
-  // gridHeader klebt direkt unter der Topbar
-  document.documentElement.style.setProperty("--topbarH", (h) + "px");
+  const h = Math.ceil(topbar.getBoundingClientRect().height) + 6;
+  document.documentElement.style.setProperty("--wrapTop", h + "px");
 }
 window.addEventListener("resize", adjust);
 window.addEventListener("orientationchange", ()=>setTimeout(adjust, 80));
@@ -488,8 +488,8 @@ function openNoteView(i){
   $("viewNoteText").textContent = a.note;
   $("viewNoteModal").style.display = "block";
 }
-$("viewPhotoClose").addEventListener("click", ()=>{ $("viewPhotoModal").style.display="none"; });
-$("viewNoteClose").addEventListener("click", ()=>{ $("viewNoteModal").style.display="none"; });
+const _vpc=$("viewPhotoClose"); if(_vpc){ _vpc.addEventListener("click", ()=>{ $("viewPhotoModal").style.display="none"; }); }
+const _vnc=$("viewNoteClose"); if(_vnc){ _vnc.addEventListener("click", ()=>{ $("viewNoteModal").style.display="none"; }); }
 
 
 /* ===== Verkauf ===== */
@@ -732,10 +732,11 @@ function deleteSale(sid){
   }
 }
 
-$("salesSearch").addEventListener("input", ()=>renderSales());
+const _salesSearch = $("salesSearch");
+if(_salesSearch){ _salesSearch.addEventListener("input", ()=>renderSales()); }
 
 $("btnSalesTop").addEventListener("click", ()=>{ renderSales(); $("salesModal").style.display="block"; });
-$("salesClose").addEventListener("click", ()=>{ $("salesModal").style.display="none"; });
+const _salesClose=$("salesClose"); if(_salesClose){ _salesClose.addEventListener("click", ()=>{ $("salesModal").style.display="none"; }); }
 
 /* ===== Export / Import ===== */
 $("btnSave").addEventListener("click", ()=>{
@@ -812,8 +813,8 @@ saveLocal();
 render();
 adjust();
 setTimeout(adjust, 0);
-setTimeout(adjust, 200);
-setTimeout(adjust, 600);
+setTimeout(adjust, 250);
+
 </script>
 
 <!-- Foto ansehen -->
