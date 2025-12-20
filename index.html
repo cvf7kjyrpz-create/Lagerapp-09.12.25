@@ -9,7 +9,7 @@
   --bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff;
   --wrapTop:80px;
   --gap:2px;
-  --cols: 44px 220px 38px 44px 78px 110px 58px 70px 72px;
+  --cols: 78px 206px 38px 44px 78px 110px 58px 70px 72px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;-webkit-text-size-adjust:100%;overflow:hidden}
@@ -97,6 +97,13 @@ textarea{min-height:80px;resize:vertical}
 .gridRow.zero{background:rgba(180,0,0,.18)}
 .ico.danger{border-color:#5a2222}
 .ico.danger:active{transform:scale(.98)}
+
+
+/* Trennung Artikelnummer <-> Artikelname */
+.cellNo{padding-right:8px;border-right:1px solid #333;overflow:hidden;text-overflow:ellipsis}
+.cellName{padding-left:8px}
+/* Zeile auswählen (nur visuell, nicht gespeichert) */
+.gridRow.selected{background:rgba(0,110,255,.22)}
 
 </style>
 </head>
@@ -222,6 +229,7 @@ let editIndex = null;
 let saleIndex = null;
 let editSaleId = null;
 let modalPhotoData = "";
+let selectedItemId = null; // nur UI, nicht speichern
 
 
 function extractItemsFromHTMLText(text){
@@ -335,10 +343,10 @@ function render(){
     const hasPhoto = (a.photo||"").trim().length>0;
 
     const row = document.createElement("div");
-    row.className = "gridRow" + ((Number(a.qty)||0)<=0 ? " zero" : "");
+    row.className = "gridRow" + ((Number(a.qty)||0)<=0 ? " zero" : "") + (a.id===selectedItemId ? " selected" : "");
     row.innerHTML = `
-      <div>${esc(a.artNo || String(i+1).padStart(3,"0"))}</div>
-      <div class="name" title="${esc(a.name)}">${esc(a.name)}</div>
+      <div class="cellNo" title="${esc(a.artNo || "")}">${esc(a.artNo || String(i+1).padStart(3,"0"))}</div>
+      <div class="name cellName" title="${esc(a.name)}">${esc(a.name)}</div>
       <div><input class="qty" data-i="${i}" type="number" inputmode="numeric" value="${Number(a.qty)||0}"></div>
       <div class="small" title="${(Number(a.ek)||0).toFixed(2)}">${(Number(a.ek)||0).toFixed(2)}</div>
       <div class="small" title="${esc(a.date)}">${esc(a.date)}</div>
@@ -353,10 +361,20 @@ function render(){
         <div class="ico danger" data-act="delItem" data-i="${i}" title="Löschen">🗑️</div>
       </div>
     `;
+    
+    // Zeile anklicken => blau markieren (toggle), aber NICHT wenn man in Inputs/Icons klickt
+    row.addEventListener("click", (ev)=>{
+      const t = ev.target;
+      if(t && (t.closest("input") || t.closest(".ico"))) return;
+      const id = a.id;
+      selectedItemId = (selectedItemId === id) ? null : id;
+      render();
+    });
     table.appendChild(row);
   });
 
   table.querySelectorAll("input.qty").forEach(inp=>{
+    inp.addEventListener("click", (ev)=>ev.stopPropagation());
     inp.addEventListener("change", (e)=>{
       const idx = Number(e.target.dataset.i);
       items[idx].qty = Number(e.target.value||0);
@@ -365,7 +383,8 @@ function render(){
   });
 
   table.querySelectorAll(".ico").forEach(ico=>{
-    ico.addEventListener("click", ()=>{
+    ico.addEventListener("click", (ev)=>{
+      ev.stopPropagation();
       const idx = Number(ico.dataset.i);
       const act = ico.dataset.act;
       if(act==="sale") { openSale(idx); return; }
@@ -810,6 +829,7 @@ for(const it of items){
   }
 }
 saveLocal();
+selectedItemId = null;
 render();
 adjust();
 setTimeout(adjust, 0);
