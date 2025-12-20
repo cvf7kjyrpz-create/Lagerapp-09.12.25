@@ -379,6 +379,7 @@ function render(){
       const idx = Number(e.target.dataset.i);
       items[idx].qty = Number(e.target.value||0);
       saveLocal();
+      render();
     });
   });
 
@@ -509,6 +510,12 @@ function openNoteView(i){
 }
 const _vpc=$("viewPhotoClose"); if(_vpc){ _vpc.addEventListener("click", ()=>{ $("viewPhotoModal").style.display="none"; }); }
 const _vnc=$("viewNoteClose"); if(_vnc){ _vnc.addEventListener("click", ()=>{ $("viewNoteModal").style.display="none"; }); }
+// Klick außerhalb der Box schließt (iOS-Fallback)
+const _vpnm=$("viewNoteModal");
+if(_vpnm){ _vpnm.addEventListener("click",(ev)=>{ if(ev.target===_vpnm) _vpnm.style.display="none"; }); }
+const _vppm=$("viewPhotoModal");
+if(_vppm){ _vppm.addEventListener("click",(ev)=>{ if(ev.target===_vppm) _vppm.style.display="none"; }); }
+
 
 
 /* ===== Verkauf ===== */
