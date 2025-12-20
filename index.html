@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 <title>Lager App – Stabil v27</title>
 <style>
+
 :root{
   --bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff;
   --gap:2px;
@@ -22,12 +23,13 @@ textarea{min-height:90px;resize:vertical}
 .app{position:fixed;inset:0;overflow:hidden;background:#000}
 .topbar{
   position:fixed;top:0;left:0;right:0;z-index:9999;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
   background:#000;border-bottom:1px solid #333;
   padding:6px 8px;
   padding-top:calc(6px + env(safe-area-inset-top));
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+
 }
 .actions{display:flex;gap:6px}
 .actions button{flex:1}
@@ -106,14 +108,12 @@ textarea{min-height:90px;resize:vertical}
 .salesRow{display:grid;grid-template-columns:90px 86px 1fr 52px 70px 120px 78px;gap:6px;font-size:10px;white-space:nowrap;padding:6px 0;border-bottom:1px solid #222}
 .salesActions{display:flex;gap:6px;justify-content:flex-end}
 
-/* Zähler oben */
+
+/* Zähler + Suche oben (stabil, kein Overlap) */
 .stats{
-  margin:0;
   display:grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap:6px;
-  margin-top:6px;
-  padding-bottom:6px;
 }
 .stat{
   min-width:0;
@@ -121,22 +121,11 @@ textarea{min-height:90px;resize:vertical}
   border:1px solid #222;
   border-radius:12px;
   padding:6px 8px;
-  min-height:44px;
 }
 .stat .k{font-size:9px;color:#aaa;line-height:1.1}
 .stat .v{font-size:12px;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-
-@media (max-width: 420px){
-  .stats{grid-template-columns: repeat(2, minmax(0, 1fr));}
-  .stat{padding:5px 6px; min-height:40px;}
-  .stat .v{font-size:11px;}
-  .actions button{font-size:10px;padding:6px 6px;}
-}
-
-
-/* Suche unter den Zählern */
-.mainSearchWrap{margin:0}
+.mainSearchWrap{min-width:0}
 #mainSearch{
   width:100%;
   font-size:11px;
@@ -147,25 +136,38 @@ textarea{min-height:90px;resize:vertical}
   color:#fff;
 }
 
+@media (max-width: 420px){
+  .stats{grid-template-columns: repeat(2, minmax(0, 1fr));}
+  .stat{padding:5px 6px}
+  .stat .v{font-size:11px}
+  .actions button{font-size:10px;padding:6px 6px}
+}
+
 </style>
 </head>
 <body>
 <div class="app" id="app">
   <div class="topbar" id="topbar">
+    
     <div class="stats" id="stats">
-      <div class="stat"><div class="k">Artikel</div>
-<div class="actions">
-      <button id="btnAdd">Artikel</button>
-      <button id="btnSalesTop">Verkäufe</button>
-      <button id="btnSave">Sichern</button>
-      <button id="btnLoad">Laden</button>
-      <button id="btnPDF">PDF</button>
-    </div><div class="v" id="stArtikel">0</div></div>
+      <div class="stat"><div class="k">Artikel</div><div class="v" id="stArtikel">0</div></div>
       <div class="stat"><div class="k">Gegenstände</div><div class="v" id="stStueck">0</div></div>
       <div class="stat"><div class="k">Warenwert</div><div class="v" id="stWarenwert">0,00</div></div>
       <div class="stat"><div class="k" id="stIVLabel">IV</div><div class="v" id="stIV">0,00</div></div>
       <div class="stat"><div class="k">Umsatz</div><div class="v" id="stUmsatz">0,00</div></div>
       <div class="stat"><div class="k">Gewinn</div><div class="v" id="stGewinn">0,00</div></div>
+    </div>
+
+    <div class="mainSearchWrap">
+      <input id="mainSearch" placeholder="Suchen: Nr, Artikel, Größe, Wo gekauft, Zustand …" autocomplete="off">
+    </div>
+
+    <div class="actions">
+      <button id="btnAdd">Artikel</button>
+      <button id="btnSalesTop">Verkäufe</button>
+      <button id="btnSave">Sichern</button>
+      <button id="btnLoad">Laden</button>
+      <button id="btnPDF">PDF</button>
     </div>
 
   </div>
@@ -297,7 +299,6 @@ textarea{min-height:90px;resize:vertical}
 
 <script>
 
-
 const $ = (id)=>document.getElementById(id);
 
 function bindTap(el, handler){
@@ -408,14 +409,14 @@ function toDEDate(iso){
   if(!m) return String(iso||"");
   return m[3]+"."+m[2]+"."+m[1];
 }
-function fmt2(n){ return (Number(n||0)).toFixed(2); }
-
+function fmt2(n){ return (Number(n||0)).toFixed(2); 
 function euro(n){
   const v = Number(n||0);
   return v.toLocaleString("de-DE", {minimumFractionDigits:2, maximumFractionDigits:2});
 }
 function updateStats(){
   const artikel = items.length;
+
   let stueck = 0;
   let warenwert = 0;
   for(const it of items){
@@ -425,17 +426,15 @@ function updateStats(){
     warenwert += q * ek;
   }
 
-  // IV = Gesamtwert, der jemals im Lager war (aktueller Bestand + verkaufte Menge), nach Kaufjahr (aktuelles Jahr anzeigen)
+  // IV = "jemals im Lager" (aktueller Bestand + verkaufte Menge) für das aktuelle Jahr (nach Kaufdatum)
   const year = String(new Date().getFullYear());
-  let iv = 0;
-  // sold qty per item (ohne Storno)
   const soldMap = new Map();
   for(const s of sales){
     if(s && !s.storno){
-      const id = s.itemId;
-      soldMap.set(id, (soldMap.get(id)||0) + Number(s.qty||0));
+      soldMap.set(s.itemId, (soldMap.get(s.itemId)||0) + Number(s.qty||0));
     }
   }
+  let iv = 0;
   for(const it of items){
     const y = (String(it.date||"").match(/^(\d{4})/)||[])[1] || year;
     if(y !== year) continue;
@@ -452,10 +451,8 @@ function updateStats(){
     const price = Number(s.price||0);
     const ship = Number(s.ship||0);
     const ek = Number(s.ek||0);
-    // Umsatz = Preis + Versand (wenn du Versand als Einnahme nutzt, passt das; wenn Versand Kosten sind, ist Gewinn konservativer)
     umsatz += price + ship;
-    // Gewinn = (Preis + Versand) - EK*qty - Versand (als Kosten) => konservativ: Versand mindert Gewinn
-    gewinn += (price + ship) - (ek*q) - ship;
+    gewinn += price - (ek*q); // Versand neutral
   }
 
   const set = (id, val)=>{ const el=$(id); if(el) el.textContent = val; };
@@ -467,6 +464,7 @@ function updateStats(){
   set("stUmsatz", euro(umsatz));
   set("stGewinn", euro(gewinn));
 }
+}
 
 /* ===== Layout ===== */
 function adjust(){
@@ -476,22 +474,25 @@ function adjust(){
 }
 window.addEventListener("resize", adjust);
 window.addEventListener("orientationchange", ()=>setTimeout(adjust, 80));
-
 const _mainSearch = $("mainSearch");
-if(_mainSearch){ _mainSearch.addEventListener("input", ()=>{ mainQuery = String(_mainSearch.value||"").trim().toLowerCase(); render(); }); }
+if(_mainSearch){
+  _mainSearch.addEventListener("input", ()=>{
+    mainQuery = String(_mainSearch.value||"").trim().toLowerCase();
+    render();
+  });
+}
 
 
 /* ===== Render ===== */
 function render(){
   const table = $("table");
   table.innerHTML = "";
-  const list = items.map((it,idx)=>({it,idx}))
-    .filter(o=>{
-      if(!mainQuery) return true;
-      const a=o.it;
-      const hay = (String(a.artNo||"")+" "+String(a.name||"")+" "+String(a.size||"")+" "+String(a.shop||"")+" "+String(a.state||"")).toLowerCase();
-      return hay.includes(mainQuery);
-    });
+  const list = items.map((it,idx)=>({it,idx})).filter(o=>{
+    if(!mainQuery) return true;
+    const a=o.it;
+    const hay = (String(a.artNo||"")+" "+String(a.name||"")+" "+String(a.size||"")+" "+String(a.shop||"")+" "+String(a.state||"")).toLowerCase();
+    return hay.includes(mainQuery);
+  });
   list.forEach(({it:a,idx:i})=>{
     const hasNote = (a.note||"").trim().length>0;
     const hasPhoto = (a.photo||"").trim().length>0;
@@ -888,7 +889,6 @@ function renderSales(){
       else if(act==="del") deleteSale(sid);
     });
   });
-  updateStats();
 }
 
 bindTap($("btnSalesTop"), ()=>{ renderSales(); showModal("salesModal"); });
@@ -966,7 +966,6 @@ adjust();
 setTimeout(adjust, 0);
 setTimeout(adjust, 200);
 setTimeout(adjust, 600);
-
 
 </script>
 </body>
