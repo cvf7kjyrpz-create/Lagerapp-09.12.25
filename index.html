@@ -9,7 +9,7 @@
   --bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff;
   --wrapTop:80px;
   --gap:2px;
-  --cols: 78px 206px 38px 44px 78px 110px 58px 70px 72px;
+  --cols: 26px 86px 198px 38px 44px 54px 78px 110px 58px 70px 78px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;-webkit-text-size-adjust:100%;overflow:hidden}
@@ -100,10 +100,18 @@ textarea{min-height:80px;resize:vertical}
 
 
 /* Trennung Artikelnummer <-> Artikelname */
-.cellNo{padding-right:8px;border-right:1px solid #333;overflow:hidden;text-overflow:ellipsis}
-.cellName{padding-left:8px}
+.cellNo{padding-right:6px;border-right:1px solid #333;overflow:hidden;text-overflow:ellipsis}
+.cellName{padding-left:6px}
 /* Zeile auswählen (nur visuell, nicht gespeichert) */
 .gridRow.selected{background:rgba(0,110,255,.22)}
+/* Stern-Markierung (gespeichert) */
+.star{width:20px;height:20px;border:1px solid #333;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.star.on{background:rgba(255,210,0,.18);border-color:#665200}
+.gridRow.starred{background:rgba(255,210,0,.10)}
+/* Zustand-Spalte etwas Luft nach rechts */
+.stateCell{padding-right:6px}
+/* Modal Buttons immer erreichbar */
+.btnRow{z-index:5}
 
 </style>
 </head>
@@ -121,7 +129,7 @@ textarea{min-height:80px;resize:vertical}
 
 <div class="tableWrap" id="tableWrap">
   <div class="gridHeader" id="gridHeader">
-    <div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>Kaufdatum</div><div>Wo gekauft</div><div>Größe</div><div>Zustand</div><div>Info</div>
+    <div>★</div><div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>EK Σ</div><div>Kaufdatum</div><div>Wo gekauft</div><div>Größe</div><div>Zustand</div><div>Info</div>
   </div>
   <div id="table"></div>
 </div>
@@ -139,7 +147,8 @@ textarea{min-height:80px;resize:vertical}
 
     <div class="row2">
       <div><label>Menge</label><input id="mQty" type="number" inputmode="numeric" value="1"></div>
-      <div><label>EK</label><input id="mEK" type="number" inputmode="decimal" value="0"></div>
+      <div><label>EK (pro Stück)</label><input id="mEK" type="number" inputmode="decimal" value="0">
+<div class="small" id="mEKTotal" style="margin-top:4px;color:#aaa">EK gesamt: 0.00</div></div>
     </div>
 
     <label>Kaufdatum</label>
@@ -230,7 +239,6 @@ let saleIndex = null;
 let editSaleId = null;
 let modalPhotoData = "";
 let selectedItemId = null; // nur UI, nicht speichern
-let currentNoteItemId = null; // für Notiz-Popup
 
 
 function extractItemsFromHTMLText(text){
@@ -293,6 +301,7 @@ function normalizeItems(arr){
     state: String(x.state ?? x.zustand ?? "Neu"),
     note: String(x.note ?? x.notiz ?? ""),
     photo: String(x.photo ?? x.foto ?? x.bild ?? ""),
+    starred: Boolean(x.starred ?? x.fav ?? x.favorite ?? x.stern ?? false),
     artNo: String(x.artNo ?? x.nr ?? x.artikelnummer ?? x.artikelNr ?? x.artnr ?? x.artikel_nr ?? x.articleNo ?? x.article_nr ?? x.articleNumber ?? "")
   }));
 }
@@ -322,6 +331,20 @@ function loadSales(){
   }catch(e){}
 }
 
+
+function formatDateDE(iso){
+  const s = String(iso||"").trim();
+  // akzeptiere bereits dd.mm.yyyy oder dd-mm-yyyy
+  if(/^\d{2}[.\-]\d{2}[.\-]\d{4}$/.test(s)) return s.replace(/-/g,".");
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!m) return s;
+  return m[3] + "." + m[2] + "." + m[1];
+}
+function money(n){
+  const v = Number(n||0);
+  return (Number.isFinite(v) ? v : 0).toFixed(2);
+}
+
 function esc(s){
   return String(s).replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 }
@@ -344,16 +367,20 @@ function render(){
     const hasPhoto = (a.photo||"").trim().length>0;
 
     const row = document.createElement("div");
-    row.className = "gridRow" + ((Number(a.qty)||0)<=0 ? " zero" : "") + (a.id===selectedItemId ? " selected" : "");
+    row.className = "gridRow" + ((Number(a.qty)||0)<=0 ? " zero" : "") + (a.starred ? " starred" : "") + (a.id===selectedItemId ? " selected" : "");
+    const ekUnit = Number(a.ek||0);
+    const ekSum = ekUnit * (Number(a.qty||0) || 0);
     row.innerHTML = `
+      <div><div class="star ${a.starred?'on':''}" data-act="star" data-i="${i}" title="Stern">${a.starred?'★':'☆'}</div></div>
       <div class="cellNo" title="${esc(a.artNo || "")}">${esc(a.artNo || String(i+1).padStart(3,"0"))}</div>
       <div class="name cellName" title="${esc(a.name)}">${esc(a.name)}</div>
       <div><input class="qty" data-i="${i}" type="number" inputmode="numeric" value="${Number(a.qty)||0}"></div>
-      <div class="small" title="${(Number(a.ek)||0).toFixed(2)}">${(Number(a.ek)||0).toFixed(2)}</div>
-      <div class="small" title="${esc(a.date)}">${esc(a.date)}</div>
+      <div class="small" title="${money(ekUnit)}">${money(ekUnit)}</div>
+      <div class="small" title="${money(ekSum)}">${money(ekSum)}</div>
+      <div class="small" title="${esc(a.date)}">${esc(formatDateDE(a.date))}</div>
       <div class="small" title="${esc(a.shop)}">${esc(a.shop)}</div>
       <div class="small" title="${esc(a.size)}">${esc(a.size)}</div>
-      <div class="small" title="${esc(a.state)}">${esc(a.state)}</div>
+      <div class="small stateCell" title="${esc(a.state)}">${esc(a.state)}</div>
       <div class="icoBar">
         <div class="ico ${hasPhoto?'':'muted'}" data-act="photo" data-i="${i}" title="Foto">📷</div>
         <div class="ico ${hasNote?'':'muted'}" data-act="note" data-i="${i}" title="Notiz">📝</div>
@@ -362,11 +389,10 @@ function render(){
         <div class="ico danger" data-act="delItem" data-i="${i}" title="Löschen">🗑️</div>
       </div>
     `;
-    
     // Zeile anklicken => blau markieren (toggle), aber NICHT wenn man in Inputs/Icons klickt
     row.addEventListener("click", (ev)=>{
       const t = ev.target;
-      if(t && (t.closest("input") || t.closest(".ico"))) return;
+      if(t && (t.closest("input") || t.closest(".ico") || t.closest(".star"))) return;
       const id = a.id;
       selectedItemId = (selectedItemId === id) ? null : id;
       render();
@@ -380,6 +406,17 @@ function render(){
       const idx = Number(e.target.dataset.i);
       items[idx].qty = Number(e.target.value||0);
       saveLocal();
+      render();
+    });
+  });
+
+  table.querySelectorAll(".star").forEach(st=>{
+    st.addEventListener("click", (ev)=>{
+      ev.stopPropagation();
+      const idx = Number(st.dataset.i);
+      items[idx].starred = !items[idx].starred;
+      saveLocal();
+      render();
     });
   });
 
@@ -388,6 +425,7 @@ function render(){
       ev.stopPropagation();
       const idx = Number(ico.dataset.i);
       const act = ico.dataset.act;
+      if(act==="star"){ items[idx].starred = !items[idx].starred; saveLocal(); render(); return; }
       if(act==="sale") { openSale(idx); return; }
       if(act==="delItem") { deleteItem(idx); return; }
       if(act==="photo") { openPhotoView(idx); return; }
@@ -424,6 +462,7 @@ function openEdit(i, act){
   $("mNote").value = a.note||"";
   modalPhotoData = a.photo||"";
   resetPhotoUI();
+  updateEKTotal();
   $("modal").style.display = "block";
   if(act==="note") setTimeout(()=>$("mNote").scrollIntoView({behavior:"smooth",block:"center"}), 80);
   if(act==="photo") setTimeout(()=>$("mPhoto").scrollIntoView({behavior:"smooth",block:"center"}), 80);
@@ -450,10 +489,20 @@ $("btnAdd").addEventListener("click", ()=>{
   $("mNote").value="";
   modalPhotoData="";
   resetPhotoUI();
+  updateEKTotal();
   $("modal").style.display = "block";
 });
 
 $("mCancel").addEventListener("click", ()=>{ $("modal").style.display="none"; });
+
+function updateEKTotal(){
+  const qty = Number($("mQty").value||0);
+  const ek = Number($("mEK").value||0);
+  const el = $("mEKTotal");
+  if(el) el.textContent = "EK gesamt: " + money(qty*ek);
+}
+$("mQty").addEventListener("input", updateEKTotal);
+$("mEK").addEventListener("input", updateEKTotal);
 
 $("mPhoto").addEventListener("change", (e)=>{
   const f = e.target.files && e.target.files[0];
@@ -501,14 +550,13 @@ function openPhotoView(i){
 }
 function openNoteView(i){
   const a = items[i];
-  if(!a){ return; }
-  currentNoteItemId = a.id;
-  const inp = $("viewNoteInput");
-  if(inp){ inp.value = a.note || ""; }
+  if(!a || !(a.note||"").trim()){
+    alert("Keine Notiz hinterlegt.");
+    return;
+  }
+  $("viewNoteText").textContent = a.note;
   $("viewNoteModal").style.display = "block";
 }
-
-
 /* ===== Verkauf ===== */
 
 function findItemById(id){
@@ -749,11 +797,10 @@ function deleteSale(sid){
   }
 }
 
-const _salesSearch = $("salesSearch");
-if(_salesSearch){ _salesSearch.addEventListener("input", ()=>renderSales()); }
+$("salesSearch").addEventListener("input", ()=>renderSales());
 
 $("btnSalesTop").addEventListener("click", ()=>{ renderSales(); $("salesModal").style.display="block"; });
-const _salesClose=$("salesClose"); if(_salesClose){ _salesClose.addEventListener("click", ()=>{ $("salesModal").style.display="none"; }); }
+$("salesClose").addEventListener("click", ()=>{ $("salesModal").style.display="none"; });
 
 /* ===== Export / Import ===== */
 $("btnSave").addEventListener("click", ()=>{
@@ -827,40 +874,10 @@ for(const it of items){
   }
 }
 saveLocal();
-selectedItemId = null;
 render();
 adjust();
 setTimeout(adjust, 0);
 setTimeout(adjust, 250);
-
-
-function closeNoteModal(){
-  currentNoteItemId = null;
-  const m = $("viewNoteModal");
-  if(m) m.style.display = "none";
-}
-(function bindNoteModal(){
-  const m = $("viewNoteModal");
-  const btnC = $("viewNoteClose");
-  const btnS = $("viewNoteSave");
-  if(btnC) btnC.addEventListener("click", (ev)=>{ ev.preventDefault(); ev.stopPropagation(); closeNoteModal(); });
-  if(btnS) btnS.addEventListener("click", (ev)=>{
-    ev.preventDefault(); ev.stopPropagation();
-    if(!currentNoteItemId) { closeNoteModal(); return; }
-    const it = items.find(x=>x.id===currentNoteItemId);
-    if(it){
-      const inp = $("viewNoteInput");
-      it.note = inp ? String(inp.value||"").trim() : "";
-      saveLocal();
-      render();
-    }
-    closeNoteModal();
-  });
-  // Tap outside box closes (iOS-friendly)
-  if(m) m.addEventListener("click", (ev)=>{
-    if(ev.target === m) closeNoteModal();
-  });
-})();
 
 function closePhotoModal(){
   const m = $("viewPhotoModal");
@@ -870,12 +887,18 @@ function closePhotoModal(){
 }
 (function bindPhotoModal(){
   const m = $("viewPhotoModal");
-  const btnC = $("viewPhotoClose");
-  if(btnC) btnC.addEventListener("click", (ev)=>{ ev.preventDefault(); ev.stopPropagation(); closePhotoModal(); });
-  if(m) m.addEventListener("click", (ev)=>{
-    if(ev.target === m) closePhotoModal();
-  });
+  const btn = $("viewPhotoClose");
+  if(btn) btn.addEventListener("click", (ev)=>{ ev.preventDefault(); ev.stopPropagation(); closePhotoModal(); });
+  if(m) m.addEventListener("click", (ev)=>{ if(ev.target===m) closePhotoModal(); });
 })();
+
+(function bindNoteCloseOnly(){
+  const m = $("viewNoteModal");
+  const btn = $("viewNoteClose");
+  if(btn) btn.addEventListener("click", (ev)=>{ ev.preventDefault(); ev.stopPropagation(); if(m) m.style.display="none"; });
+  if(m) m.addEventListener("click", (ev)=>{ if(ev.target===m) m.style.display="none"; });
+})();
+
 </script>
 
 <!-- Foto ansehen -->
@@ -891,17 +914,15 @@ function closePhotoModal(){
   </div>
 </div>
 
-<!-- Notiz ansehen / bearbeiten -->
+<!-- Notiz ansehen -->
 <div id="viewNoteModal">
   <div class="box">
     <h3 style="margin:0 0 6px;font-size:12px">Notiz</h3>
-    <textarea id="viewNoteInput" style="width:100%;min-height:140px;font-size:10px;padding:8px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;resize:vertical"></textarea>
+    <div style="border:1px solid #333;border-radius:10px;padding:8px;background:#111;font-size:10px;white-space:pre-wrap" id="viewNoteText"></div>
     <div class="btnRow">
-      <button id="viewNoteSave">Speichern</button>
       <button id="viewNoteClose">Schließen</button>
     </div>
   </div>
-</div>
 </div>
 
 </body>
