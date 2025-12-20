@@ -227,7 +227,15 @@ textarea{min-height:80px;resize:vertical}
 
 <script>
 
+
 const $ = (id)=>document.getElementById(id);
+
+function bindTap(el, handler){
+  if(!el) return;
+  el.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); handler(ev); });
+  el.addEventListener('touchend', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); handler(ev); }, {passive:false});
+}
+
 
 /* ===== Persistenz ===== */
 const LS_ITEMS = "lager_items_v3";
@@ -875,9 +883,11 @@ for(const it of items){
 }
 saveLocal();
 render();
+bindViewerModals();
 adjust();
 setTimeout(adjust, 0);
 setTimeout(adjust, 250);
+
 
 function closePhotoModal(){
   const m = $("viewPhotoModal");
@@ -885,19 +895,26 @@ function closePhotoModal(){
   const img = $("viewPhotoImg");
   if(img) img.removeAttribute("src");
 }
-(function bindPhotoModal(){
-  const m = $("viewPhotoModal");
-  const btn = $("viewPhotoClose");
-  if(btn) btn.addEventListener("click", (ev)=>{ ev.preventDefault(); ev.stopPropagation(); closePhotoModal(); });
-  if(m) m.addEventListener("click", (ev)=>{ if(ev.target===m) closePhotoModal(); });
-})();
-
-(function bindNoteCloseOnly(){
+function closeNoteModal(){
   const m = $("viewNoteModal");
-  const btn = $("viewNoteClose");
-  if(btn) btn.addEventListener("click", (ev)=>{ ev.preventDefault(); ev.stopPropagation(); if(m) m.style.display="none"; });
-  if(m) m.addEventListener("click", (ev)=>{ if(ev.target===m) m.style.display="none"; });
-})();
+  if(m) m.style.display = "none";
+}
+function bindViewerModals(){
+  const photoM = $("viewPhotoModal");
+  const photoClose = $("viewPhotoClose");
+  bindTap(photoClose, closePhotoModal);
+  if(photoM) bindTap(photoM, (ev)=>{ if(ev.target===photoM) closePhotoModal(); });
+
+  const noteM = $("viewNoteModal");
+  const noteClose = $("viewNoteClose");
+  bindTap(noteClose, closeNoteModal);
+  if(noteM) bindTap(noteM, (ev)=>{ if(ev.target===noteM) closeNoteModal(); });
+}
+
+
+
+
+
 
 </script>
 
