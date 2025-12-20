@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-<title>Lager App – Stabil v25</title>
+<title>Lager App – Stabil v27</title>
 <style>
 :root{
   --bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff;
   --gap:2px;
   --topbarH:64px;
-  --cols: 30px 82px 206px 38px 50px 86px 120px 58px 74px 62px 160px;
   /* ★ | Nr | Artikel | Menge | EK | EK Σ | Datum | Wo | Größe | Zustand | Aktionen */
+  --cols: 30px 82px 206px 54px 50px 86px 120px 58px 74px 62px 160px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;-webkit-text-size-adjust:100%;overflow:hidden}
@@ -19,7 +19,7 @@ button{background:var(--panel2);border:1px solid var(--border);border-radius:10p
 input,select,textarea{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:6px 8px;color:#fff;width:100%}
 textarea{min-height:90px;resize:vertical}
 
-.app{position:fixed;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:#000}
+.app{position:fixed;inset:0;overflow:hidden;background:#000}
 .topbar{
   position:fixed;top:0;left:0;right:0;z-index:9999;
   background:#000;border-bottom:1px solid #333;
@@ -29,12 +29,16 @@ textarea{min-height:90px;resize:vertical}
 .actions{display:flex;gap:6px}
 .actions button{flex:1}
 
-.tableWrap{padding: calc(var(--topbarH,64px) + 8px) 8px 8px 8px}
-.tableX{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #222;border-radius:12px}
+.tableWrap{padding: calc(var(--topbarH,64px) + 8px) 8px 8px 8px;}
+.tableX{
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid #222;border-radius:12px;
+  max-height:calc(100vh - var(--topbarH,64px) - 18px);
+  background:#000;
+}
 .gridHeader{
-  position:sticky;
-  top: 0;
-  z-index:50;
+  position:sticky; top:0; z-index:50;
   background:#000;
   border-bottom:1px solid #333;
   padding:4px 8px;
@@ -45,11 +49,11 @@ textarea{min-height:90px;resize:vertical}
   grid-template-columns: var(--cols);
   gap: var(--gap);
   align-items:center;
-  min-width: 920px;
+  min-width: 980px;
   white-space:nowrap;
 }
 .gridRow{
-  padding:4px 8px;
+  padding:6px 8px;
   border-bottom:1px solid #1f1f1f;
   font-size:10px;
 }
@@ -59,7 +63,7 @@ textarea{min-height:90px;resize:vertical}
 .cellName{padding-left:10px}
 .name{overflow:hidden;text-overflow:ellipsis}
 .small{font-size:10px;color:#ddd;overflow:hidden;text-overflow:ellipsis}
-.qty{width:38px;text-align:center;padding:4px 4px;font-size:10px;border-radius:9px}
+.qty{width:54px;text-align:center;padding:6px 6px;font-size:11px;border-radius:10px;touch-action:manipulation}
 .gridRow.zero{background:rgba(180,0,0,.18)}
 .gridRow.selected{background:rgba(0,110,255,.22)}
 .gridRow.starred{box-shadow: inset 0 0 0 9999px rgba(255,200,0,.12)}
@@ -160,8 +164,8 @@ textarea{min-height:90px;resize:vertical}
     <div class="preview" id="photoPreview"><img id="photoImg" alt="Foto Vorschau"></div>
 
     <div class="btnRow">
-      <button id="mSave">Speichern</button>
-      <button id="mCancel">Abbrechen</button>
+      <button id="mSave" type="button">Speichern</button>
+      <button id="mCancel" type="button" data-close="modal">Abbrechen</button>
     </div>
   </div>
 </div>
@@ -213,7 +217,7 @@ textarea{min-height:90px;resize:vertical}
     <div class="small" id="sHint" style="margin-top:10px;color:#aaa"></div>
 
     <div class="btnRow">
-      <button id="sSave">Speichern</button>
+      <button id="sSave" type="button">Speichern</button>
       <button type="button" data-close="saleModal">Abbrechen</button>
     </div>
   </div>
@@ -244,32 +248,27 @@ function bindTap(el, handler){
   el.addEventListener("click", (ev)=>{ ev.preventDefault(); ev.stopPropagation(); handler(ev); });
   el.addEventListener("touchend", (ev)=>{ ev.preventDefault(); ev.stopPropagation(); handler(ev); }, {passive:false});
 }
-
 function showModal(id){ const m=$(id); if(m) m.style.display="block"; }
 function hideModal(id){ const m=$(id); if(m) m.style.display="none"; }
 
-// Global close: Tap outside modal content closes; any [data-close] closes
-(function bindGlobalModalClose(){
-  const closeIfOverlay = (ev)=>{
-    const t = ev.target;
-    if(!t) return;
-    if(t.matches && t.matches("[data-close]")){
-      hideModal(t.getAttribute("data-close"));
-      return;
-    }
-    // Tap on overlay (modal background)
-    if(t.classList && t.classList.contains("modal")){
-      hideModal(t.id);
-    }
-  };
-  document.addEventListener("click", closeIfOverlay, true);
-  document.addEventListener("touchend", (ev)=>{ ev.preventDefault(); closeIfOverlay(ev); }, {passive:false, capture:true});
-})();
+// Global modal close (close button + overlay tap)
+document.addEventListener("click", (ev)=>{
+  const t = ev.target;
+  if(!t) return;
+  if(t.matches && t.matches("[data-close]")) hideModal(t.getAttribute("data-close"));
+  else if(t.classList && t.classList.contains("modal")) hideModal(t.id);
+}, true);
+
+document.addEventListener("touchend", (ev)=>{
+  const t = ev.target;
+  if(!t) return;
+  if(t.matches && t.matches("[data-close]")){ ev.preventDefault(); hideModal(t.getAttribute("data-close")); }
+  else if(t.classList && t.classList.contains("modal")){ ev.preventDefault(); hideModal(t.id); }
+}, {passive:false, capture:true});
 
 /* ===== Persistenz ===== */
-const LS_ITEMS = "lager_items_v25";
-const LS_SALES = "lager_sales_v25";
-
+const LS_ITEMS = "lager_items_v27";
+const LS_SALES = "lager_sales_v27";
 let items = [];
 let sales = [];
 let editIndex = null;
@@ -280,7 +279,7 @@ let selectedItemId = null; // nur UI
 let currentNoteItemId = null;
 
 function parseYearFromDate(str){
-  const m = String(str||"").match(/^(\d{4})/);
+  const m = String(str||"").match(/^(\\d{4})/);
   return m ? m[1] : null;
 }
 function nextItemNumber(year){
@@ -288,7 +287,7 @@ function nextItemNumber(year){
   let max = 0;
   for(const it of items){
     const no = String(it.artNo||"");
-    const mm = no.match(/^(\d+)-(\d{4})$/);
+    const mm = no.match(/^(\\d+)-(\\d{4})$/);
     if(mm && mm[2]===y){
       const n = Number(mm[1]);
       if(Number.isFinite(n) && n>max) max = n;
@@ -318,7 +317,7 @@ function extractItems(parsed){
 function normalizeItems(arr){
   return arr.map(x=>({
     id: String(x.id || x._id || x.uuid || (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2)))),
-    artNo: String(x.artNo ?? x.artnr ?? x.nr ?? x.artikelnummer ?? x.artikelNr ?? x.artnr ?? x.artikel_nr ?? x.articleNo ?? x.articleNumber ?? ""),
+    artNo: String(x.artNo ?? x.artnr ?? x.nr ?? x.artikelnummer ?? x.artikelNr ?? x.artikel_nr ?? x.articleNo ?? x.articleNumber ?? ""),
     name: String(x.name ?? x.artikelname ?? x.artikel ?? x.bezeichnung ?? ""),
     qty: Number(x.qty ?? x.menge ?? 0),
     ek: Number(x.ek ?? x.einkauf ?? x.preis ?? 0),
@@ -347,7 +346,7 @@ function loadSales(){ try{ const raw = localStorage.getItem(LS_SALES); if(raw){ 
 
 function esc(s){ return String(s).replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
 function toDEDate(iso){
-  const m = String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const m = String(iso||"").match(/^(\\d{4})-(\\d{2})-(\\d{2})/);
   if(!m) return String(iso||"");
   return m[3]+"."+m[2]+"."+m[1];
 }
@@ -369,6 +368,7 @@ function render(){
   items.forEach((a,i)=>{
     const hasNote = (a.note||"").trim().length>0;
     const hasPhoto = (a.photo||"").trim().length>0;
+    const ekSum = (Number(a.qty)||0) * (Number(a.ek)||0);
 
     const row = document.createElement("div");
     row.className =
@@ -376,8 +376,6 @@ function render(){
       ((Number(a.qty)||0)<=0 ? " zero" : "") +
       (a.id===selectedItemId ? " selected" : "") +
       (a.star ? " starred" : "");
-
-    const ekSum = (Number(a.qty)||0) * (Number(a.ek)||0);
 
     row.innerHTML = `
       <div class="ico" data-act="star" data-i="${i}" title="Stern">${a.star ? "★" : "☆"}</div>
@@ -399,7 +397,6 @@ function render(){
       </div>
     `;
 
-    // Zeile antippen => blau markieren (toggle), nicht wenn man in Inputs/Icons klickt
     row.addEventListener("click", (ev)=>{
       const t = ev.target;
       if(t && (t.closest("input") || t.closest(".ico"))) return;
@@ -410,7 +407,7 @@ function render(){
     table.appendChild(row);
   });
 
-  // Menge ändern => sofort rendern (damit rot/gelb/blau korrekt)
+  // Menge ändern
   table.querySelectorAll("input.qty").forEach(inp=>{
     inp.addEventListener("click", (ev)=>ev.stopPropagation());
     inp.addEventListener("change", (e)=>{
@@ -421,6 +418,7 @@ function render(){
     });
   });
 
+  // Icons
   table.querySelectorAll(".ico").forEach(ico=>{
     ico.addEventListener("click", (ev)=>{
       ev.preventDefault(); ev.stopPropagation();
@@ -433,10 +431,6 @@ function render(){
       if(act==="edit") { openEdit(idx); return; }
       if(act==="star") { toggleStar(idx); return; }
     });
-    ico.addEventListener("touchend", (ev)=>{
-      ev.preventDefault(); ev.stopPropagation();
-      ico.dispatchEvent(new MouseEvent("click", {bubbles:true}));
-    }, {passive:false});
   });
 }
 
@@ -446,7 +440,6 @@ function toggleStar(i){
   saveLocal();
   render();
 }
-
 function deleteItem(i){
   const a = items[i];
   if(!a) return;
@@ -508,7 +501,6 @@ bindTap($("btnAdd"), ()=>{
   recalcEKSum();
   showModal("modal");
 });
-bindTap($("mCancel"), ()=>hideModal("modal"));
 
 $("mPhoto").addEventListener("change", (e)=>{
   const f = e.target.files && e.target.files[0];
@@ -545,7 +537,7 @@ bindTap($("mSave"), ()=>{
   render();
 });
 
-/* ===== Foto / Notiz Popups ===== */
+/* ===== Foto / Notiz ===== */
 function openPhotoView(i){
   const a = items[i];
   if(!a || !(a.photo||"").trim()){ alert("Kein Foto hinterlegt."); return; }
@@ -598,7 +590,6 @@ function openSale(i){
   $("sHint").textContent = "Bestand aktuell: " + (Number(a.qty)||0);
   showModal("saleModal");
 }
-
 function openSaleEdit(saleId){
   const s = sales.find(x=>x.id===saleId);
   if(!s) return;
@@ -621,7 +612,6 @@ bindTap($("sSave"), ()=>{
   const qty = Number($("sQty").value||0);
   if(!qty || qty<=0){ alert("Bitte Menge > 0 eingeben."); return; }
 
-  // EDIT MODE
   if(editSaleId){
     const idxSale = sales.findIndex(x=>x.id===editSaleId);
     if(idxSale===-1){ alert("Verkauf nicht gefunden."); return; }
@@ -643,8 +633,7 @@ bindTap($("sSave"), ()=>{
       saveLocal();
     }
 
-    sales[idxSale] = {
-      ...old,
+    sales[idxSale] = {...old,
       number: ($("sNumber").value||"").trim() || old.number,
       date: $("sDate").value || old.date || todayISO(),
       place: ($("sPlace").value||"").trim(),
@@ -660,7 +649,6 @@ bindTap($("sSave"), ()=>{
     return;
   }
 
-  // NEW SALE MODE
   if(saleIndex===null){ alert("Artikel nicht gefunden."); return; }
   const a = items[saleIndex];
   const current = Number(a.qty||0);
@@ -744,7 +732,6 @@ function renderSales(){
   arr.forEach(s=>{
     const row = document.createElement("div");
     row.className = "salesRow";
-
     const status = s.storno ? " (Storno)" : "";
     row.innerHTML = `
       <div>${esc(s.number||"")}${status}</div>
@@ -772,10 +759,6 @@ function renderSales(){
       else if(act==="storno") stornoSale(sid);
       else if(act==="del") deleteSale(sid);
     });
-    btn.addEventListener("touchend", (ev)=>{
-      ev.preventDefault(); ev.stopPropagation();
-      btn.dispatchEvent(new MouseEvent("click",{bubbles:true}));
-    }, {passive:false});
   });
 }
 
@@ -784,7 +767,6 @@ $("salesSearch").addEventListener("input", ()=>renderSales());
 
 /* ===== Export / Import ===== */
 bindTap($("btnSave"), ()=>{
-  // Export im Backup-Format (dein JSON)
   const payload = {
     artikel: items.map(it=>({
       artnr: it.artNo,
@@ -821,7 +803,7 @@ bindTap($("btnLoad"), ()=>{
         if(!arr) throw new Error("Format falsch");
         items = normalizeItems(arr);
 
-        // fehlende Artikelnummern ergänzen (aber vorhandene NIE ändern)
+        // fehlende Artikelnummern ergänzen (vorhandene NIE ändern)
         const yearCounters = {};
         for(const it of items){
           if(!it.artNo){
@@ -848,7 +830,6 @@ bindTap($("btnPDF"), ()=>{ alert("PDF kommt als nächster Schritt."); });
 /* Init */
 loadLocal();
 loadSales();
-// IDs nachziehen
 items = items.map(x=>({id: x.id || (crypto.randomUUID?crypto.randomUUID():('id_'+Math.random().toString(16).slice(2))), ...x}));
 saveLocal();
 render();
