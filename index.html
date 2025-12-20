@@ -3,139 +3,126 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-<title>Lager App – Stabil (Header im Scroll-Container)</title>
+<title>Lager App – Stabil v25</title>
 <style>
 :root{
   --bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff;
-  --wrapTop:80px;
   --gap:2px;
-  --cols: 26px 86px 198px 38px 44px 54px 78px 110px 58px 70px 78px;
+  --topbarH:64px;
+  --cols: 82px 206px 38px 50px 86px 120px 58px 74px 62px 86px;
+  /* Nr | Artikel | Menge | EK | EK Σ | Datum | Wo | Größe | Zustand | Aktionen */
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Arial,system-ui,sans-serif;-webkit-text-size-adjust:100%;overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
-button{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:5px 6px;font-size:10px}
-input,select,textarea{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;color:#fff;width:100%}
-textarea{min-height:80px;resize:vertical}
+button{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:6px 8px;font-size:11px;touch-action:manipulation}
+input,select,textarea{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:6px 8px;color:#fff;width:100%}
+textarea{min-height:90px;resize:vertical}
 
+.app{position:fixed;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:#000}
 .topbar{
-  position:fixed;top:0;left:0;right:0;z-index:5000;
+  position:sticky;top:0;z-index:9999;
   background:#000;border-bottom:1px solid #333;
   padding:6px 8px;
   padding-top:calc(6px + env(safe-area-inset-top));
 }
-.actions{display:flex;gap:4px}
+.actions{display:flex;gap:6px}
 .actions button{flex:1}
 
-/* Einziger Scroll-Bereich unter der Topbar */
-.tableWrap{
-  position:fixed;
-  left:0; right:0; bottom:0;
-  top: var(--wrapTop);
-  overflow:auto;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
-  padding:0 8px 12px 8px;
-  background:#000;
-}
-
-/* Header ist im Flow und sticky innerhalb tableWrap => KEIN Überlappen möglich */
+.tableWrap{padding:8px}
+.tableX{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #222;border-radius:12px}
 .gridHeader{
   position:sticky;
-  top:0;
-  z-index:10;
+  top: var(--topbarH);
+  z-index:50;
   background:#000;
   border-bottom:1px solid #333;
-  padding:2px 0;
-  font-size:9px;
+  padding:4px 8px;
+  font-size:10px;
 }
-
 .gridHeader,.gridRow{
   display:grid;
   grid-template-columns: var(--cols);
   gap: var(--gap);
   align-items:center;
-  min-width: calc(44px + 220px + 38px + 44px + 78px + 110px + 58px + 70px + 72px + (8 * var(--gap)));
+  min-width: 920px;
   white-space:nowrap;
 }
 .gridRow{
-  padding:1px 0;
-  border-bottom:1px solid #2a2a2a;
-  font-size:9px;
+  padding:4px 8px;
+  border-bottom:1px solid #1f1f1f;
+  font-size:10px;
 }
+.gridRow:last-child{border-bottom:none}
 
-.name{font-size:9px;line-height:1.0;overflow:hidden;text-overflow:ellipsis}
-.qty{width:34px;text-align:center;padding:1px 3px;font-size:9px;border-radius:7px}
-.small{font-size:9px;color:#ddd;overflow:hidden;text-overflow:ellipsis}
-.icoBar{display:flex;gap:7px;justify-content:flex-end}
+.cellNo{padding-right:10px;border-right:1px solid #333;overflow:hidden;text-overflow:ellipsis}
+.cellName{padding-left:10px}
+.name{overflow:hidden;text-overflow:ellipsis}
+.small{font-size:10px;color:#ddd;overflow:hidden;text-overflow:ellipsis}
+.qty{width:38px;text-align:center;padding:4px 4px;font-size:10px;border-radius:9px}
+.gridRow.zero{background:rgba(180,0,0,.18)}
+.gridRow.selected{background:rgba(0,110,255,.22)}
+.gridRow.starred{box-shadow: inset 0 0 0 9999px rgba(255,200,0,.12)}
+
+.icoBar{display:flex;gap:10px;justify-content:flex-end}
 .ico{
-  width:20px;height:20px;border:1px solid #333;border-radius:6px;
+  width:22px;height:22px;border:1px solid #333;border-radius:8px;
   display:flex;align-items:center;justify-content:center;
   user-select:none;-webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
 }
-.ico:active{transform:scale(.98)}
 .ico.muted{opacity:.35}
+.ico.danger{border-color:#5a2222}
 
 /* Modals */
-#modal,#saleModal,#salesModal,#viewPhotoModal,#viewNoteModal{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;overflow:hidden
+.modal{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+  z-index:12000;overflow:hidden;
 }
 .box{
-  background:#0b0b0b;border:1px solid #333;border-radius:12px;
-  width:92%;max-width:520px;margin:7vh auto;padding:10px;
-  max-height:82vh; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
+  background:#0b0b0b;border:1px solid #333;border-radius:14px;
+  width:92%;max-width:760px;margin:7vh auto;padding:12px;
+  max-height:82vh; overflow:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
 }
-.box h3{margin:0 0 6px;font-size:12px}
-.box label{font-size:9px;color:#aaa;margin-top:6px;display:block}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.btnRow{display:flex;gap:6px;margin-top:10px;position:sticky;bottom:0;background:#0b0b0b;padding-top:8px}
+.box h3{margin:0 0 8px;font-size:13px}
+.box label{font-size:10px;color:#aaa;margin-top:8px;display:block}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btnRow{display:flex;gap:8px;margin-top:12px;position:sticky;bottom:0;background:#0b0b0b;padding-top:10px}
 .btnRow button{flex:1}
-.preview{margin-top:8px;border:1px solid #333;border-radius:10px;overflow:hidden;display:none}
-.preview img{display:block;width:100%;height:auto;max-height:180px;object-fit:contain}
+.preview{margin-top:8px;border:1px solid #333;border-radius:12px;overflow:hidden;display:none}
+.preview img{display:block;width:100%;height:auto;max-height:240px;object-fit:contain}
 
-/* Status */
-.gridRow.zero{background:rgba(180,0,0,.18)}
-.ico.danger{border-color:#5a2222}
-.ico.danger:active{transform:scale(.98)}
-
-
-/* Trennung Artikelnummer <-> Artikelname */
-.cellNo{padding-right:6px;border-right:1px solid #333;overflow:hidden;text-overflow:ellipsis}
-.cellName{padding-left:6px}
-/* Zeile auswählen (nur visuell, nicht gespeichert) */
-.gridRow.selected{background:rgba(0,110,255,.22)}
-/* Stern-Markierung (gespeichert) */
-.star{width:20px;height:20px;border:1px solid #333;border-radius:6px;display:flex;align-items:center;justify-content:center}
-.star.on{background:rgba(255,210,0,.18);border-color:#665200}
-.gridRow.starred{background:rgba(255,210,0,.10)}
-/* Zustand-Spalte etwas Luft nach rechts */
-.stateCell{padding-right:6px}
-/* Modal Buttons immer erreichbar */
-.btnRow{z-index:5}
-
+/* Sales list */
+.salesHeader{display:grid;grid-template-columns:90px 86px 1fr 52px 70px 120px 78px;gap:6px;font-size:10px;color:#ddd;border-bottom:1px solid #333;padding:0 0 6px 0;white-space:nowrap}
+.salesRow{display:grid;grid-template-columns:90px 86px 1fr 52px 70px 120px 78px;gap:6px;font-size:10px;white-space:nowrap;padding:6px 0;border-bottom:1px solid #222}
+.salesActions{display:flex;gap:6px;justify-content:flex-end}
 </style>
 </head>
-
 <body>
-<div class="topbar" id="topbar">
-  <div class="actions">
-    <button id="btnAdd">+ Artikel</button>
-    <button id="btnSalesTop">Verkäufe</button>
-    <button id="btnSave">Sichern</button>
-    <button id="btnLoad">Laden</button>
-    <button id="btnPDF">PDF</button>
+<div class="app" id="app">
+  <div class="topbar" id="topbar">
+    <div class="actions">
+      <button id="btnAdd">Artikel</button>
+      <button id="btnSalesTop">Verkäufe</button>
+      <button id="btnSave">Sichern</button>
+      <button id="btnLoad">Laden</button>
+      <button id="btnPDF">PDF</button>
+    </div>
   </div>
-</div>
 
-<div class="tableWrap" id="tableWrap">
-  <div class="gridHeader" id="gridHeader">
-    <div>★</div><div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>EK Σ</div><div>Kaufdatum</div><div>Wo gekauft</div><div>Größe</div><div>Zustand</div><div>Info</div>
+  <div class="tableWrap">
+    <div class="tableX" id="tableX">
+      <div class="gridHeader" id="gridHeader">
+        <div>Nr</div><div>Artikel</div><div>Menge</div><div>EK</div><div>EK Σ</div><div>Datum</div><div>Wo</div><div>Größe</div><div>Zustand</div><div>Aktion</div>
+      </div>
+      <div id="table"></div>
+    </div>
   </div>
-  <div id="table"></div>
 </div>
 
 <!-- Artikel anlegen/bearbeiten -->
-<div id="modal">
+<div class="modal" id="modal">
   <div class="box">
     <h3 id="modalTitle">Artikel anlegen</h3>
 
@@ -147,12 +134,13 @@ textarea{min-height:80px;resize:vertical}
 
     <div class="row2">
       <div><label>Menge</label><input id="mQty" type="number" inputmode="numeric" value="1"></div>
-      <div><label>EK (pro Stück)</label><input id="mEK" type="number" inputmode="decimal" value="0">
-<div class="small" id="mEKTotal" style="margin-top:4px;color:#aaa">EK gesamt: 0.00</div></div>
+      <div><label>EK pro Stück</label><input id="mEK" type="number" inputmode="decimal" value="0"></div>
     </div>
 
-    <label>Kaufdatum</label>
-    <input id="mDate" type="date">
+    <div class="row2">
+      <div><label>EK gesamt</label><input id="mEKSum" disabled></div>
+      <div><label>Kaufdatum</label><input id="mDate" type="date"></div>
+    </div>
 
     <label>Wo gekauft</label>
     <input id="mShop" autocomplete="off">
@@ -178,12 +166,35 @@ textarea{min-height:80px;resize:vertical}
   </div>
 </div>
 
+<!-- Foto ansehen -->
+<div class="modal" id="viewPhotoModal">
+  <div class="box">
+    <h3 style="margin:0 0 8px;font-size:13px">Foto</h3>
+    <div class="preview" style="display:block"><img id="viewPhotoImg" alt="Foto"></div>
+    <div class="btnRow">
+      <button type="button" data-close="viewPhotoModal">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notiz ansehen / bearbeiten -->
+<div class="modal" id="viewNoteModal">
+  <div class="box">
+    <h3 style="margin:0 0 8px;font-size:13px">Notiz</h3>
+    <textarea id="viewNoteInput" style="width:100%;min-height:160px;font-size:11px;padding:10px;border-radius:12px;border:1px solid #333;background:#111;color:#fff;resize:vertical"></textarea>
+    <div class="btnRow">
+      <button type="button" id="viewNoteSave">Speichern</button>
+      <button type="button" data-close="viewNoteModal">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <!-- Verkauf Popup -->
-<div id="saleModal">
+<div class="modal" id="saleModal">
   <div class="box">
     <h3 id="saleTitle">Verkauf</h3>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="row2">
       <div><label>Verkaufsnummer</label><input id="sNumber"></div>
       <div><label>Datum</label><input id="sDate" type="date"></div>
     </div>
@@ -199,90 +210,97 @@ textarea{min-height:80px;resize:vertical}
     <label>Versandkosten</label>
     <input id="sShip" type="number" inputmode="decimal" value="0">
 
-    <div class="small" id="sHint" style="margin-top:8px;color:#aaa"></div>
+    <div class="small" id="sHint" style="margin-top:10px;color:#aaa"></div>
 
     <div class="btnRow">
       <button id="sSave">Speichern</button>
-      <button id="sCancel">Abbrechen</button>
+      <button type="button" data-close="saleModal">Abbrechen</button>
     </div>
   </div>
 </div>
 
 <!-- Verkäufe Übersicht -->
-<div id="salesModal">
-  <div class="box" style="max-width:760px">
-    <h3 style="margin:0 0 6px;font-size:12px">Verkäufe</h3>
-<input id="salesSearch" placeholder="Suchen…" style="width:100%;margin:6px 0 10px 0;font-size:10px;padding:6px 8px;border-radius:10px;border:1px solid #333;background:#111;color:#fff">
-    <div style="overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #333;border-radius:10px;padding:6px;max-height:55vh">
-      <div style="display:grid;grid-template-columns:90px 86px 1fr 52px 70px 120px 78px;gap:4px;font-size:9px;color:#ddd;border-bottom:1px solid #333;padding-bottom:4px;white-space:nowrap">
+<div class="modal" id="salesModal">
+  <div class="box" style="max-width:900px">
+    <h3 style="margin:0 0 8px;font-size:13px">Verkäufe</h3>
+    <input id="salesSearch" placeholder="Suchen…" style="width:100%;margin:6px 0 10px 0;font-size:11px;padding:8px 10px;border-radius:12px;border:1px solid #333;background:#111;color:#fff">
+    <div style="overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #333;border-radius:12px;padding:10px;max-height:55vh">
+      <div class="salesHeader">
         <div>V-Nr</div><div>Datum</div><div>Artikel</div><div>Menge</div><div>Preis</div><div>Ort</div><div>Aktion</div>
       </div>
-      <div id="salesList" style="margin-top:4px"></div>
+      <div id="salesList"></div>
     </div>
     <div class="btnRow">
-      <button id="salesClose">Schließen</button>
+      <button type="button" data-close="salesModal">Schließen</button>
     </div>
   </div>
 </div>
 
 <script>
-
-
 const $ = (id)=>document.getElementById(id);
 
 function bindTap(el, handler){
   if(!el) return;
-  el.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); handler(ev); });
-  el.addEventListener('touchend', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); handler(ev); }, {passive:false});
+  el.addEventListener("click", (ev)=>{ ev.preventDefault(); ev.stopPropagation(); handler(ev); });
+  el.addEventListener("touchend", (ev)=>{ ev.preventDefault(); ev.stopPropagation(); handler(ev); }, {passive:false});
 }
 
+function showModal(id){ const m=$(id); if(m) m.style.display="block"; }
+function hideModal(id){ const m=$(id); if(m) m.style.display="none"; }
+
+// Global close: Tap outside modal content closes; any [data-close] closes
+(function bindGlobalModalClose(){
+  const closeIfOverlay = (ev)=>{
+    const t = ev.target;
+    if(!t) return;
+    if(t.matches && t.matches("[data-close]")){
+      hideModal(t.getAttribute("data-close"));
+      return;
+    }
+    // Tap on overlay (modal background)
+    if(t.classList && t.classList.contains("modal")){
+      hideModal(t.id);
+    }
+  };
+  document.addEventListener("click", closeIfOverlay, true);
+  document.addEventListener("touchend", (ev)=>{ ev.preventDefault(); closeIfOverlay(ev); }, {passive:false, capture:true});
+})();
 
 /* ===== Persistenz ===== */
-const LS_ITEMS = "lager_items_v3";
-const LS_SALES = "lager_sales_v2";
+const LS_ITEMS = "lager_items_v25";
+const LS_SALES = "lager_sales_v25";
+
 let items = [];
 let sales = [];
 let editIndex = null;
 let saleIndex = null;
 let editSaleId = null;
 let modalPhotoData = "";
-let selectedItemId = null; // nur UI, nicht speichern
+let selectedItemId = null; // nur UI
+let currentNoteItemId = null;
 
-
-function extractItemsFromHTMLText(text){
-  // Best-effort: try to find something like "items = [ ... ]" in older HTML versions.
-  const candidates = ["items","artikel","inventory","lagerItems","lager_items"];
-  for(const key of candidates){
-    const idx = text.indexOf(key);
-    if(idx === -1) continue;
-    const startBracket = text.indexOf("[", idx);
-    if(startBracket === -1) continue;
-    // bracket matching
-    let depth = 0;
-    for(let i=startBracket;i<text.length;i++){
-      const ch = text[i];
-      if(ch === "[") depth++;
-      else if(ch === "]"){
-        depth--;
-        if(depth === 0){
-          const snippet = text.slice(startBracket, i+1);
-          try{
-            const parsed = JSON.parse(snippet);
-            if(Array.isArray(parsed)) return parsed;
-          }catch(e){
-            // ignore and continue
-          }
-          break;
-        }
-      }
+function parseYearFromDate(str){
+  const m = String(str||"").match(/^(\d{4})/);
+  return m ? m[1] : null;
+}
+function nextItemNumber(year){
+  const y = String(year||new Date().getFullYear());
+  let max = 0;
+  for(const it of items){
+    const no = String(it.artNo||"");
+    const mm = no.match(/^(\d+)-(\d{4})$/);
+    if(mm && mm[2]===y){
+      const n = Number(mm[1]);
+      if(Number.isFinite(n) && n>max) max = n;
     }
   }
-  return null;
+  return String(max+1).padStart(3,"0")+"-"+y;
 }
 
 function extractItems(parsed){
   if(Array.isArray(parsed)) return parsed;
   if(parsed && typeof parsed === "object"){
+    if(Array.isArray(parsed.artikel)) return parsed.artikel; // dein Backup
     const keys = ["items","artikel","data","inventory","lager","produkte","products"];
     for(const k of keys){ if(Array.isArray(parsed[k])) return parsed[k]; }
     for(const k of Object.keys(parsed)){
@@ -299,8 +317,9 @@ function extractItems(parsed){
 
 function normalizeItems(arr){
   return arr.map(x=>({
-    id: String(x.id || x._id || x.uuid || (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2)))) ,
-    name: String(x.name ?? x.artikel ?? ""),
+    id: String(x.id || x._id || x.uuid || (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2)))),
+    artNo: String(x.artNo ?? x.artnr ?? x.nr ?? x.artikelnummer ?? x.artikelNr ?? x.artnr ?? x.artikel_nr ?? x.articleNo ?? x.articleNumber ?? ""),
+    name: String(x.name ?? x.artikelname ?? x.artikel ?? x.bezeichnung ?? ""),
     qty: Number(x.qty ?? x.menge ?? 0),
     ek: Number(x.ek ?? x.einkauf ?? x.preis ?? 0),
     date: String(x.date ?? x.kaufdatum ?? x.datum ?? ""),
@@ -309,14 +328,11 @@ function normalizeItems(arr){
     state: String(x.state ?? x.zustand ?? "Neu"),
     note: String(x.note ?? x.notiz ?? ""),
     photo: String(x.photo ?? x.foto ?? x.bild ?? ""),
-    starred: Boolean(x.starred ?? x.fav ?? x.favorite ?? x.stern ?? false),
-    artNo: String(x.artNo ?? x.nr ?? x.artikelnummer ?? x.artikelNr ?? x.artnr ?? x.artikel_nr ?? x.articleNo ?? x.article_nr ?? x.articleNumber ?? "")
+    star: Boolean(x.star ?? x.favorit ?? x.favorite ?? false)
   }));
 }
 
-function saveLocal(){
-  try{ localStorage.setItem(LS_ITEMS, JSON.stringify(items)); }catch(e){ alert("Speichern im Gerät nicht möglich."); }
-}
+function saveLocal(){ try{ localStorage.setItem(LS_ITEMS, JSON.stringify(items)); }catch(e){ alert("Speichern im Gerät nicht möglich."); } }
 function loadLocal(){
   try{
     const raw = localStorage.getItem(LS_ITEMS);
@@ -326,42 +342,22 @@ function loadLocal(){
     }
   }catch(e){}
 }
-function saveSales(){
-  try{ localStorage.setItem(LS_SALES, JSON.stringify(sales)); }catch(e){}
-}
-function loadSales(){
-  try{
-    const raw = localStorage.getItem(LS_SALES);
-    if(raw){
-      const parsed = JSON.parse(raw);
-      if(Array.isArray(parsed)) sales = parsed;
-    }
-  }catch(e){}
-}
+function saveSales(){ try{ localStorage.setItem(LS_SALES, JSON.stringify(sales)); }catch(e){} }
+function loadSales(){ try{ const raw = localStorage.getItem(LS_SALES); if(raw){ const p=JSON.parse(raw); if(Array.isArray(p)) sales=p; } }catch(e){} }
 
-
-function formatDateDE(iso){
-  const s = String(iso||"").trim();
-  // akzeptiere bereits dd.mm.yyyy oder dd-mm-yyyy
-  if(/^\d{2}[.\-]\d{2}[.\-]\d{4}$/.test(s)) return s.replace(/-/g,".");
-  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(!m) return s;
-  return m[3] + "." + m[2] + "." + m[1];
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
+function toDEDate(iso){
+  const m = String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!m) return String(iso||"");
+  return m[3]+"."+m[2]+"."+m[1];
 }
-function money(n){
-  const v = Number(n||0);
-  return (Number.isFinite(v) ? v : 0).toFixed(2);
-}
-
-function esc(s){
-  return String(s).replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
-}
+function fmt2(n){ return (Number(n||0)).toFixed(2); }
 
 /* ===== Layout ===== */
 function adjust(){
   const topbar = $("topbar");
-  const h = Math.ceil(topbar.getBoundingClientRect().height) + 6;
-  document.documentElement.style.setProperty("--wrapTop", h + "px");
+  const h = Math.ceil(topbar.getBoundingClientRect().height);
+  document.documentElement.style.setProperty("--topbarH", h + "px");
 }
 window.addEventListener("resize", adjust);
 window.addEventListener("orientationchange", ()=>setTimeout(adjust, 80));
@@ -375,21 +371,26 @@ function render(){
     const hasPhoto = (a.photo||"").trim().length>0;
 
     const row = document.createElement("div");
-    row.className = "gridRow" + ((Number(a.qty)||0)<=0 ? " zero" : "") + (a.starred ? " starred" : "") + (a.id===selectedItemId ? " selected" : "");
-    const ekUnit = Number(a.ek||0);
-    const ekSum = ekUnit * (Number(a.qty||0) || 0);
+    row.className =
+      "gridRow" +
+      ((Number(a.qty)||0)<=0 ? " zero" : "") +
+      (a.id===selectedItemId ? " selected" : "") +
+      (a.star ? " starred" : "");
+
+    const ekSum = (Number(a.qty)||0) * (Number(a.ek)||0);
+
     row.innerHTML = `
-      <div><div class="star ${a.starred?'on':''}" data-act="star" data-i="${i}" title="Stern">${a.starred?'★':'☆'}</div></div>
-      <div class="cellNo" title="${esc(a.artNo || "")}">${esc(a.artNo || String(i+1).padStart(3,"0"))}</div>
+      <div class="cellNo" title="${esc(a.artNo||"")}">${esc(a.artNo || String(i+1).padStart(3,"0"))}</div>
       <div class="name cellName" title="${esc(a.name)}">${esc(a.name)}</div>
       <div><input class="qty" data-i="${i}" type="number" inputmode="numeric" value="${Number(a.qty)||0}"></div>
-      <div class="small" title="${money(ekUnit)}">${money(ekUnit)}</div>
-      <div class="small" title="${money(ekSum)}">${money(ekSum)}</div>
-      <div class="small" title="${esc(a.date)}">${esc(formatDateDE(a.date))}</div>
+      <div class="small" title="${fmt2(a.ek)}">${fmt2(a.ek)}</div>
+      <div class="small" title="${fmt2(ekSum)}">${fmt2(ekSum)}</div>
+      <div class="small" title="${esc(a.date)}">${esc(toDEDate(a.date))}</div>
       <div class="small" title="${esc(a.shop)}">${esc(a.shop)}</div>
       <div class="small" title="${esc(a.size)}">${esc(a.size)}</div>
-      <div class="small stateCell" title="${esc(a.state)}">${esc(a.state)}</div>
+      <div class="small" title="${esc(a.state)}">${esc(a.state)}</div>
       <div class="icoBar">
+        <div class="ico" data-act="star" data-i="${i}" title="Stern">${a.star ? "★" : "☆"}</div>
         <div class="ico ${hasPhoto?'':'muted'}" data-act="photo" data-i="${i}" title="Foto">📷</div>
         <div class="ico ${hasNote?'':'muted'}" data-act="note" data-i="${i}" title="Notiz">📝</div>
         <div class="ico" data-act="sale" data-i="${i}" title="Verkaufen">🛒</div>
@@ -397,17 +398,19 @@ function render(){
         <div class="ico danger" data-act="delItem" data-i="${i}" title="Löschen">🗑️</div>
       </div>
     `;
-    // Zeile anklicken => blau markieren (toggle), aber NICHT wenn man in Inputs/Icons klickt
+
+    // Zeile antippen => blau markieren (toggle), nicht wenn man in Inputs/Icons klickt
     row.addEventListener("click", (ev)=>{
       const t = ev.target;
-      if(t && (t.closest("input") || t.closest(".ico") || t.closest(".star"))) return;
-      const id = a.id;
-      selectedItemId = (selectedItemId === id) ? null : id;
+      if(t && (t.closest("input") || t.closest(".ico"))) return;
+      selectedItemId = (selectedItemId === a.id) ? null : a.id;
       render();
     });
+
     table.appendChild(row);
   });
 
+  // Menge ändern => sofort rendern (damit rot/gelb/blau korrekt)
   table.querySelectorAll("input.qty").forEach(inp=>{
     inp.addEventListener("click", (ev)=>ev.stopPropagation());
     inp.addEventListener("change", (e)=>{
@@ -418,29 +421,40 @@ function render(){
     });
   });
 
-  table.querySelectorAll(".star").forEach(st=>{
-    st.addEventListener("click", (ev)=>{
-      ev.stopPropagation();
-      const idx = Number(st.dataset.i);
-      items[idx].starred = !items[idx].starred;
-      saveLocal();
-      render();
-    });
-  });
-
   table.querySelectorAll(".ico").forEach(ico=>{
     ico.addEventListener("click", (ev)=>{
-      ev.stopPropagation();
+      ev.preventDefault(); ev.stopPropagation();
       const idx = Number(ico.dataset.i);
       const act = ico.dataset.act;
-      if(act==="star"){ items[idx].starred = !items[idx].starred; saveLocal(); render(); return; }
       if(act==="sale") { openSale(idx); return; }
       if(act==="delItem") { deleteItem(idx); return; }
       if(act==="photo") { openPhotoView(idx); return; }
       if(act==="note") { openNoteView(idx); return; }
-      openEdit(idx, act);
+      if(act==="edit") { openEdit(idx); return; }
+      if(act==="star") { toggleStar(idx); return; }
     });
+    ico.addEventListener("touchend", (ev)=>{
+      ev.preventDefault(); ev.stopPropagation();
+      ico.dispatchEvent(new MouseEvent("click", {bubbles:true}));
+    }, {passive:false});
   });
+}
+
+function toggleStar(i){
+  const a = items[i]; if(!a) return;
+  a.star = !a.star;
+  saveLocal();
+  render();
+}
+
+function deleteItem(i){
+  const a = items[i];
+  if(!a) return;
+  if(confirm("Artikel wirklich löschen?")){
+    items.splice(i,1);
+    saveLocal();
+    render();
+  }
 }
 
 /* ===== Artikel Modal ===== */
@@ -454,8 +468,15 @@ function resetPhotoUI(){
     $("photoImg").removeAttribute("src");
   }
 }
+function recalcEKSum(){
+  const qty = Number($("mQty").value||0);
+  const ek = Number($("mEK").value||0);
+  $("mEKSum").value = fmt2(qty*ek);
+}
+$("mQty").addEventListener("input", recalcEKSum);
+$("mEK").addEventListener("input", recalcEKSum);
 
-function openEdit(i, act){
+function openEdit(i){
   editIndex = i;
   const a = items[i];
   $("modalTitle").textContent = "Artikel bearbeiten";
@@ -470,24 +491,11 @@ function openEdit(i, act){
   $("mNote").value = a.note||"";
   modalPhotoData = a.photo||"";
   resetPhotoUI();
-  updateEKTotal();
-  $("modal").style.display = "block";
-  if(act==="note") setTimeout(()=>$("mNote").scrollIntoView({behavior:"smooth",block:"center"}), 80);
-  if(act==="photo") setTimeout(()=>$("mPhoto").scrollIntoView({behavior:"smooth",block:"center"}), 80);
+  recalcEKSum();
+  showModal("modal");
 }
 
-function deleteItem(i){
-  const a = items[i];
-  if(!a) return;
-  if(confirm("Artikel wirklich löschen?")){
-    items.splice(i,1);
-    saveLocal();
-    render();
-  }
-}
-
-
-$("btnAdd").addEventListener("click", ()=>{
+bindTap($("btnAdd"), ()=>{
   editIndex = null;
   $("modalTitle").textContent = "Artikel anlegen";
   const y = String(new Date().getFullYear());
@@ -497,20 +505,10 @@ $("btnAdd").addEventListener("click", ()=>{
   $("mNote").value="";
   modalPhotoData="";
   resetPhotoUI();
-  updateEKTotal();
-  $("modal").style.display = "block";
+  recalcEKSum();
+  showModal("modal");
 });
-
-$("mCancel").addEventListener("click", ()=>{ $("modal").style.display="none"; });
-
-function updateEKTotal(){
-  const qty = Number($("mQty").value||0);
-  const ek = Number($("mEK").value||0);
-  const el = $("mEKTotal");
-  if(el) el.textContent = "EK gesamt: " + money(qty*ek);
-}
-$("mQty").addEventListener("input", updateEKTotal);
-$("mEK").addEventListener("input", updateEKTotal);
+bindTap($("mCancel"), ()=>hideModal("modal"));
 
 $("mPhoto").addEventListener("change", (e)=>{
   const f = e.target.files && e.target.files[0];
@@ -520,7 +518,7 @@ $("mPhoto").addEventListener("change", (e)=>{
   r.readAsDataURL(f);
 });
 
-$("mSave").addEventListener("click", ()=>{
+bindTap($("mSave"), ()=>{
   const obj = {
     id: (editIndex===null ? (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2))) : (items[editIndex].id || (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2))))),
     artNo: ($("mArtNo").value||"").trim(),
@@ -532,7 +530,8 @@ $("mSave").addEventListener("click", ()=>{
     size: ($("mSize").value||"").trim(),
     state: $("mState").value||"Neu",
     note: ($("mNote").value||"").trim(),
-    photo: modalPhotoData||""
+    photo: modalPhotoData||"",
+    star: (editIndex===null ? false : Boolean(items[editIndex].star))
   };
   if(!obj.name){ alert("Bitte Artikelname eingeben."); return; }
   if(!obj.artNo){
@@ -542,40 +541,68 @@ $("mSave").addEventListener("click", ()=>{
   if(editIndex===null) items.push(obj);
   else items[editIndex] = obj;
   saveLocal();
-  $("modal").style.display="none";
+  hideModal("modal");
   render();
 });
 
-
+/* ===== Foto / Notiz Popups ===== */
 function openPhotoView(i){
   const a = items[i];
-  if(!a || !(a.photo||"").trim()){
-    alert("Kein Foto hinterlegt.");
-    return;
-  }
+  if(!a || !(a.photo||"").trim()){ alert("Kein Foto hinterlegt."); return; }
   $("viewPhotoImg").src = a.photo;
-  $("viewPhotoModal").style.display = "block";
+  showModal("viewPhotoModal");
 }
 function openNoteView(i){
   const a = items[i];
-  if(!a || !(a.note||"").trim()){
-    alert("Keine Notiz hinterlegt.");
-    return;
+  if(!a){ return; }
+  currentNoteItemId = a.id;
+  $("viewNoteInput").value = a.note || "";
+  showModal("viewNoteModal");
+}
+bindTap($("viewNoteSave"), ()=>{
+  if(!currentNoteItemId){ hideModal("viewNoteModal"); return; }
+  const it = items.find(x=>x.id===currentNoteItemId);
+  if(it){
+    it.note = String($("viewNoteInput").value||"").trim();
+    saveLocal();
+    render();
   }
-  $("viewNoteText").textContent = a.note;
-  $("viewNoteModal").style.display = "block";
-}
-/* ===== Verkauf ===== */
+  currentNoteItemId = null;
+  hideModal("viewNoteModal");
+});
 
-function findItemById(id){
-  return items.find(x=>x.id===id);
+/* ===== Verkauf ===== */
+function todayISO(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
+function nextSaleNumber(dateStr){
+  const year = (dateStr && dateStr.length>=4) ? dateStr.slice(0,4) : String(new Date().getFullYear());
+  const count = sales.filter(s=>String(s.date||"").startsWith(year)).length + 1;
+  return String(count).padStart(3,"0")+"-"+year;
+}
+function findItemById(id){ return items.find(x=>x.id===id); }
+
+function openSale(i){
+  editSaleId = null;
+  saleIndex = i;
+  const a = items[i];
+  const d = todayISO();
+  $("saleTitle").textContent = "Verkauf – " + (a.name||"");
+  $("sDate").value = d;
+  $("sNumber").value = nextSaleNumber(d);
+  $("sPlace").value = "";
+  $("sQty").value = Math.min(1, Number(a.qty||0) || 0);
+  $("sPrice").value = 0;
+  $("sShip").value = 0;
+  $("sHint").textContent = "Bestand aktuell: " + (Number(a.qty)||0);
+  showModal("saleModal");
+}
+
 function openSaleEdit(saleId){
   const s = sales.find(x=>x.id===saleId);
   if(!s) return;
   editSaleId = saleId;
-
-  // Item may be missing (deleted)
   const item = findItemById(s.itemId);
   saleIndex = item ? items.indexOf(item) : null;
 
@@ -587,56 +614,10 @@ function openSaleEdit(saleId){
   $("sPrice").value = Number(s.price||0);
   $("sShip").value = Number(s.ship||0);
   $("sHint").textContent = item ? ("Bestand aktuell: " + (Number(item.qty)||0) + " (Bearbeiten passt Bestand an)") : "Artikel wurde gelöscht – Bestand kann nicht angepasst werden.";
-  $("saleModal").style.display = "block";
+  showModal("saleModal");
 }
 
-function parseYearFromDate(str){
-  const m = String(str||"").match(/^(\d{4})/);
-  return m ? m[1] : null;
-}
-function nextItemNumber(year){
-  const y = String(year||new Date().getFullYear());
-  // finde höchste laufende Nummer im Jahr
-  let max = 0;
-  for(const it of items){
-    const no = String(it.artNo||"");
-    const mm = no.match(/^(\d{3,})-(\d{4})$/);
-    if(mm && mm[2]===y){
-      const n = Number(mm[1]);
-      if(Number.isFinite(n) && n>max) max = n;
-    }
-  }
-  const next = String(max+1).padStart(3,"0");
-  return next + "-" + y;
-}
-
-function todayISO(){
-  const d = new Date();
-  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-}
-function nextSaleNumber(dateStr){
-  const year = (dateStr && dateStr.length>=4) ? dateStr.slice(0,4) : String(new Date().getFullYear());
-  const count = sales.filter(s=>String(s.date||"").startsWith(year)).length + 1;
-  return String(count).padStart(3,"0")+"-"+year;
-}
-function openSale(i){
-  editSaleId = null;
-  saleIndex = i;
-  const a = items[i];
-  const d = todayISO();
-  $("saleTitle").textContent = "Verkauf – " + String(i+1).padStart(3,"0") + " – " + (a.name||"");
-  $("sDate").value = d;
-  $("sNumber").value = nextSaleNumber(d);
-  $("sPlace").value = "";
-  $("sQty").value = Math.min(1, Number(a.qty||0) || 0);
-  $("sPrice").value = 0;
-  $("sShip").value = 0;
-  $("sHint").textContent = "Bestand aktuell: " + (Number(a.qty)||0);
-  $("saleModal").style.display="block";
-}
-$("sCancel").addEventListener("click", ()=>{ $("saleModal").style.display="none"; });
-
-$("sSave").addEventListener("click", ()=>{
+bindTap($("sSave"), ()=>{
   const qty = Number($("sQty").value||0);
   if(!qty || qty<=0){ alert("Bitte Menge > 0 eingeben."); return; }
 
@@ -648,16 +629,14 @@ $("sSave").addEventListener("click", ()=>{
     if(old.storno){ alert("Stornierte Verkäufe können nicht bearbeitet werden."); return; }
 
     const item = findItemById(old.itemId);
-    // Bestand: zuerst alten Verkauf zurück, dann neuen abziehen (wenn Artikel existiert)
     if(item){
       const oldQty = Number(old.qty||0);
       item.qty = Number(item.qty||0) + oldQty;
 
       const current = Number(item.qty||0);
       if(qty>current){
-        // rollback old restore? actually we already restored; just show error and keep restored -> revert back to old state
         item.qty = current - oldQty;
-        alert("Menge zu hoch. Bestand: " + (current));
+        alert("Menge zu hoch. Bestand: " + current);
         return;
       }
       item.qty = current - qty;
@@ -674,7 +653,7 @@ $("sSave").addEventListener("click", ()=>{
       ship: Number($("sShip").value||0)
     };
     saveSales();
-    $("saleModal").style.display="none";
+    hideModal("saleModal");
     editSaleId = null;
     render();
     renderSales();
@@ -703,72 +682,11 @@ $("sSave").addEventListener("click", ()=>{
   sales.push(rec);
   a.qty = current - qty;
   saveLocal(); saveSales();
-  $("saleModal").style.display="none";
+  hideModal("saleModal");
   render();
 });
 
-
 /* ===== Verkäufe Übersicht ===== */
-function renderSales(){
-  const el = $("salesList");
-  const q = ($("salesSearch")?.value || "").trim().toLowerCase();
-  el.innerHTML = "";
-  if(!sales.length){
-    el.innerHTML = '<div style="color:#aaa;font-size:9px;padding:6px">Noch keine Verkäufe gespeichert.</div>';
-    return;
-  }
-  const arr = [...sales].slice().reverse().filter(s=>{
-    if(!q) return true;
-    const hay = (String(s.number||"")+" "+String(s.date||"")+" "+String(s.itemName||"")+" "+String(s.place||"")).toLowerCase();
-    return hay.includes(q);
-  });
-
-  if(!arr.length){
-    el.innerHTML = '<div style="color:#aaa;font-size:9px;padding:6px">Keine Treffer.</div>';
-    return;
-  }
-
-  arr.forEach(s=>{
-    const row = document.createElement("div");
-    row.style.display="grid";
-    row.style.gridTemplateColumns="90px 86px 1fr 52px 70px 120px 78px";
-    row.style.gap="4px";
-    row.style.fontSize="9px";
-    row.style.whiteSpace="nowrap";
-    row.style.padding="3px 0";
-    row.style.borderBottom="1px solid #222";
-
-    const status = s.storno ? " (Storno)" : "";
-    row.innerHTML = `
-      <div>${esc(s.number||"")}${status}</div>
-      <div>${esc(s.date||"")}</div>
-      <div title="${esc(s.itemName||"")}">${esc(s.itemName||"")}</div>
-      <div>${Number(s.qty||0)}</div>
-      <div>${(Number(s.price||0)).toFixed(2)}</div>
-      <div title="${esc(s.place||"")}">${esc(s.place||"")}</div>
-      <div style="display:flex;gap:4px;justify-content:flex-end">
-        <div class="ico" data-sact="edit" data-sid="${esc(s.id)}" title="Bearbeiten">✏️</div>
-        <div class="ico" data-sact="storno" data-sid="${esc(s.id)}" title="Storno">↩️</div>
-        <div class="ico danger" data-sact="del" data-sid="${esc(s.id)}" title="Löschen">🗑️</div>
-      </div>
-    `;
-    el.appendChild(row);
-  });
-
-  // actions
-  el.querySelectorAll(".ico").forEach(btn=>{
-    const act = btn.getAttribute("data-sact");
-    const sid = btn.getAttribute("data-sid");
-    if(!act || !sid) return;
-    btn.addEventListener("click", (ev)=>{
-      ev.stopPropagation();
-      if(act==="edit"){ openSaleEdit(sid); return; }
-      if(act==="storno"){ stornoSale(sid); return; }
-      if(act==="del"){ deleteSale(sid); return; }
-    });
-  });
-}
-
 function stornoSale(sid){
   const idx = sales.findIndex(x=>x.id===sid);
   if(idx===-1) return;
@@ -785,7 +703,6 @@ function stornoSale(sid){
   render();
   renderSales();
 }
-
 function deleteSale(sid){
   const idx = sales.findIndex(x=>x.id===sid);
   if(idx===-1) return;
@@ -805,53 +722,120 @@ function deleteSale(sid){
   }
 }
 
+function renderSales(){
+  const el = $("salesList");
+  const q = ($("salesSearch")?.value || "").trim().toLowerCase();
+  el.innerHTML = "";
+  if(!sales.length){
+    el.innerHTML = '<div style="color:#aaa;font-size:10px;padding:8px">Noch keine Verkäufe gespeichert.</div>';
+    return;
+  }
+  const arr = [...sales].slice().reverse().filter(s=>{
+    if(!q) return true;
+    const hay = (String(s.number||"")+" "+String(s.date||"")+" "+String(s.itemName||"")+" "+String(s.place||"")).toLowerCase();
+    return hay.includes(q);
+  });
+
+  if(!arr.length){
+    el.innerHTML = '<div style="color:#aaa;font-size:10px;padding:8px">Keine Treffer.</div>';
+    return;
+  }
+
+  arr.forEach(s=>{
+    const row = document.createElement("div");
+    row.className = "salesRow";
+
+    const status = s.storno ? " (Storno)" : "";
+    row.innerHTML = `
+      <div>${esc(s.number||"")}${status}</div>
+      <div>${esc(toDEDate(s.date||""))}</div>
+      <div title="${esc(s.itemName||"")}">${esc(s.itemName||"")}</div>
+      <div>${Number(s.qty||0)}</div>
+      <div>${fmt2(s.price||0)}</div>
+      <div title="${esc(s.place||"")}">${esc(s.place||"")}</div>
+      <div class="salesActions">
+        <div class="ico" data-sact="edit" data-sid="${esc(s.id)}" title="Bearbeiten">✏️</div>
+        <div class="ico" data-sact="storno" data-sid="${esc(s.id)}" title="Storno">↩️</div>
+        <div class="ico danger" data-sact="del" data-sid="${esc(s.id)}" title="Löschen">🗑️</div>
+      </div>
+    `;
+    el.appendChild(row);
+  });
+
+  el.querySelectorAll(".ico").forEach(btn=>{
+    const act = btn.getAttribute("data-sact");
+    const sid = btn.getAttribute("data-sid");
+    if(!act || !sid) return;
+    btn.addEventListener("click", (ev)=>{
+      ev.preventDefault(); ev.stopPropagation();
+      if(act==="edit") openSaleEdit(sid);
+      else if(act==="storno") stornoSale(sid);
+      else if(act==="del") deleteSale(sid);
+    });
+    btn.addEventListener("touchend", (ev)=>{
+      ev.preventDefault(); ev.stopPropagation();
+      btn.dispatchEvent(new MouseEvent("click",{bubbles:true}));
+    }, {passive:false});
+  });
+}
+
+bindTap($("btnSalesTop"), ()=>{ renderSales(); showModal("salesModal"); });
 $("salesSearch").addEventListener("input", ()=>renderSales());
 
-$("btnSalesTop").addEventListener("click", ()=>{ renderSales(); $("salesModal").style.display="block"; });
-$("salesClose").addEventListener("click", ()=>{ $("salesModal").style.display="none"; });
-
 /* ===== Export / Import ===== */
-$("btnSave").addEventListener("click", ()=>{
-  const blob = new Blob([JSON.stringify(items, null, 2)], {type:"application/json"});
+bindTap($("btnSave"), ()=>{
+  // Export im Backup-Format (dein JSON)
+  const payload = {
+    artikel: items.map(it=>({
+      artnr: it.artNo,
+      artikel: it.name,
+      menge: it.qty,
+      datum: it.date,
+      ort: it.shop,
+      groesse: it.size,
+      zustand: it.state,
+      notiz: it.note,
+      bild: it.photo,
+      preis: it.ek
+    }))
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "lager_backup.json";
   a.click();
 });
 
-$("btnLoad").addEventListener("click", ()=>{
+bindTap($("btnLoad"), ()=>{
   const inp = document.createElement("input");
-  inp.type = "file";
-  // JSON Backups (empfohlen) oder alte HTML-Versionen (best-effort)
-  inp.accept = ".json,application/json,.html,text/html";
+  inp.type="file";
+  inp.accept=".json,application/json";
   inp.onchange = (e)=>{
     const f = e.target.files && e.target.files[0];
     if(!f) return;
-
-    const name = (f.name || "").toLowerCase();
     const r = new FileReader();
     r.onload = ()=>{
       try{
-        const text = String(r.result || "");
+        const parsed = JSON.parse(String(r.result||""));
+        const arr = extractItems(parsed);
+        if(!arr) throw new Error("Format falsch");
+        items = normalizeItems(arr);
 
-        let arr = null;
-
-        if(name.endsWith(".html")){
-          // Versuche, ein Items-Array direkt aus dem HTML zu ziehen
-          arr = extractItemsFromHTMLText(text);
-          if(!arr) throw new Error("HTML-Import: kein Items-Array gefunden");
-        }else{
-          const parsed = JSON.parse(text);
-          arr = extractItems(parsed);
-          if(!arr) throw new Error("Format falsch");
+        // fehlende Artikelnummern ergänzen (aber vorhandene NIE ändern)
+        const yearCounters = {};
+        for(const it of items){
+          if(!it.artNo){
+            const y = parseYearFromDate(it.date) || String(new Date().getFullYear());
+            yearCounters[y] = (yearCounters[y]||0) + 1;
+            it.artNo = String(yearCounters[y]).padStart(3,"0") + "-" + y;
+          }
         }
 
-        // Wichtig: vorhandene Artikelnummern werden übernommen (artNo/nr/artikelnummer/...)
-        items = normalizeItems(arr);
         saveLocal();
+        selectedItemId = null;
         render();
       }catch(err){
-        alert("Datei konnte nicht gelesen werden. Tipp: Bitte aus der alten App als JSON exportieren und hier laden.");
+        alert("Datei konnte nicht gelesen werden.");
       }
     };
     r.readAsText(f);
@@ -859,88 +843,19 @@ $("btnLoad").addEventListener("click", ()=>{
   inp.click();
 });
 
-$("btnPDF").addEventListener("click", ()=>{
-  alert("PDF kommt als nächster Schritt.");
-});
+bindTap($("btnPDF"), ()=>{ alert("PDF kommt als nächster Schritt."); });
 
 /* Init */
 loadLocal();
 loadSales();
-// Migration: IDs + Artikelnummern nachziehen (aus alten Backups)
-items = items.map(x=>({
-  id: x.id || (crypto.randomUUID?crypto.randomUUID():('id_'+Math.random().toString(16).slice(2))),
-  ...x
-}));
-
-// fehlende Artikelnummern: pro Jahr fortlaufend vergeben (jahr aus Kaufdatum, sonst aktuelles Jahr)
-const yearCounters = {};
-for(const it of items){
-  if(!it.artNo){
-    const y = parseYearFromDate(it.date) || String(new Date().getFullYear());
-    yearCounters[y] = (yearCounters[y]||0) + 1;
-    it.artNo = String(yearCounters[y]).padStart(3,"0") + "-" + y;
-  }
-}
+// IDs nachziehen
+items = items.map(x=>({id: x.id || (crypto.randomUUID?crypto.randomUUID():('id_'+Math.random().toString(16).slice(2))), ...x}));
 saveLocal();
 render();
-bindViewerModals();
 adjust();
 setTimeout(adjust, 0);
-setTimeout(adjust, 250);
-
-
-function closePhotoModal(){
-  const m = $("viewPhotoModal");
-  if(m) m.style.display = "none";
-  const img = $("viewPhotoImg");
-  if(img) img.removeAttribute("src");
-}
-function closeNoteModal(){
-  const m = $("viewNoteModal");
-  if(m) m.style.display = "none";
-}
-function bindViewerModals(){
-  const photoM = $("viewPhotoModal");
-  const photoClose = $("viewPhotoClose");
-  bindTap(photoClose, closePhotoModal);
-  if(photoM) bindTap(photoM, (ev)=>{ if(ev.target===photoM) closePhotoModal(); });
-
-  const noteM = $("viewNoteModal");
-  const noteClose = $("viewNoteClose");
-  bindTap(noteClose, closeNoteModal);
-  if(noteM) bindTap(noteM, (ev)=>{ if(ev.target===noteM) closeNoteModal(); });
-}
-
-
-
-
-
-
+setTimeout(adjust, 200);
+setTimeout(adjust, 600);
 </script>
-
-<!-- Foto ansehen -->
-<div id="viewPhotoModal">
-  <div class="box">
-    <h3 style="margin:0 0 6px;font-size:12px">Foto</h3>
-    <div class="preview" id="viewPhotoPreview" style="display:block">
-      <img id="viewPhotoImg" alt="Foto">
-    </div>
-    <div class="btnRow">
-      <button id="viewPhotoClose">Schließen</button>
-    </div>
-  </div>
-</div>
-
-<!-- Notiz ansehen -->
-<div id="viewNoteModal">
-  <div class="box">
-    <h3 style="margin:0 0 6px;font-size:12px">Notiz</h3>
-    <div style="border:1px solid #333;border-radius:10px;padding:8px;background:#111;font-size:10px;white-space:pre-wrap" id="viewNoteText"></div>
-    <div class="btnRow">
-      <button id="viewNoteClose">Schließen</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
