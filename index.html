@@ -173,7 +173,7 @@ textarea{min-height:70px;resize:vertical}
       <div class="stat"><div class="k">Artikel</div><div class="v" id="stArtikel">0</div></div>
       <div class="stat"><div class="k">Gegenstände</div><div class="v" id="stStueck">0</div></div>
       <div class="stat"><div class="k">Warenwert</div><div class="v" id="stWarenwert">0,00</div></div>
-      <div class="stat"><div class="k" id="stWGLabel">Warenwert Gesamt</div><div class="v" id="stWG">0,00</div></div>
+      <div class="stat"><div class="k" id="stSalesCountLabel">Verkäufe</div><div class="v" id="stSalesCount">0</div></div>
       <div class="stat"><div class="k">Umsatz</div><div class="v" id="stUmsatz">0,00</div></div>
       <div class="stat"><div class="k">Gewinn</div><div class="v" id="stGewinn">0,00</div></div>
     </div>
@@ -285,13 +285,14 @@ textarea{min-height:70px;resize:vertical}
 
     <div class="row2" style="margin-top:2px">
       <div><label>Menge</label><input id="sQty" type="number" inputmode="numeric" value="1"></div>
-      <div><label>Preis (gesamt)</label><input id="sPrice" type="number" inputmode="decimal" value="0"></div>
+      <div><label>Preis pro Stück</label><input id="sPrice" type="number" inputmode="decimal" value="0"></div>
     </div>
 
     <label>Versandkosten</label>
     <input id="sShip" type="number" inputmode="decimal" value="0">
 
     <div class="small" id="sHint" style="margin-top:10px;color:#aaa"></div>
+<div class="small" id="sTotal" style="margin-top:6px;color:#ddd;font-weight:700"></div>
 
     <div class="btnRow">
       <button id="sSave" type="button">Speichern</button>
@@ -318,6 +319,9 @@ textarea{min-height:70px;resize:vertical}
 </div>
 
 <script>
+
+
+
 
 
 const $ = (id)=>document.getElementById(id);
@@ -448,7 +452,7 @@ function toDEDate(iso){
   if(!m) return String(iso||"");
   return m[3]+"-"+m[2]+"-"+m[1];
 }
-function fmt2(n){ return (Number(n||0)).toFixed(2); }
+function fmt2(n){ return (toNum(n)).toFixed(2); }
 
 function toNum(v){
   if(v===null || v===undefined) return 0;
@@ -476,23 +480,17 @@ function updateStats(){
     warenwert += q * ek;
   }
 
-  // Warenwert Gesamt = "jemals im Lager" (aktueller Bestand + verkaufte Menge) fürs aktuelle Jahr (nach Kaufdatum)
+  // Verkäufe (ohne Storno) im aktuellen Jahr
   const year = String(new Date().getFullYear());
-  const soldMap = new Map();
+  let salesCount = 0;
   for(const s of sales){
-    if(s && !s.storno){
-      soldMap.set(s.itemId, (soldMap.get(s.itemId)||0) + toNum(s.qty));
-    }
-  }
-  let wg = 0;
-  for(const it of items){
-    const y = (String(it.date||"").match(/^(\d{4})/)||[])[1] || year;
-    if(y !== year) continue;
-    const qEver = toNum(it.qty) + (soldMap.get(it.id)||0);
-    wg += qEver * toNum(it.ek);
+    if(!s || s.storno) continue;
+    const y = String(s.date||"").slice(0,4);
+    if(y === year) salesCount++;
   }
 
   // Umsatz/Gewinn (ohne Storno)
+
   let umsatz = 0;
   let gewinn = 0;
   for(const s of sales){
@@ -509,8 +507,8 @@ function updateStats(){
   set("stArtikel", String(artikel));
   set("stStueck", String(stueck));
   set("stWarenwert", euro(warenwert));
-  const wgLabel = $("stWGLabel"); if(wgLabel) wgLabel.textContent = "Warenwert Gesamt " + year;
-  set("stWG", euro(wg));
+  const scLabel = $("stSalesCountLabel"); if(scLabel) scLabel.textContent = "Verkäufe " + year;
+  set("stSalesCount", String(salesCount));
   set("stUmsatz", euro(umsatz));
   set("stGewinn", euro(gewinn));
 }
@@ -754,6 +752,15 @@ function nextSaleNumber(dateStr){
 }
 function findItemById(id){ return items.find(x=>x.id===id); }
 
+
+function updateSaleTotalUI(){
+  const q = toNum($("sQty")?.value);
+  const p = toNum($("sPrice")?.value);      // Preis pro Stück
+  const ship = toNum($("sShip")?.value);
+  const total = (q * p) + ship;
+  const el = $("sTotal");
+  if(el) el.textContent = "Gesamt: " + euro(total);
+}
 function openSale(i){
   editSaleId = null;
   saleIndex = i;
@@ -781,9 +788,10 @@ function openSaleEdit(saleId){
   $("sNumber").value = s.number || "";
   $("sPlace").value = s.place || "";
   $("sQty").value = Number(s.qty||0);
-  $("sPrice").value = Number(s.price||0);
+  $("sPrice").value = (s.unitPrice!==undefined && s.unitPrice!==null) ? toNum(s.unitPrice) : (toNum(s.qty) ? (toNum(s.price)/toNum(s.qty)) : toNum(s.price));
   $("sShip").value = Number(s.ship||0);
   $("sHint").textContent = item ? ("Bestand aktuell: " + (Number(item.qty)||0) + " (Bearbeiten passt Bestand an)") : "Artikel wurde gelöscht – Bestand kann nicht angepasst werden.";
+  updateSaleTotalUI();
   showModal("saleModal");
 }
 
@@ -817,8 +825,11 @@ bindTap($("sSave"), ()=>{
       date: $("sDate").value || old.date || todayISO(),
       place: ($("sPlace").value||"").trim(),
       qty: qty,
-      price: Number($("sPrice").value||0),
-      ship: Number($("sShip").value||0)
+      unitPrice: toNum($("sPrice").value),
+      price: toNum($("sPrice").value) * qty,
+      ship: toNum($("sShip").value),
+    total: (toNum($("sPrice").value) * qty) + toNum($("sShip").value),
+      total: (toNum($("sPrice").value) * qty) + toNum($("sShip").value)
     };
     saveSales();
     hideModal("saleModal");
@@ -842,8 +853,11 @@ bindTap($("sSave"), ()=>{
     place: ($("sPlace").value||"").trim(),
     itemName: a.name||"",
     qty: qty,
-    price: Number($("sPrice").value||0),
-    ship: Number($("sShip").value||0),
+    unitPrice: toNum($("sPrice").value),
+      price: toNum($("sPrice").value) * qty,
+    ship: toNum($("sShip").value),
+    total: (toNum($("sPrice").value) * qty) + toNum($("sShip").value),
+      total: (toNum($("sPrice").value) * qty) + toNum($("sShip").value),
     ek: Number(a.ek||0)
   };
   sales.push(rec);
@@ -896,6 +910,25 @@ function renderSales(){
   if(!sales.length){
     el.innerHTML = '<div style="color:#aaa;font-size:10px;padding:8px">Noch keine Verkäufe gespeichert.</div>';
     return;
+
+  // Aktionen (delegiert, iOS-sicher)
+  const _salesList = $("salesList");
+  if(_salesList && !_salesList._bound){
+    _salesList._bound = true;
+    const handler = (ev)=>{
+      const btn = ev.target && ev.target.closest ? ev.target.closest(".ico") : null;
+      if(!btn) return;
+      const act = btn.getAttribute("data-sact");
+      const sid = btn.getAttribute("data-sid");
+      if(!act || !sid) return;
+      ev.preventDefault(); ev.stopPropagation();
+      if(act==="edit") openSaleEdit(sid);
+      else if(act==="storno") stornoSale(sid);
+      else if(act==="del") deleteSale(sid);
+    };
+    _salesList.addEventListener("click", handler, true);
+    _salesList.addEventListener("touchend", (ev)=>{ handler(ev); }, {passive:false, capture:true});
+  }
   }
   const arr = [...sales].slice().reverse().filter(s=>{
     if(!q) return true;
@@ -927,98 +960,95 @@ function renderSales(){
     `;
     el.appendChild(row);
   });
-
-  el.querySelectorAll(".ico").forEach(btn=>{
-    const act = btn.getAttribute("data-sact");
-    const sid = btn.getAttribute("data-sid");
-    if(!act || !sid) return;
-    btn.addEventListener("click", (ev)=>{
-      ev.preventDefault(); ev.stopPropagation();
-      if(act==="edit") openSaleEdit(sid);
-      else if(act==="storno") stornoSale(sid);
-      else if(act==="del") deleteSale(sid);
-    });
   });
 }
 
 bindTap($("btnSalesTop"), ()=>{ renderSales(); showModal("salesModal"); });
 $("salesSearch").addEventListener("input", ()=>renderSales());
 
-/* ===== Export / Import ===== */
-bindTap($("btnSave"), ()=>{
-  const payload = {
-    artikel: items.map(it=>({
-      artnr: it.artNo,
-      artikel: it.name,
-      menge: it.qty,
-      datum: it.date,
-      ort: it.shop,
-      groesse: it.size,
-      zustand: it.state,
-      notiz: it.note,
-      bild: it.photo,
-      preis: it.ek
-    }))
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "lager_backup.json";
-  a.click();
-});
 
-bindTap($("btnLoad"), ()=>{
-  const inp = document.createElement("input");
-  inp.type="file";
-  inp.accept=".json,application/json";
-  inp.onchange = (e)=>{
-    const f = e.target.files && e.target.files[0];
-    if(!f) return;
-    const r = new FileReader();
-    r.onload = ()=>{
-      try{
-        const parsed = robustJsonParse(String(r.result||""));
-        if(!parsed) throw new Error("parse");
-        const arr = extractItems(parsed);
-        if(!arr) throw new Error("Format falsch");
-        items = normalizeItems(arr);
+function generateInventurPDF(){
+  // Inventurliste: nur Bestand > 0
+  const list = items
+    .map(it=>({ ...it }))
+    .filter(it=>toNum(it.qty) > 0)
+    .sort((a,b)=>String(a.artNo||"").localeCompare(String(b.artNo||""), "de"));
 
-        // fehlende Artikelnummern ergänzen (vorhandene NIE ändern)
-        const yearCounters = {};
-        for(const it of items){
-          if(!it.artNo){
-            const y = parseYearFromDate(it.date) || String(new Date().getFullYear());
-            yearCounters[y] = (yearCounters[y]||0) + 1;
-            it.artNo = String(yearCounters[y]).padStart(3,"0") + "-" + y;
-          }
-        }
+  const today = new Date();
+  const d = String(today.getDate()).padStart(2,"0")+"."+String(today.getMonth()+1).padStart(2,"0")+"."+today.getFullYear();
 
-        saveLocal();
-        selectedItemId = null;
-        render();
-      }catch(err){
-        alert("Datei konnte nicht gelesen werden.");
+  const css = `
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:Arial,system-ui,sans-serif;margin:24px;color:#000}
+      h1{font-size:18px;margin:0 0 6px}
+      .meta{font-size:11px;color:#333;margin:0 0 14px}
+      table{width:100%;border-collapse:collapse;font-size:11px}
+      th,td{border:1px solid #000;padding:6px 6px;vertical-align:top}
+      th{background:#f0f0f0;text-align:left}
+      .w-nr{width:110px}
+      .w-art{width:auto}
+      .w-gro{width:70px}
+      .w-zus{width:70px}
+      .w-menge{width:60px;text-align:right}
+      .w-ist{width:60px}
+      .w-diff{width:60px}
+      .w-kom{width:160px}
+      .small{font-size:10px;color:#222}
+      @media print{
+        body{margin:14mm}
+        h1{page-break-after:avoid}
+        table{page-break-inside:auto}
+        tr{page-break-inside:avoid;page-break-after:auto}
       }
-    };
-    r.readAsText(f);
-  };
-  inp.click();
-});
+    </style>
+  `;
 
-bindTap($("btnPDF"), ()=>{ alert("PDF kommt als nächster Schritt."); });
+  const rows = list.map((it, idx)=>{
+    const nr = esc(it.artNo || String(idx+1).padStart(3,"0"));
+    const name = esc(it.name||"");
+    const size = esc(it.size||"");
+    const state = esc(it.state||"");
+    const menge = toNum(it.qty);
+    return `
+      <tr>
+        <td class="w-nr">${nr}</td>
+        <td class="w-art">${name}</td>
+        <td class="w-gro">${size}</td>
+        <td class="w-zus">${state}</td>
+        <td class="w-menge">${menge}</td>
+        <td class="w-ist"></td>
+        <td class="w-diff"></td>
+        <td class="w-kom"></td>
+      </tr>
+    `;
+  }).join("");
 
-/* Init */
-loadLocal();
-loadSales();
-items = items.map(x=>({id: x.id || (crypto.randomUUID?crypto.randomUUID():('id_'+Math.random().toString(16).slice(2))), ...x}));
-saveLocal();
-render();
-adjust();
-setTimeout(adjust, 0);
-setTimeout(adjust, 200);
-setTimeout(adjust, 600);
-
-
+  const htmlDoc = `
+    <!doctype html>
+    <html><head><meta charset="utf-8"><title>Inventur ${d}</title>${css}</head>
+    <body>
+      <h1>Inventur-Liste</h1>
+      <div class="meta">Datum: ${d} &nbsp;&nbsp;|&nbsp;&nbsp; Artikel: ${list.length} &nbsp;&nbsp;|&nbsp;&nbsp; Gegenstände: ${list.reduce((s,it)=>s+toNum(it.qty),0)}</div>
+      <table>
+        <thead>
+          <tr>
+            <th class="w-nr">Artikel-Nr</th>
+            <th class="w-art">Artikel</th>
+            <th class="w-gro">Größe</th>
+            <th class="w-zus">Zustand</th>
+            <th class="w-menge">Soll</th>
+            <th class="w-ist">Ist</th>
+            <th class="w-diff">Diff</th>
+            <th class="w-kom">Kommentar</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows || `<tr><td colspan="8" class="small">Keine Artikel mit Bestand > 0.</td></tr>`}
+        </tbody>
+      </table>
+      <p class="small" style="margin-top:12px">Hinweis: „Ist“, „Diff“ und „Kommentar“ sind für die manuelle Inventur gedacht.</p>
+      
 </script>
 </body>
 </html>
