@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Lager Dark</title>
+    <title>Mein Lager</title>
     <style>
         :root {
-            /* Dark Mode Palette */
+            /* Dark Mode Design */
             --bg: #121212;
             --card: #1e1e1e;
             --input-bg: #2d2d2d;
@@ -16,9 +16,6 @@
             --border: #374151;
             --danger: #ef4444;
             --success: #10b981;
-            
-            /* WICHTIG: Sagt dem Browser, dass wir Dark Mode nutzen 
-               (macht Kalender-Picker und Icons automatisch hell) */
             color-scheme: dark; 
         }
 
@@ -32,14 +29,14 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        h1 { text-align: center; margin-bottom: 25px; font-size: 1.6rem; letter-spacing: 1px; color: white; }
+        h1 { text-align: center; margin-bottom: 20px; font-size: 1.5rem; letter-spacing: 1px; color: white; }
 
         /* Dashboard Stats */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         .stat-card {
             background: linear-gradient(145deg, #252525, #1e1e1e);
@@ -107,7 +104,7 @@
         .btn-edit { background: #333; color: white; border: 1px solid #555; }
         .btn-sell { background: var(--success); color: #000; }
 
-        /* MODAL (Pop-up) */
+        /* MODAL (Pop-up) - Fixiert & Zentriert */
         #modalOverlay {
             display: none;
             position: fixed;
@@ -161,12 +158,12 @@
             margin-left: 2px;
         }
 
-        /* HIER IST DER FIX FÜR DIE EINGABEFELDER */
+        /* Einheitliche Eingabefelder */
         input, select, textarea {
             width: 100%;
-            padding: 0 12px; /* Nur seitliches Padding */
-            height: 46px;    /* Feste Höhe erzwingen */
-            line-height: 46px; /* Text vertikal zentrieren */
+            padding: 0 12px;
+            height: 46px;    /* Feste Höhe für alle! */
+            line-height: 46px; 
             background-color: var(--input-bg);
             border: 1px solid var(--border);
             color: white;
@@ -175,11 +172,10 @@
             box-sizing: border-box;
             outline: none;
             font-family: inherit;
-            -webkit-appearance: none; /* iOS Reset */
+            -webkit-appearance: none;
             appearance: none;
         }
 
-        /* Spezialbehandlung für Textarea */
         textarea {
             height: 80px;
             padding: 10px;
@@ -187,7 +183,7 @@
             resize: vertical;
         }
 
-        /* Pfeil im Select wieder hinzufügen (da appearance:none ihn entfernt) */
+        /* Pfeil für Dropdown wiederherstellen */
         select {
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23AAAAAA%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat;
@@ -197,7 +193,7 @@
 
         input:focus, select:focus, textarea:focus { border-color: var(--primary); }
 
-        /* File Upload */
+        /* Bild Upload */
         .file-upload-wrapper {
             position: relative;
             overflow: hidden;
@@ -214,7 +210,6 @@
             cursor: pointer;
             width: 100%;
             box-sizing: border-box;
-            /* Reset der Höhe für den Button, da er Text enthält */
             height: auto; 
             line-height: normal;
         }
@@ -244,7 +239,6 @@
             gap: 15px;
         }
 
-        /* FAB Button */
         .fab {
             position: fixed;
             bottom: 25px; right: 25px;
@@ -270,13 +264,12 @@
             border: 1px solid var(--danger);
             margin-top: 10px;
         }
-
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <h1>📦 PRO LAGER <span style="font-size:0.5em; vertical-align:middle; background:#333; padding:2px 6px; border-radius:4px;">DARK</span></h1>
+    <h1>📦 MEIN LAGER</h1>
 
     <div class="stats-grid">
         <div class="stat-card">
@@ -305,11 +298,11 @@
                     <div class="form-row">
                         <div>
                             <label>Art.-Nr.</label>
-                            <input type="text" id="inpNr" placeholder="A-001">
+                            <input type="text" id="inpArtnr" placeholder="A-001">
                         </div>
                         <div>
                             <label>Menge</label>
-                            <input type="number" id="inpQty" placeholder="1">
+                            <input type="number" id="inpMenge" placeholder="1">
                         </div>
                     </div>
 
@@ -321,18 +314,18 @@
                     <div class="form-row">
                         <div>
                             <label>Preis (Einzel)</label>
-                            <input type="number" step="0.01" id="inpPrice" placeholder="0.00">
+                            <input type="number" step="0.01" id="inpPreis" placeholder="0.00">
                         </div>
                         <div>
                             <label>Größe</label>
-                            <input type="text" id="inpSize" placeholder="M, XL...">
+                            <input type="text" id="inpGroesse" placeholder="M, XL...">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div>
                             <label>Zustand</label>
-                            <select id="inpCond">
+                            <select id="inpZustand">
                                 <option value="Neu">Neu</option>
                                 <option value="Wie neu">Wie neu</option>
                                 <option value="Gebraucht">Gebraucht</option>
@@ -341,18 +334,18 @@
                         </div>
                         <div>
                             <label>Kaufdatum</label>
-                            <input type="date" id="inpDate">
+                            <input type="date" id="inpDatum">
                         </div>
                     </div>
 
                     <div>
-                        <label>Gekauft bei</label>
-                        <input type="text" id="inpShop" placeholder="z.B. Amazon">
+                        <label>Gekauft bei (Ort)</label>
+                        <input type="text" id="inpOrt" placeholder="z.B. Müller, Amazon">
                     </div>
 
                     <div>
                         <label>Notiz</label>
-                        <textarea id="inpNote" placeholder="Details..."></textarea>
+                        <textarea id="inpNotiz" placeholder="Details..."></textarea>
                     </div>
 
                     <div>
@@ -361,9 +354,8 @@
                             <div class="file-btn" id="fileBtnText">📷 Foto aufnehmen oder wählen</div>
                             <input type="file" id="inpFile" accept="image/*" onchange="handleImage(this)">
                         </div>
-                        <input type="hidden" id="inpImgData">
+                        <input type="hidden" id="inpBild">
                         <img id="imgPreview" src="">
-                        <a href="#" id="downloadLink" style="display:none; text-align:center; color:var(--primary); margin-top:10px; display:block;">Download</a>
                     </div>
 
                 </div>
@@ -378,7 +370,17 @@
     </div>
 
     <script>
-        let inventory = JSON.parse(localStorage.getItem('darkInventory')) || [];
+        // HIER SIND DEINE DATEN AUS DER DATEI:
+        const initialData = [
+            {"artnr":"190-2024","name":"Jordan A Ma Maniere Shooting shirt","menge":1,"groesse":"M","preis":109.99,"ort":"Solebox","datum":"2024-09-27","zustand":"Neu","notiz":"Noch auslösen , da selbst genutzt","bild":""},
+            {"artnr":"805-2025","name":"Pokémon Mega Glurak X ex Ultra-Premium-Kollektion","menge":1,"groesse":"One Size","preis":189.88,"ort":"Cardmarked","datum":"2025-11-26","zustand":"Neu","notiz":"","bild":""},
+            {"artnr":"806-2025","name":"Pokémon Mega Glurak X ex Ultra-Premium-Kollektion","menge":1,"groesse":"One Size","preis":135.99,"ort":"Müller Gotha","datum":"2025-11-27","zustand":"Neu","notiz":"","bild":""},
+            {"artnr":"807-2025","name":"Pokémon Mega Glurak X ex Ultra-Premium-Kollektion","menge":1,"groesse":"One Size","preis":135.99,"ort":"Müller Ilmenau","datum":"2025-11-28","zustand":"Neu","notiz":"","bild":""},
+            {"artnr":"808-2025","name":"Pokemon Mega Entwicklung Fatale Flammen ETB","menge":3,"groesse":"One Size","preis":44,"ort":"Müller Gotha","datum":"2025-11-28","zustand":"Neu","notiz":"","bild":""}
+        ];
+
+        // Laden aus Speicher oder Initialdaten nutzen
+        let inventory = JSON.parse(localStorage.getItem('lagerAppDB')) || initialData;
 
         renderList();
 
@@ -390,37 +392,38 @@
             let value = 0;
 
             inventory.forEach((item, index) => {
-                const qty = parseInt(item.qty);
-                const price = parseFloat(item.price);
-                count += qty;
-                value += (price * qty);
+                const menge = parseInt(item.menge) || 0;
+                const preis = parseFloat(item.preis) || 0;
+                count += menge;
+                value += (preis * menge);
 
                 const div = document.createElement('div');
                 div.className = 'item-card';
                 div.innerHTML = `
                     <div class="card-header">
                         <div>
-                            <span class="art-nr">#${item.nr || '---'}</span>
+                            <span class="art-nr">#${item.artnr || '---'}</span>
                             <span class="item-name">${item.name}</span>
                         </div>
                         <div style="text-align:right">
-                            <div class="price-tag">${price.toFixed(2)} €</div>
+                            <div class="price-tag">${preis.toFixed(2)} €</div>
                         </div>
                     </div>
 
                     <div class="info-row">
-                        <span>Gesamtwert: ${(price * qty).toFixed(2)} €</span>
-                        <span>${item.date ? formatDate(item.date) : ''}</span>
+                        <span>Gesamt: ${(preis * menge).toFixed(2)} €</span>
+                        <span>${item.datum ? formatDate(item.datum) : ''}</span>
                     </div>
 
                     <div class="badges">
-                        <span class="badge badge-qty">${qty}x auf Lager</span>
-                        <span class="badge">${item.cond}</span>
-                        ${item.size ? `<span class="badge">Gr: ${item.size}</span>` : ''}
-                        ${item.img ? `<span class="badge" style="background:#4b5563">📎 Foto</span>` : ''}
+                        <span class="badge badge-qty">${menge}x Lager</span>
+                        <span class="badge">${item.zustand}</span>
+                        ${item.groesse ? `<span class="badge">Gr: ${item.groesse}</span>` : ''}
+                        ${item.ort ? `<span class="badge" style="background:#444">📍 ${item.ort}</span>` : ''}
+                        ${item.bild ? `<span class="badge" style="background:#4b5563">📎 Bild</span>` : ''}
                     </div>
                     
-                    ${item.note ? `<div style="font-size:0.85rem; color:#9ca3af; margin-bottom:10px; font-style:italic;">"${item.note}"</div>` : ''}
+                    ${item.notiz ? `<div style="font-size:0.85rem; color:#9ca3af; margin-bottom:10px; font-style:italic;">"${item.notiz}"</div>` : ''}
 
                     <div class="actions">
                         <button class="btn btn-edit" onclick="editItem(${index})">Bearbeiten</button>
@@ -483,7 +486,7 @@
                         ctx.drawImage(img, 0, 0, width, height);
                         
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
-                        document.getElementById('inpImgData').value = dataUrl;
+                        document.getElementById('inpBild').value = dataUrl;
                         document.getElementById('imgPreview').src = dataUrl;
                         document.getElementById('imgPreview').style.display = 'block';
                         document.getElementById('fileBtnText').innerText = "✅ Bild gespeichert";
@@ -496,17 +499,19 @@
         function saveItem() {
             const id = document.getElementById('editIndex').value;
             
+            // Objekt passend zu deiner Datei-Struktur
             const newItem = {
-                nr: document.getElementById('inpNr').value,
+                artnr: document.getElementById('inpArtnr').value,
                 name: document.getElementById('inpName').value,
-                qty: parseInt(document.getElementById('inpQty').value) || 0,
-                price: parseFloat(document.getElementById('inpPrice').value) || 0,
-                size: document.getElementById('inpSize').value,
-                cond: document.getElementById('inpCond').value,
-                date: document.getElementById('inpDate').value,
-                shop: document.getElementById('inpShop').value,
-                note: document.getElementById('inpNote').value,
-                img: document.getElementById('inpImgData').value
+                menge: parseInt(document.getElementById('inpMenge').value) || 0,
+                preis: parseFloat(document.getElementById('inpPreis').value) || 0,
+                groesse: document.getElementById('inpGroesse').value,
+                zustand: document.getElementById('inpZustand').value,
+                datum: document.getElementById('inpDatum').value,
+                ort: document.getElementById('inpOrt').value,
+                notiz: document.getElementById('inpNotiz').value,
+                bild: document.getElementById('inpBild').value,
+                markiert: false
             };
 
             if (!newItem.name) { alert('Bitte Name eingeben'); return; }
@@ -518,7 +523,7 @@
             }
 
             try {
-                localStorage.setItem('darkInventory', JSON.stringify(inventory));
+                localStorage.setItem('lagerAppDB', JSON.stringify(inventory));
                 renderList();
                 closeModal();
             } catch (e) {
@@ -529,39 +534,36 @@
         function editItem(index) {
             const item = inventory[index];
             document.getElementById('editIndex').value = index;
-            document.getElementById('inpNr').value = item.nr;
+            
+            // Felder befüllen
+            document.getElementById('inpArtnr').value = item.artnr;
             document.getElementById('inpName').value = item.name;
-            document.getElementById('inpQty').value = item.qty;
-            document.getElementById('inpPrice').value = item.price;
-            document.getElementById('inpSize').value = item.size;
-            document.getElementById('inpCond').value = item.cond;
-            document.getElementById('inpDate').value = item.date;
-            document.getElementById('inpShop').value = item.shop;
-            document.getElementById('inpNote').value = item.note;
-            document.getElementById('inpImgData').value = item.img;
+            document.getElementById('inpMenge').value = item.menge;
+            document.getElementById('inpPreis').value = item.preis;
+            document.getElementById('inpGroesse').value = item.groesse;
+            document.getElementById('inpZustand').value = item.zustand;
+            document.getElementById('inpDatum').value = item.datum;
+            document.getElementById('inpOrt').value = item.ort;
+            document.getElementById('inpNotiz').value = item.notiz;
+            document.getElementById('inpBild').value = item.bild;
             
             const preview = document.getElementById('imgPreview');
-            const downLink = document.getElementById('downloadLink');
 
-            if(item.img) {
-                preview.src = item.img;
+            if(item.bild) {
+                preview.src = item.bild;
                 preview.style.display = 'block';
-                downLink.href = item.img;
-                downLink.download = "Rechnung_" + item.name + ".jpg";
-                downLink.style.display = 'block';
                 document.getElementById('fileBtnText').innerText = "Bild hinterlegt";
             } else {
                 preview.style.display = 'none';
-                downLink.style.display = 'none';
                 document.getElementById('fileBtnText').innerText = "📷 Foto aufnehmen oder wählen";
             }
             openModal(true);
         }
 
         function sellItem(index) {
-            if(inventory[index].qty > 0) {
-                inventory[index].qty--;
-                localStorage.setItem('darkInventory', JSON.stringify(inventory));
+            if(inventory[index].menge > 0) {
+                inventory[index].menge--;
+                localStorage.setItem('lagerAppDB', JSON.stringify(inventory));
                 renderList();
             }
         }
@@ -570,7 +572,7 @@
             const index = document.getElementById('editIndex').value;
             if(confirm("Wirklich löschen?")) {
                 inventory.splice(index, 1);
-                localStorage.setItem('darkInventory', JSON.stringify(inventory));
+                localStorage.setItem('lagerAppDB', JSON.stringify(inventory));
                 renderList();
                 closeModal();
             }
@@ -579,9 +581,8 @@
         function resetForm() {
             document.getElementById('editIndex').value = "";
             document.querySelectorAll('input:not([type=hidden]), textarea').forEach(el => el.value = '');
-            document.getElementById('inpCond').value = 'Neu';
+            document.getElementById('inpZustand').value = 'Neu';
             document.getElementById('imgPreview').style.display = 'none';
-            document.getElementById('downloadLink').style.display = 'none';
             document.getElementById('fileBtnText').innerText = "📷 Foto aufnehmen oder wählen";
         }
     </script>
