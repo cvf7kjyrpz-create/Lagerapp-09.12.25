@@ -326,6 +326,7 @@ textarea{min-height:70px;resize:vertical}
 
 
 
+
 const $ = (id)=>document.getElementById(id);
 
 function bindTap(el, handler){
@@ -961,7 +962,6 @@ function renderSales(){
     `;
     el.appendChild(row);
   });
-  });
 }
 
 bindTap($("btnSalesTop"), ()=>{ renderSales(); showModal("salesModal"); });
@@ -1085,42 +1085,7 @@ function generateInventurPDF(){
         </tbody>
       </table>
       <p class="small" style="margin-top:12px">Hinweis: „Ist“, „Diff“ und „Kommentar“ sind für die manuelle Inventur gedacht.</p>
-      <script>window.onload=()=>{ setTimeout(()=>window.print(), 200); }<\/script>
-    </body></html>
-  `;
-
-  const w = window.open("", "_blank");
-  if(!w){ alert("Popup blockiert. Bitte Popups erlauben."); return; }
-  w.document.open();
-  w.document.write(htmlDoc);
-  w.document.close();
-}
-
-
-const LS_BACKUP_NO = "lager_backup_no_v1";
-function nextBackupName(){
-  const year = new Date().getFullYear();
-  let n = 0;
-  try{ n = Number(localStorage.getItem(LS_BACKUP_NO)||"0")||0; }catch(e){ n = 0; }
-  n += 1;
-  try{ localStorage.setItem(LS_BACKUP_NO, String(n)); }catch(e){}
-  const num = String(n).padStart(3,"0");
-  return `lager_backup_${num}-${year}.json`;
-}
-function downloadJSON(filename, obj){
-  const blob = new Blob([JSON.stringify(obj, null, 2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
-}
-
-
-
-
+      
 </script>
 </body>
 </html>
