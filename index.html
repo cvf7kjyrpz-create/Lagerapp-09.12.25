@@ -26,12 +26,9 @@ textarea{min-height:90px;resize:vertical}
   background:#000;border-bottom:1px solid #333;
   padding:6px 8px;
   padding-top:calc(6px + env(safe-area-inset-top));
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-
 }
-.actions{display:flex;gap:6px}
+
+.actions{display:flex;gap:6px;margin-top:6px}
 .actions button{flex:1}
 
 .tableWrap{padding: calc(var(--topbarH,64px) + 8px) 8px 8px 8px;}
@@ -109,7 +106,7 @@ textarea{min-height:90px;resize:vertical}
 .salesActions{display:flex;gap:6px;justify-content:flex-end}
 
 
-/* Zähler + Suche oben (stabil, kein Overlap) */
+/* Zähler + Suche (stabil) */
 .stats{
   display:grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -125,7 +122,7 @@ textarea{min-height:90px;resize:vertical}
 .stat .k{font-size:9px;color:#aaa;line-height:1.1}
 .stat .v{font-size:12px;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-.mainSearchWrap{min-width:0}
+.mainSearchWrap{margin-top:6px}
 #mainSearch{
   width:100%;
   font-size:11px;
@@ -153,7 +150,7 @@ textarea{min-height:90px;resize:vertical}
       <div class="stat"><div class="k">Artikel</div><div class="v" id="stArtikel">0</div></div>
       <div class="stat"><div class="k">Gegenstände</div><div class="v" id="stStueck">0</div></div>
       <div class="stat"><div class="k">Warenwert</div><div class="v" id="stWarenwert">0,00</div></div>
-      <div class="stat"><div class="k" id="stIVLabel">Warenwert Gesamt</div><div class="v" id="stIV">0,00</div></div>
+      <div class="stat"><div class="k" id="stWGLabel">Warenwert Gesamt</div><div class="v" id="stWG">0,00</div></div>
       <div class="stat"><div class="k">Umsatz</div><div class="v" id="stUmsatz">0,00</div></div>
       <div class="stat"><div class="k">Gewinn</div><div class="v" id="stGewinn">0,00</div></div>
     </div>
@@ -163,11 +160,11 @@ textarea{min-height:90px;resize:vertical}
     </div>
 
     <div class="actions">
-      <button id="btnAdd">Artikel</button>
-      <button id="btnSalesTop">Verkäufe</button>
-      <button id="btnSave">Sichern</button>
-      <button id="btnLoad">Laden</button>
-      <button id="btnPDF">PDF</button>
+      <button id="btnAdd" type="button">Artikel</button>
+      <button id="btnSalesTop" type="button">Verkäufe</button>
+      <button id="btnSave" type="button">Sichern</button>
+      <button id="btnLoad" type="button">Laden</button>
+      <button id="btnPDF" type="button">PDF</button>
     </div>
 
   </div>
@@ -299,8 +296,6 @@ textarea{min-height:90px;resize:vertical}
 
 <script>
 
-
-
 const $ = (id)=>document.getElementById(id);
 
 function bindTap(el, handler){
@@ -357,6 +352,24 @@ function nextItemNumber(year){
   return String(max+1).padStart(3,"0")+"-"+y;
 }
 
+
+function robustJsonParse(txt){
+  // strip BOM
+  let s = String(txt||"").replace(/^\uFEFF/, "").trim();
+  // First try normal JSON
+  try{ return JSON.parse(s); }catch(e){}
+  // Try remove trailing commas
+  try{
+    let last;
+    for(let i=0;i<8;i++){
+      last = s;
+      s = s.replace(/,\s*([}\]])/g, "$1");
+      if(s === last) break;
+    }
+    return JSON.parse(s);
+  }catch(e){}
+  return null;
+}
 function extractItems(parsed){
   if(Array.isArray(parsed)) return parsed;
   if(parsed && typeof parsed === "object"){
@@ -372,75 +385,16 @@ function extractItems(parsed){
       }
     }
   }
-  return findItemsDeep(parsed) || null;
+  return null;
 }
-
-function looksLikeItem(obj){
-  if(!obj || typeof obj!=="object") return false;
-  const keys = Object.keys(obj);
-  const hasNo = ("artNo" in obj) || ("artnr" in obj) || ("nr" in obj) || ("artikelnummer" in obj) || ("artikelNr" in obj);
-  const hasName = ("name" in obj) || ("artikel" in obj) || ("artikelname" in obj) || ("bezeichnung" in obj);
-  const hasQty = ("qty" in obj) || ("menge" in obj);
-  return (hasNo || hasName) && (hasQty || keys.length>=3);
-}
-function findItemsDeep(root){
-  // Breadth-first scan; choose the "best" array of objects that looks like items
-  const queue = [root];
-  let best = null;
-  let bestScore = 0;
-
-  const scoreArr = (arr)=>{
-    if(!Array.isArray(arr) || arr.length===0) return 0;
-    let hits = 0;
-    let objCount = 0;
-    for(const x of arr.slice(0, Math.min(50, arr.length))){
-      if(x && typeof x==="object" && !Array.isArray(x)){
-        objCount++;
-        if(looksLikeItem(x)) hits++;
-      }
-    }
-    if(objCount===0) return 0;
-    const ratio = hits/objCount;
-    if(ratio<0.25) return 0;
-    return Math.round(arr.length * (0.5 + ratio)); // size + quality
-  };
-
-  while(queue.length){
-    const cur = queue.shift();
-    if(!cur) continue;
-
-    if(Array.isArray(cur)){
-      const sc = scoreArr(cur);
-      if(sc > bestScore){ bestScore = sc; best = cur; }
-      for(const x of cur){
-        if(x && typeof x==="object") queue.push(x);
-      }
-      continue;
-    }
-
-    if(typeof cur === "object"){
-      for(const k of Object.keys(cur)){
-        const v = cur[k];
-        if(!v) continue;
-        if(Array.isArray(v)){
-          const sc = scoreArr(v);
-          if(sc > bestScore){ bestScore = sc; best = v; }
-        }
-        if(typeof v === "object") queue.push(v);
-      }
-    }
-  }
-  return best;
-}
-
 
 function normalizeItems(arr){
   return arr.map(x=>({
     id: String(x.id || x._id || x.uuid || (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2)))),
     artNo: String(x.artNo ?? x.artnr ?? x.nr ?? x.artikelnummer ?? x.artikelNr ?? x.artikel_nr ?? x.articleNo ?? x.articleNumber ?? ""),
     name: String(x.name ?? x.artikelname ?? x.artikel ?? x.bezeichnung ?? ""),
-    qty: toNum(x.qty ?? x.menge ?? 0),
-    ek: toNum(x.ek ?? x.einkauf ?? x.preis ?? 0),
+    qty: Number(x.qty ?? x.menge ?? 0),
+    ek: Number(x.ek ?? x.einkauf ?? x.preis ?? 0),
     date: String(x.date ?? x.kaufdatum ?? x.datum ?? ""),
     shop: String(x.shop ?? x.wo ?? x.ort ?? ""),
     size: String(x.size ?? x.groesse ?? ""),
@@ -470,19 +424,20 @@ function toDEDate(iso){
   if(!m) return String(iso||"");
   return m[3]+"."+m[2]+"."+m[1];
 }
-function fmt2(n){ return (Number(n||0)).toFixed(2); 
+function fmt2(n){ return (Number(n||0)).toFixed(2); }
+
 function toNum(v){
   if(v===null || v===undefined) return 0;
   if(typeof v === "number") return Number.isFinite(v) ? v : 0;
   let s = String(v).trim();
   if(!s) return 0;
-  // allow German comma decimals
+  // German comma decimals & thousand separators
   s = s.replace(/\./g, "").replace(/,/g, ".");
   const n = Number(s);
   return Number.isFinite(n) ? n : 0;
 }
 function euro(n){
-  const v = Number(n||0);
+  const v = toNum(n);
   return v.toLocaleString("de-DE", {minimumFractionDigits:2, maximumFractionDigits:2});
 }
 function updateStats(){
@@ -497,7 +452,7 @@ function updateStats(){
     warenwert += q * ek;
   }
 
-  // IV = "jemals im Lager" (aktueller Bestand + verkaufte Menge) für das aktuelle Jahr (nach Kaufdatum)
+  // Warenwert Gesamt = "jemals im Lager" (aktueller Bestand + verkaufte Menge) fürs aktuelle Jahr (nach Kaufdatum)
   const year = String(new Date().getFullYear());
   const soldMap = new Map();
   for(const s of sales){
@@ -505,15 +460,15 @@ function updateStats(){
       soldMap.set(s.itemId, (soldMap.get(s.itemId)||0) + toNum(s.qty));
     }
   }
-  let iv = 0;
+  let wg = 0;
   for(const it of items){
     const y = (String(it.date||"").match(/^(\d{4})/)||[])[1] || year;
     if(y !== year) continue;
     const qEver = toNum(it.qty) + (soldMap.get(it.id)||0);
-    iv += qEver * toNum(it.ek);
+    wg += qEver * toNum(it.ek);
   }
 
-  // Umsatz & Gewinn (ohne Storno)
+  // Umsatz/Gewinn (ohne Storno)
   let umsatz = 0;
   let gewinn = 0;
   for(const s of sales){
@@ -523,18 +478,17 @@ function updateStats(){
     const ship = toNum(s.ship);
     const ek = toNum(s.ek);
     umsatz += price + ship;
-    gewinn += price - (ek*q); // Versand neutral
+    gewinn += price - (ek*q); // Versand neutral (einfach nachvollziehbar)
   }
 
   const set = (id, val)=>{ const el=$(id); if(el) el.textContent = val; };
   set("stArtikel", String(artikel));
   set("stStueck", String(stueck));
   set("stWarenwert", euro(warenwert));
-  const ivLabel = $("stIVLabel"); if(ivLabel) ivLabel.textContent = "Warenwert Gesamt " + year;
-  set("stIV", euro(iv));
+  const wgLabel = $("stWGLabel"); if(wgLabel) wgLabel.textContent = "Warenwert Gesamt " + year;
+  set("stWG", euro(wg));
   set("stUmsatz", euro(umsatz));
   set("stGewinn", euro(gewinn));
-}
 }
 
 /* ===== Layout ===== */
@@ -612,7 +566,7 @@ function render(){
     inp.addEventListener("click", (ev)=>ev.stopPropagation());
     inp.addEventListener("change", (e)=>{
       const idx = Number(e.target.dataset.i);
-      items[idx].qty = toNum(e.target.value);
+      items[idx].qty = Number(e.target.value||0);
       saveLocal();
       render();
     });
@@ -663,8 +617,8 @@ function resetPhotoUI(){
   }
 }
 function recalcEKSum(){
-  const qty = toNum($("mQty").value);
-  const ek = toNum($("mEK").value);
+  const qty = Number($("mQty").value||0);
+  const ek = Number($("mEK").value||0);
   $("mEKSum").value = fmt2(qty*ek);
 }
 $("mQty").addEventListener("input", recalcEKSum);
@@ -716,8 +670,8 @@ bindTap($("mSave"), ()=>{
     id: (editIndex===null ? (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2))) : (items[editIndex].id || (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2))))),
     artNo: ($("mArtNo").value||"").trim(),
     name: ($("mName").value||"").trim(),
-    qty: toNum($("mQty").value),
-    ek: toNum($("mEK").value),
+    qty: Number($("mQty").value||0),
+    ek: Number($("mEK").value||0),
     date: $("mDate").value||"",
     shop: ($("mShop").value||"").trim(),
     size: ($("mSize").value||"").trim(),
@@ -810,7 +764,7 @@ function openSaleEdit(saleId){
 }
 
 bindTap($("sSave"), ()=>{
-  const qty = toNum($("sQty").value);
+  const qty = Number($("sQty").value||0);
   if(!qty || qty<=0){ alert("Bitte Menge > 0 eingeben."); return; }
 
   if(editSaleId){
@@ -852,7 +806,7 @@ bindTap($("sSave"), ()=>{
 
   if(saleIndex===null){ alert("Artikel nicht gefunden."); return; }
   const a = items[saleIndex];
-  const current = toNum(a.qty);
+  const current = Number(a.qty||0);
   if(qty>current){ alert("Menge zu hoch. Bestand: "+current); return; }
 
   const rec = {
@@ -999,28 +953,11 @@ bindTap($("btnLoad"), ()=>{
     const r = new FileReader();
     r.onload = ()=>{
       try{
-        let txt = String(r.result||"");
-        txt = txt.replace(/^\uFEFF/, "");
-        let parsed;
-        try{ parsed = JSON.parse(txt); }
-        catch(e){
-          // fallback: try to parse substring between first {/[ and last }/]
-          const a = txt.indexOf("[");
-          const o = txt.indexOf("{");
-          let start = -1;
-          if(a!==-1 && (o===-1 || a<o)) start = a; else start = o;
-          let end = Math.max(txt.lastIndexOf("]"), txt.lastIndexOf("}"));
-          if(start!==-1 && end!==-1 && end>start){
-            parsed = JSON.parse(txt.slice(start, end+1));
-          } else {
-            throw e;
-          }
-        }
+        const parsed = robustJsonParse(String(r.result||""));
+        if(!parsed) throw new Error("parse");
         const arr = extractItems(parsed);
         if(!arr) throw new Error("Format falsch");
         items = normalizeItems(arr);
-        mainQuery = "";
-        const ms = $("mainSearch"); if(ms) ms.value = "";
 
         // fehlende Artikelnummern ergänzen (vorhandene NIE ändern)
         const yearCounters = {};
@@ -1035,7 +972,6 @@ bindTap($("btnLoad"), ()=>{
         saveLocal();
         selectedItemId = null;
         render();
-        updateStats();
       }catch(err){
         alert("Datei konnte nicht gelesen werden.");
       }
@@ -1057,8 +993,6 @@ adjust();
 setTimeout(adjust, 0);
 setTimeout(adjust, 200);
 setTimeout(adjust, 600);
-
-
 
 </script>
 </body>
