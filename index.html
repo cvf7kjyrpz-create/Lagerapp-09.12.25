@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V5 Stats</title>
+    <title>Lager V8 Markiert</title>
     <style>
         :root {
             --bg: #121212;
@@ -15,7 +15,7 @@
             --border: #333;
             --danger: #ef4444;
             --success: #10b981;
-            --profit: #eab308; /* Gelb für Gewinn */
+            --profit: #eab308; /* Gold/Gelb */
             color-scheme: dark; 
         }
 
@@ -29,7 +29,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- STICKY HEADER (ULTRA COMPACT) --- */
+        /* --- STICKY HEADER --- */
         .app-header {
             background-color: rgba(30, 30, 30, 0.98);
             backdrop-filter: blur(10px);
@@ -50,39 +50,30 @@
 
         h1 { margin: 0; font-size: 1rem; font-weight: 700; letter-spacing: 0.5px; }
 
+        /* --- SUCHE --- */
         .search-container { position: relative; width: 100%; }
         .search-input {
-            width: 100%;
-            height: 30px; /* NOCH KLEINER */
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            padding: 0 8px 0 30px;
-            color: white;
-            font-size: 0.85rem;
-            box-sizing: border-box;
+            width: 100%; height: 30px;
+            background: var(--input-bg); border: 1px solid var(--border);
+            border-radius: 5px; padding: 0 30px 0 30px; 
+            color: white; font-size: 0.85rem; box-sizing: border-box;
         }
         .search-icon {
-            position: absolute;
-            left: 8px; top: 50%;
-            transform: translateY(-50%);
-            opacity: 0.5;
-            font-size: 0.8rem;
+            position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+            opacity: 0.5; font-size: 0.8rem; pointer-events: none;
+        }
+        .search-clear {
+            position: absolute; right: 0; top: 0; bottom: 0; width: 30px;
+            background: none; border: none; color: #999; font-size: 1.2rem;
+            cursor: pointer; display: none; align-items: center; justify-content: center;
         }
 
-        /* --- NEUE 4-SPALTEN STATS --- */
+        /* --- STATS --- */
         .stats-bar {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr; /* 4 Spalten */
-            gap: 5px;
-            margin-top: 8px;
-            padding-top: 5px;
-            border-top: 1px solid #333;
+            display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 5px; margin-top: 8px; padding-top: 5px; border-top: 1px solid #333;
         }
-
-        .stat-box {
-            text-align: center;
-        }
+        .stat-box { text-align: center; }
         .stat-label { font-size: 0.65rem; color: #888; display: block; }
         .stat-val { font-size: 0.8rem; font-weight: bold; display: block; }
         
@@ -90,7 +81,7 @@
         .c-green { color: var(--success); }
         .c-gold { color: var(--profit); }
 
-        /* --- KOMPAKTE LISTE --- */
+        /* --- LISTE --- */
         #itemList { padding: 0; }
 
         .item-row {
@@ -101,8 +92,16 @@
             grid-template-columns: 1fr auto;
             gap: 8px;
             align-items: center;
+            transition: background 0.2s;
+            border-left: 3px solid transparent; /* Platzhalter für Rand */
         }
         
+        /* Neuer Style für markierte Artikel */
+        .item-row.marked {
+            background: rgba(234, 179, 8, 0.15); /* Subtiler Gold-Hintergrund */
+            border-left: 3px solid var(--profit); /* Goldener Rand links */
+        }
+
         .item-main { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
         
         .item-title { 
@@ -110,20 +109,30 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
         }
         
-        .item-meta { font-size: 0.7rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 5px; }
+        .item-meta { font-size: 0.7rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
         .meta-tag { background: #333; padding: 1px 4px; border-radius: 3px; }
         .tag-shop { color: #93c5fd; }
         .tag-size { color: #f9a8d4; }
+        .icon-symbol { font-size: 0.85rem; margin-left: 2px; }
 
         .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 65px; }
+        
         .item-price { font-weight: 600; font-size: 0.9rem; color: var(--success); }
+
+        /* Stern Button */
+        .star-btn {
+            background: none; border: none; padding: 0;
+            font-size: 1.2rem; cursor: pointer; color: #444;
+            line-height: 1; margin-bottom: 2px;
+        }
+        .star-btn.active { color: var(--profit); } /* Goldener Stern wenn aktiv */
         
         .btn-mini {
             background: #2d2d2d; border: 1px solid #444; color: #ddd;
             padding: 3px 6px; font-size: 0.7rem; border-radius: 4px; cursor: pointer;
         }
 
-        /* --- UI ELEMENTS --- */
+        /* --- FAB & MODALS --- */
         .fab {
             position: fixed; bottom: 20px; right: 20px;
             background: var(--primary); color: white;
@@ -135,7 +144,6 @@
 
         .settings-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; opacity: 0.8; }
 
-        /* Modal */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.9); z-index: 200;
@@ -179,6 +187,7 @@
         <div class="search-container">
             <span class="search-icon">🔍</span>
             <input type="text" id="searchInput" class="search-input" placeholder="Suche..." onkeyup="filterList()">
+            <button id="clearSearchBtn" class="search-clear" onclick="clearSearch()">✕</button>
         </div>
 
         <div class="stats-bar">
@@ -256,13 +265,9 @@
                     <label>Importieren (JSON)</label>
                     <input type="file" id="fileImport" accept=".json" onchange="importBackup(this)" style="padding-top:6px; height:auto;">
                 </div>
-                <div class="settings-row">
+                <div class="settings-row" style="border:none">
                     <label>Exportieren</label>
                     <button class="btn-full btn-blue" onclick="exportBackup()">Backup erstellen</button>
-                </div>
-                 <div class="settings-row" style="border:none">
-                    <label>Umsatz/Gewinn Reset</label>
-                    <button class="btn-full btn-gray" onclick="resetSales()">Statistik zurücksetzen</button>
                 </div>
             </div>
             <div class="modal-footer">
@@ -272,7 +277,6 @@
     </div>
 
     <script>
-        // Artikel-Datenbank und Umsatz-Historie laden
         let inventory = JSON.parse(localStorage.getItem('lagerAppDB')) || [];
         let salesLog = JSON.parse(localStorage.getItem('lagerAppSales')) || [];
 
@@ -282,11 +286,13 @@
             const list = document.getElementById('itemList');
             list.innerHTML = '';
             
+            const clearBtn = document.getElementById('clearSearchBtn');
+            clearBtn.style.display = filterText.length > 0 ? 'flex' : 'none';
+
             let totalQty = 0;
             let totalVal = 0;
             const term = filterText.toLowerCase();
 
-            // 1. Inventar durchgehen
             inventory.forEach((item, index) => {
                 const searchString = `${item.name} ${item.ort} ${item.groesse} ${item.artnr}`.toLowerCase();
                 
@@ -296,8 +302,14 @@
                     totalQty += qty;
                     totalVal += (price * qty);
 
+                    // Klasse für Markierung prüfen
+                    const markedClass = item.markiert ? 'item-row marked' : 'item-row';
+                    const starClass = item.markiert ? 'star-btn active' : 'star-btn';
+                    const starIcon = item.markiert ? '★' : '☆';
+
                     const div = document.createElement('div');
-                    div.className = 'item-row';
+                    div.className = markedClass;
+                    // Klick auf Zeile öffnet Edit, außer man klickt Button
                     div.onclick = (e) => {
                         if(e.target.tagName !== 'BUTTON') openEditModal(index);
                     };
@@ -309,10 +321,12 @@
                                 ${item.groesse ? `<span class="meta-tag tag-size">${item.groesse}</span>` : ''}
                                 ${item.ort ? `<span class="meta-tag tag-shop">${item.ort}</span>` : ''}
                                 <span class="meta-tag">#${item.artnr || '?'}</span>
-                                ${item.bild ? '<span>📎</span>' : ''}
+                                ${item.bild ? '<span class="icon-symbol" title="Bild">📎</span>' : ''}
+                                ${item.notiz ? '<span class="icon-symbol" title="Notiz">📝</span>' : ''}
                             </div>
                         </div>
                         <div class="item-right">
+                            <button class="${starClass}" onclick="toggleStar(event, ${index})">${starIcon}</button>
                             <span class="item-price">${price.toFixed(2)} €</span>
                             <div style="font-size:0.7rem; color:#666">${qty} Stk.</div>
                             <button class="btn-mini" onclick="sellItem(event, ${index})">Verkauf</button>
@@ -322,16 +336,13 @@
                 }
             });
 
-            // 2. Umsatz & Gewinn berechnen (aus salesLog)
             let totalRevenue = 0;
             let totalProfit = 0;
-            
             salesLog.forEach(sale => {
                 totalRevenue += sale.sellPrice;
                 totalProfit += (sale.sellPrice - sale.buyPrice);
             });
 
-            // 3. Stats aktualisieren
             document.getElementById('statCount').innerText = totalQty;
             document.getElementById('statValue').innerText = formatCurrency(totalVal);
             document.getElementById('statRevenue').innerText = formatCurrency(totalRevenue);
@@ -343,7 +354,7 @@
         }
 
         function formatCurrency(val) {
-            if(val >= 10000) return (val/1000).toFixed(1) + 'k €'; // Kürzen bei großen Zahlen
+            if(val >= 10000) return (val/1000).toFixed(1) + 'k €';
             return val.toFixed(2) + ' €';
         }
 
@@ -351,23 +362,32 @@
             renderList(document.getElementById('searchInput').value);
         }
 
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            renderList("");
+        }
+
         // --- CORE ACTIONS ---
+
+        function toggleStar(e, index) {
+            e.stopPropagation(); // Verhindert Öffnen des Modals
+            // Toggle Status (true <-> false)
+            inventory[index].markiert = !inventory[index].markiert;
+            saveAll();
+            // Nur Liste neu rendern, Suche beibehalten
+            filterList();
+        }
 
         function sellItem(e, index) {
             e.stopPropagation();
             const item = inventory[index];
             if(item.menge > 0) {
-                // Frage nach dem Verkaufspreis für die Gewinnberechnung
-                let sellPriceStr = prompt(`Verkaufspreis für 1x ${item.name}?`, item.preis); // Standard = EK
-                
+                let sellPriceStr = prompt(`Verkaufspreis für 1x ${item.name}?`, item.preis);
                 if (sellPriceStr !== null) {
                     let sellPrice = parseFloat(sellPriceStr.replace(',', '.')) || 0;
                     let buyPrice = parseFloat(item.preis) || 0;
 
-                    // Bestand senken
                     item.menge--;
-                    
-                    // In Historie speichern
                     salesLog.push({
                         name: item.name,
                         date: new Date().toISOString().split('T')[0],
@@ -375,21 +395,23 @@
                         sellPrice: sellPrice
                     });
 
-                    // Wenn leer, evtl löschen
                     if(item.menge === 0) {
-                         if(confirm("Bestand ist 0. Artikel aus der Liste löschen?")) {
+                         if(confirm("Bestand ist 0. Löschen?")) {
                              inventory.splice(index, 1);
                          }
                     }
-
                     saveAll();
-                    renderList(document.getElementById('searchInput').value);
+                    filterList();
                 }
             }
         }
 
         function saveItem() {
             const id = document.getElementById('editIndex').value;
+            // Markiert-Status beim Speichern erhalten, wenn Update
+            let markiertStatus = false;
+            if(id !== "") markiertStatus = inventory[id].markiert;
+
             const newItem = {
                 artnr: document.getElementById('inpArtnr').value,
                 name: document.getElementById('inpName').value,
@@ -400,7 +422,8 @@
                 datum: document.getElementById('inpDatum').value,
                 ort: document.getElementById('inpOrt').value,
                 notiz: document.getElementById('inpNotiz').value,
-                bild: document.getElementById('inpBild').value
+                bild: document.getElementById('inpBild').value,
+                markiert: markiertStatus // Status übernehmen
             };
 
             if (!newItem.name) return alert('Name fehlt!');
@@ -410,7 +433,7 @@
 
             saveAll();
             closeModals();
-            renderList(document.getElementById('searchInput').value);
+            filterList();
         }
 
         function deleteCurrentItem() {
@@ -419,20 +442,11 @@
                 inventory.splice(index, 1);
                 saveAll();
                 closeModals();
-                renderList(document.getElementById('searchInput').value);
+                filterList();
             }
         }
 
-        function resetSales() {
-            if(confirm("Umsatz und Gewinn wirklich auf 0 setzen?")) {
-                salesLog = [];
-                saveAll();
-                renderList(document.getElementById('searchInput').value);
-                closeModals();
-            }
-        }
-
-        // --- TECH STUFF ---
+        // --- TECH / UI ---
 
         function openEditModal(index = null) {
             document.getElementById('modalEdit').style.display = 'flex';
@@ -517,7 +531,6 @@
         }
 
         function exportBackup() {
-            // Kombinierter Export (Inventar + Sales)
             const exportData = { artikel: inventory, sales: salesLog };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
             const dlAnchorElem = document.createElement('a');
@@ -532,21 +545,18 @@
                 reader.onload = function(e) {
                     try {
                         const loadedData = JSON.parse(e.target.result);
-                        
-                        // Check ob neues Format (mit Sales) oder altes Format
                         if(Array.isArray(loadedData)) {
-                            inventory = loadedData; // Altes Format
+                            inventory = loadedData;
                         } else if (loadedData.artikel) {
                             inventory = loadedData.artikel;
                             if(loadedData.sales) salesLog = loadedData.sales;
                         } else {
                             return alert("Format falsch.");
                         }
-
                         saveAll();
                         renderList();
                         closeModals();
-                        alert("Daten erfolgreich importiert!");
+                        alert("Daten importiert!");
                     } catch(err) { alert("Fehler beim Import!"); }
                 };
                 reader.readAsText(input.files[0]);
