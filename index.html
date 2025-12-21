@@ -6,6 +6,7 @@
 <title>Lager App – Stabil v27</title>
 <style>
 
+
 :root{
   --bg:#000;--panel:#0b0b0b;--panel2:#111;--border:#333;--muted:#aaa;--text:#fff;
   --gap:2px;
@@ -24,7 +25,7 @@ textarea{min-height:70px;resize:vertical}
 .topbar{
   position:fixed;top:0;left:0;right:0;z-index:9999;
   background:#000;border-bottom:1px solid #333;
-  padding:6px 8px;
+  padding:4px 6px;
   padding-top:calc(6px + env(safe-area-inset-top));
 }
 
@@ -44,7 +45,7 @@ textarea{min-height:70px;resize:vertical}
   position:sticky; top:0; z-index:50;
   background:#000;
   border-bottom:1px solid #333;
-  padding:4px 8px;
+  padding:3px 6px;
   font-size:10px;
 }
 .gridHeader,.gridRow{
@@ -56,7 +57,7 @@ textarea{min-height:70px;resize:vertical}
   white-space:nowrap;
 }
 .gridRow{
-  padding:6px 8px;
+  padding:4px 6px;
   border-bottom:1px solid #1f1f1f;
   font-size:10px;
 }
@@ -64,16 +65,16 @@ textarea{min-height:70px;resize:vertical}
 
 .cellNo{padding-right:10px;border-right:1px solid #333;overflow:hidden;text-overflow:ellipsis}
 .cellName{padding-left:10px}
-.name{overflow:hidden;text-overflow:ellipsis}
+.name{overflow-x:auto;overflow-y:hidden;text-overflow:clip;scrollbar-width:none}
 .small{font-size:10px;color:#ddd;overflow:hidden;text-overflow:ellipsis}
-.qty{width:54px;text-align:center;padding:6px 6px;font-size:11px;border-radius:10px;touch-action:manipulation}
+.qty{width:52px;text-align:center;padding:4px 4px;font-size:11px;border-radius:10px;touch-action:manipulation}
 .gridRow.zero{background:rgba(180,0,0,.18)}
 .gridRow.selected{background:rgba(0,110,255,.22)}
 .gridRow.starred{box-shadow: inset 0 0 0 9999px rgba(255,200,0,.12)}
 
-.icoBar{display:flex;gap:10px;justify-content:flex-end;overflow:hidden}
+.icoBar{display:flex;gap:10px;justify-content:flex-end;overflow:hidden;padding-right:8px}
 .ico{
-  width:22px;height:22px;border:1px solid #333;border-radius:8px;
+  width:20px;height:20px;border:1px solid #333;border-radius:8px;
   display:flex;align-items:center;justify-content:center;
   user-select:none;-webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
@@ -117,7 +118,7 @@ textarea{min-height:70px;resize:vertical}
   background:#0b0b0b;
   border:1px solid #222;
   border-radius:12px;
-  padding:6px 8px;
+  padding:4px 6px;
 }
 .stat .k{font-size:9px;color:#aaa;line-height:1.1}
 .stat .v{font-size:12px;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -149,6 +150,18 @@ textarea{min-height:70px;resize:vertical}
 .row2{margin-top:2px}
 #mNote{min-height:70px}
 .preview img{max-height:200px}
+
+
+.name::-webkit-scrollbar{display:none}
+
+
+/* Popup-Abstände feinjustiert */
+#modal .row2{gap:10px;}
+#modal .row2.qtyEk{gap:12px;}          /* Menge ↔ EK etwas mehr */
+#modal .row2.eksumDate{gap:6px;}       /* EK Σ ↔ Datum etwas weniger */
+#modal label.compactAfter{margin-top:6px;} /* Datum ↔ Wo weniger */
+#modal label.moreBefore{margin-top:12px;}  /* Wo ↔ Größe etwas mehr */
+
 
 </style>
 </head>
@@ -200,21 +213,21 @@ textarea{min-height:70px;resize:vertical}
     <label>Artikelname</label>
     <input id="mName" autocomplete="off">
 
-    <div class="row2">
+    <div class="row2 qtyEk">
       <div><label>Menge</label><input id="mQty" type="number" inputmode="numeric" value="1"></div>
       <div><label>EK pro Stück</label><input id="mEK" type="number" inputmode="decimal" value="0"></div>
     </div>
 
-    <div class="row2">
+    <div class="row2 eksumDate">
       <div><label>EK gesamt</label><input id="mEKSum" disabled></div>
       <div><label>Kaufdatum</label><input id="mDate" type="date"></div>
     </div>
 
-    <label>Wo gekauft</label>
+    <label class="compactAfter">Wo gekauft</label>
     <input id="mShop" autocomplete="off">
 
     <div class="row2">
-      <div><label>Größe</label><input id="mSize" autocomplete="off"></div>
+      <div><label class="moreBefore">Größe</label><input id="mSize" autocomplete="off"></div>
       <div><label>Zustand</label>
         <select id="mState"><option>Neu</option><option>Neuwertig</option><option>Gebraucht</option></select>
       </div>
@@ -305,6 +318,7 @@ textarea{min-height:70px;resize:vertical}
 </div>
 
 <script>
+
 
 const $ = (id)=>document.getElementById(id);
 
@@ -432,7 +446,7 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;
 function toDEDate(iso){
   const m = String(iso||"").match(/^(\\d{4})-(\\d{2})-(\\d{2})/);
   if(!m) return String(iso||"");
-  return m[3]+"."+m[2]+"."+m[1];
+  return m[3]+"-"+m[2]+"-"+m[1];
 }
 function fmt2(n){ return (Number(n||0)).toFixed(2); }
 
@@ -1003,6 +1017,7 @@ adjust();
 setTimeout(adjust, 0);
 setTimeout(adjust, 200);
 setTimeout(adjust, 600);
+
 
 </script>
 </body>
