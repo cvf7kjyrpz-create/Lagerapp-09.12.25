@@ -325,6 +325,7 @@ textarea{min-height:70px;resize:vertical}
 
 
 
+
 const $ = (id)=>document.getElementById(id);
 
 function bindTap(el, handler){
@@ -1002,6 +1003,7 @@ bindTap($("btnPDF"), ()=>{ generateInventurPDF(); });
 $("salesSearch").addEventListener("input", ()=>renderSales());
 
 
+
 function generateInventurPDF(){
   // Inventurliste: nur Bestand > 0
   const list = items
@@ -1032,8 +1034,6 @@ function generateInventurPDF(){
       .small{font-size:10px;color:#222}
       @media print{
         body{margin:14mm}
-        h1{page-break-after:avoid}
-        table{page-break-inside:auto}
         tr{page-break-inside:avoid;page-break-after:auto}
       }
     </style>
@@ -1045,19 +1045,21 @@ function generateInventurPDF(){
     const size = esc(it.size||"");
     const state = esc(it.state||"");
     const menge = toNum(it.qty);
-    return `
-      <tr>
-        <td class="w-nr">${nr}</td>
-        <td class="w-art">${name}</td>
-        <td class="w-gro">${size}</td>
-        <td class="w-zus">${state}</td>
-        <td class="w-menge">${menge}</td>
-        <td class="w-ist"></td>
-        <td class="w-diff"></td>
-        <td class="w-kom"></td>
-      </tr>
-    `;
+    return (
+      "<tr>"
+      + `<td class="w-nr">${nr}</td>`
+      + `<td class="w-art">${name}</td>`
+      + `<td class="w-gro">${size}</td>`
+      + `<td class="w-zus">${state}</td>`
+      + `<td class="w-menge">${menge}</td>`
+      + '<td class="w-ist"></td>'
+      + '<td class="w-diff"></td>'
+      + '<td class="w-kom"></td>'
+      + "</tr>"
+    );
   }).join("");
+
+  const rowsHtml = rows ? rows : '<tr><td colspan="8" class="small">Keine Artikel mit Bestand &gt; 0.</td></tr>';
 
   const htmlDoc = `
     <!doctype html>
@@ -1079,11 +1081,22 @@ function generateInventurPDF(){
           </tr>
         </thead>
         <tbody>
-          ${rows || `<tr><td colspan="8" class="small">Keine Artikel mit Bestand > 0.</td></tr>`}
+          ${rowsHtml}
         </tbody>
       </table>
       <p class="small" style="margin-top:12px">Hinweis: „Ist“, „Diff“ und „Kommentar“ sind für die manuelle Inventur gedacht.</p>
-      
+      <script>window.onload=()=>{ setTimeout(()=>window.print(), 200); }<\/script>
+    </body></html>
+  `;
+
+  const w = window.open("", "_blank");
+  if(!w){ alert("Popup blockiert. Bitte Popups erlauben."); return; }
+  w.document.open();
+  w.document.write(htmlDoc);
+  w.document.close();
+}
+
+
 const LS_BACKUP_NO = "lager_backup_no_v1";
 function nextBackupName(){
   const year = new Date().getFullYear();
@@ -1104,6 +1117,7 @@ function downloadJSON(filename, obj){
   a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
 }
+
 
 
 
