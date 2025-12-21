@@ -325,6 +325,7 @@ textarea{min-height:70px;resize:vertical}
 
 
 
+
 const $ = (id)=>document.getElementById(id);
 
 function bindTap(el, handler){
@@ -928,16 +929,49 @@ function deleteSale(sid){
 
 function renderSales(){
   const el = $("salesList");
+  if(!el) return;
   const q = ($("salesSearch")?.value || "").trim().toLowerCase();
   el.innerHTML = "";
-  if(!sales.length){
-    el.innerHTML = '<div style="color:#aaa;font-size:10px;padding:8px">Noch keine Verkäufe gespeichert.</div>';
-    return;
 
-  // Aktionen (delegiert, iOS-sicher)
-  const _salesList = $("salesList");
-  if(_salesList && !_salesList._bound){
-    _salesList._bound = true;
+  const year = String(new Date().getFullYear());
+  const filtered = (sales||[])
+    .filter(s=>!!s)
+    .slice()
+    .sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")))  // neueste oben
+    .filter(s=>{
+      if(!q) return true;
+      const hay = (String(s.no||"")+" "+String(s.date||"")+" "+String(s.itemNo||"")+" "+String(s.itemName||"")+" "+String(s.place||"")).toLowerCase();
+      return hay.includes(q);
+    });
+
+  if(!filtered.length){
+    el.innerHTML = '<div style="color:#aaa;font-size:10px;padding:8px">Keine Verkäufe gefunden.</div>';
+    updateStats();
+    return;
+  }
+
+  filtered.forEach((s)=>{
+    const row = document.createElement("div");
+    row.className = "salesRow" + (s.storno ? " storno" : "");
+    row.innerHTML = `
+      <div title="${esc(s.no||"")}">${esc(s.no||"")}</div>
+      <div>${toDEDate(String(s.date||""))}</div>
+      <div title="${esc(s.itemName||"")}">${esc(s.itemName||"")}</div>
+      <div>${toNum(s.qty)}</div>
+      <div>${fmt2(s.price||0)}</div>
+      <div title="${esc(s.place||"")}">${esc(s.place||"")}</div>
+      <div class="salesActions">
+        <div class="ico" data-sact="edit" data-sid="${esc(s.id)}" title="Bearbeiten">✏️</div>
+        <div class="ico" data-sact="storno" data-sid="${esc(s.id)}" title="Storno">↩️</div>
+        <div class="ico danger" data-sact="del" data-sid="${esc(s.id)}" title="Löschen">🗑️</div>
+      </div>
+    `;
+    el.appendChild(row);
+  });
+
+  // Delegierte Aktionen einmalig binden
+  if(!el._boundActions){
+    el._boundActions = true;
     const handler = (ev)=>{
       const btn = ev.target && ev.target.closest ? ev.target.closest(".ico") : null;
       if(!btn) return;
@@ -949,41 +983,11 @@ function renderSales(){
       else if(act==="storno") stornoSale(sid);
       else if(act==="del") deleteSale(sid);
     };
-    _salesList.addEventListener("click", handler, true);
-    _salesList.addEventListener("touchend", (ev)=>{ handler(ev); }, {passive:false, capture:true});
-  }
-  }
-  const arr = [...sales].slice().reverse().filter(s=>{
-    if(!q) return true;
-    const hay = (String(s.number||"")+" "+String(s.date||"")+" "+String(s.itemName||"")+" "+String(s.place||"")).toLowerCase();
-    return hay.includes(q);
-  });
-
-  if(!arr.length){
-    el.innerHTML = '<div style="color:#aaa;font-size:10px;padding:8px">Keine Treffer.</div>';
-    return;
+    el.addEventListener("click", handler, true);
+    el.addEventListener("touchend", (ev)=>{ handler(ev); }, {passive:false, capture:true});
   }
 
-  arr.forEach(s=>{
-    const row = document.createElement("div");
-    row.className = "salesRow";
-    const status = s.storno ? " (Storno)" : "";
-    row.innerHTML = `
-      <div>${esc(s.number||"")}${status}</div>
-      <div>${esc(toDEDate(s.date||""))}</div>
-      <div title="${esc(s.itemName||"")}">${esc(s.itemName||"")}</div>
-      <div>${Number(s.qty||0)}</div>
-      <div>${fmt2(s.price||0)}</div>
-      <div title="${esc(s.place||"")}">${esc(s.place||"")}</div>
-      <div class="salesActions">
-        <div class="ico" data-sact="edit" data-sid="${esc(s.id)}" title="Bearbeiten">✏️</div>
-        <div class="ico" data-sact="storno" data-sid="${esc(s.id)}" title="Storno">↩️</div>
-        <div class="ico danger" data-sact="del" data-sid="${esc(s.id)}" title="Löschen">🗑️</div>
-      </div>
-    `;
-    el.appendChild(row);
-  });
-  });
+  updateStats();
 }
 
 bindTap($("btnSalesTop"), ()=>{ renderSales(); showModal("salesModal"); });
@@ -1115,6 +1119,7 @@ function generateInventurPDF(){
       </table>
       <p class="small" style="margin-top:12px">Hinweis: „Ist“, „Diff“ und „Kommentar“ sind für die manuelle Inventur gedacht.</p>
       
+
 
 </script>
 </body>
