@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V8 Markiert</title>
+    <title>Lager V9 Auto-ID</title>
     <style>
         :root {
             --bg: #121212;
@@ -15,7 +15,7 @@
             --border: #333;
             --danger: #ef4444;
             --success: #10b981;
-            --profit: #eab308; /* Gold/Gelb */
+            --profit: #eab308;
             color-scheme: dark; 
         }
 
@@ -29,39 +29,30 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- STICKY HEADER --- */
+        /* --- HEADER --- */
         .app-header {
             background-color: rgba(30, 30, 30, 0.98);
             backdrop-filter: blur(10px);
             padding: 8px 12px;
-            position: sticky;
-            top: 0;
-            z-index: 50;
+            position: sticky; top: 0; z-index: 50;
             border-bottom: 1px solid var(--border);
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
         }
-
         h1 { margin: 0; font-size: 1rem; font-weight: 700; letter-spacing: 0.5px; }
 
         /* --- SUCHE --- */
         .search-container { position: relative; width: 100%; }
         .search-input {
-            width: 100%; height: 30px;
+            width: 100%; height: 32px;
             background: var(--input-bg); border: 1px solid var(--border);
-            border-radius: 5px; padding: 0 30px 0 30px; 
-            color: white; font-size: 0.85rem; box-sizing: border-box;
+            border-radius: 6px; padding: 0 30px; 
+            color: white; font-size: 0.9rem; box-sizing: border-box;
         }
-        .search-icon {
-            position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
-            opacity: 0.5; font-size: 0.8rem; pointer-events: none;
-        }
+        .search-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); opacity: 0.5; font-size: 0.8rem; pointer-events: none; }
         .search-clear {
             position: absolute; right: 0; top: 0; bottom: 0; width: 30px;
             background: none; border: none; color: #999; font-size: 1.2rem;
@@ -76,7 +67,6 @@
         .stat-box { text-align: center; }
         .stat-label { font-size: 0.65rem; color: #888; display: block; }
         .stat-val { font-size: 0.8rem; font-weight: bold; display: block; }
-        
         .c-blue { color: #60a5fa; }
         .c-green { color: var(--success); }
         .c-gold { color: var(--profit); }
@@ -87,50 +77,40 @@
         .item-row {
             background: var(--card);
             border-bottom: 1px solid #2a2a2a;
-            padding: 6px 10px;
+            padding: 8px 10px;
             display: grid;
             grid-template-columns: 1fr auto;
             gap: 8px;
             align-items: center;
-            transition: background 0.2s;
-            border-left: 3px solid transparent; /* Platzhalter für Rand */
+            border-left: 3px solid transparent;
         }
         
-        /* Neuer Style für markierte Artikel */
         .item-row.marked {
-            background: rgba(234, 179, 8, 0.15); /* Subtiler Gold-Hintergrund */
-            border-left: 3px solid var(--profit); /* Goldener Rand links */
+            background: rgba(234, 179, 8, 0.1);
+            border-left: 3px solid var(--profit);
         }
 
-        .item-main { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+        .item-main { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
+        .item-title { font-weight: 600; font-size: 0.95rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        .item-title { 
-            font-weight: 600; font-size: 0.9rem; color: white; 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-        }
-        
-        .item-meta { font-size: 0.7rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
-        .meta-tag { background: #333; padding: 1px 4px; border-radius: 3px; }
+        .item-meta { font-size: 0.75rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .meta-tag { background: #333; padding: 1px 5px; border-radius: 3px; }
         .tag-shop { color: #93c5fd; }
         .tag-size { color: #f9a8d4; }
         .icon-symbol { font-size: 0.85rem; margin-left: 2px; }
 
-        .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 65px; }
+        .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 80px; }
         
-        .item-price { font-weight: 600; font-size: 0.9rem; color: var(--success); }
+        /* PREIS ÄNDERUNG: Kleiner, nicht mehr grün */
+        .item-price { font-weight: 500; font-size: 0.85rem; color: #ccc; }
+        
+        /* GESAMTSUMME: Neu */
+        .item-total { font-size: 0.7rem; color: #666; margin-bottom: 2px;}
 
-        /* Stern Button */
-        .star-btn {
-            background: none; border: none; padding: 0;
-            font-size: 1.2rem; cursor: pointer; color: #444;
-            line-height: 1; margin-bottom: 2px;
-        }
-        .star-btn.active { color: var(--profit); } /* Goldener Stern wenn aktiv */
+        .star-btn { background: none; border: none; padding: 0; font-size: 1.2rem; cursor: pointer; color: #444; line-height: 1; margin-bottom: 2px; }
+        .star-btn.active { color: var(--profit); } 
         
-        .btn-mini {
-            background: #2d2d2d; border: 1px solid #444; color: #ddd;
-            padding: 3px 6px; font-size: 0.7rem; border-radius: 4px; cursor: pointer;
-        }
+        .btn-mini { background: #2d2d2d; border: 1px solid #444; color: #ddd; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; margin-top: 2px;}
 
         /* --- FAB & MODALS --- */
         .fab {
@@ -138,23 +118,14 @@
             background: var(--primary); color: white;
             width: 50px; height: 50px; border-radius: 50%; border: none;
             font-size: 26px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            cursor: pointer; z-index: 90;
-            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 90; display: flex; align-items: center; justify-content: center;
         }
 
         .settings-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; opacity: 0.8; }
 
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9); z-index: 200;
-            align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px;
-        }
-        .modal-box {
-            background: var(--card); width: 100%; max-width: 500px;
-            border-radius: 12px; border: 1px solid var(--border);
-            display: flex; flex-direction: column; max-height: 90vh; overflow: hidden;
-        }
-        .modal-header { padding: 10px; border-bottom: 1px solid var(--border); font-weight: bold; text-align: center; background: #252525; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px; }
+        .modal-box { background: var(--card); width: 100%; max-width: 500px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; }
+        .modal-header { padding: 12px; border-bottom: 1px solid var(--border); font-weight: bold; text-align: center; background: #252525; }
         .modal-body { padding: 15px; overflow-y: auto; }
         .modal-footer { padding: 12px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #252525; }
 
@@ -163,16 +134,35 @@
         .btn-blue { background: var(--primary); color: white; }
         .btn-gray { background: #444; color: white; }
 
-        .form-grid { display: grid; gap: 10px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 3px; }
+        /* FORM DESIGN - Vereinheitlicht */
+        .form-grid { display: grid; gap: 12px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+        
+        /* WICHTIG: input[type="date"] vereinheitlicht */
         input, select, textarea {
-            width: 100%; height: 38px; padding: 0 10px;
-            background: var(--input-bg); border: 1px solid var(--border);
-            color: white; border-radius: 6px; font-size: 0.9rem;
-            box-sizing: border-box; outline: none;
+            width: 100%; 
+            height: 40px; 
+            padding: 0 10px;
+            background: var(--input-bg); 
+            border: 1px solid var(--border);
+            color: white; 
+            border-radius: 6px; 
+            font-size: 0.95rem;
+            box-sizing: border-box; 
+            outline: none;
+            -webkit-appearance: none; /* iOS Reset */
+            appearance: none;
+            font-family: inherit;
         }
-        textarea { height: 60px; resize: vertical; padding: 8px;}
+        
+        /* Datum spezifisch */
+        input[type="date"] {
+            display: block;
+            line-height: 40px; /* Vertikale Zentrierung */
+        }
+        
+        textarea { height: 70px; resize: vertical; padding: 8px; line-height: 1.4; }
         .hidden { display: none; }
     </style>
 </head>
@@ -221,7 +211,7 @@
                 <input type="hidden" id="editIndex"> 
                 <div class="form-grid">
                     <div class="form-row">
-                        <div><label>Art.-Nr.</label><input type="text" id="inpArtnr"></div>
+                        <div><label>Art.-Nr.</label><input type="text" id="inpArtnr" placeholder="Lädt..."></div>
                         <div><label>Menge</label><input type="number" id="inpMenge"></div>
                     </div>
                     <div><label>Name</label><input type="text" id="inpName"></div>
@@ -242,7 +232,7 @@
                     
                     <div>
                          <label>Rechnung</label>
-                         <input type="file" id="inpFile" accept="image/*" onchange="handleImage(this)" style="padding-top:6px; height:auto;">
+                         <input type="file" id="inpFile" accept="image/*" onchange="handleImage(this)" style="padding-top:8px; height:auto;">
                          <input type="hidden" id="inpBild">
                          <img id="imgPreview" src="" style="width:100%; margin-top:5px; border-radius:4px; display:none;">
                          <button class="btn-mini" onclick="removeImage()" style="margin-top:5px; width:100%">Bild entfernen</button>
@@ -263,7 +253,7 @@
             <div class="modal-body">
                 <div class="settings-row">
                     <label>Importieren (JSON)</label>
-                    <input type="file" id="fileImport" accept=".json" onchange="importBackup(this)" style="padding-top:6px; height:auto;">
+                    <input type="file" id="fileImport" accept=".json" onchange="importBackup(this)" style="padding-top:8px; height:auto;">
                 </div>
                 <div class="settings-row" style="border:none">
                     <label>Exportieren</label>
@@ -302,14 +292,18 @@
                     totalQty += qty;
                     totalVal += (price * qty);
 
-                    // Klasse für Markierung prüfen
                     const markedClass = item.markiert ? 'item-row marked' : 'item-row';
                     const starClass = item.markiert ? 'star-btn active' : 'star-btn';
                     const starIcon = item.markiert ? '★' : '☆';
 
+                    // Gesamtsumme Logik
+                    let priceDisplay = `<span class="item-price">${price.toFixed(2)} €</span>`;
+                    if (qty > 1) {
+                        priceDisplay += `<div class="item-total">Gesamt: ${(price * qty).toFixed(2)} €</div>`;
+                    }
+
                     const div = document.createElement('div');
                     div.className = markedClass;
-                    // Klick auf Zeile öffnet Edit, außer man klickt Button
                     div.onclick = (e) => {
                         if(e.target.tagName !== 'BUTTON') openEditModal(index);
                     };
@@ -327,8 +321,7 @@
                         </div>
                         <div class="item-right">
                             <button class="${starClass}" onclick="toggleStar(event, ${index})">${starIcon}</button>
-                            <span class="item-price">${price.toFixed(2)} €</span>
-                            <div style="font-size:0.7rem; color:#666">${qty} Stk.</div>
+                            ${priceDisplay}
                             <button class="btn-mini" onclick="sellItem(event, ${index})">Verkauf</button>
                         </div>
                     `;
@@ -336,6 +329,7 @@
                 }
             });
 
+            // Stats
             let totalRevenue = 0;
             let totalProfit = 0;
             salesLog.forEach(sale => {
@@ -358,23 +352,15 @@
             return val.toFixed(2) + ' €';
         }
 
-        function filterList() {
-            renderList(document.getElementById('searchInput').value);
-        }
-
-        function clearSearch() {
-            document.getElementById('searchInput').value = '';
-            renderList("");
-        }
+        function filterList() { renderList(document.getElementById('searchInput').value); }
+        function clearSearch() { document.getElementById('searchInput').value = ''; renderList(""); }
 
         // --- CORE ACTIONS ---
 
         function toggleStar(e, index) {
-            e.stopPropagation(); // Verhindert Öffnen des Modals
-            // Toggle Status (true <-> false)
+            e.stopPropagation();
             inventory[index].markiert = !inventory[index].markiert;
             saveAll();
-            // Nur Liste neu rendern, Suche beibehalten
             filterList();
         }
 
@@ -386,7 +372,6 @@
                 if (sellPriceStr !== null) {
                     let sellPrice = parseFloat(sellPriceStr.replace(',', '.')) || 0;
                     let buyPrice = parseFloat(item.preis) || 0;
-
                     item.menge--;
                     salesLog.push({
                         name: item.name,
@@ -394,11 +379,8 @@
                         buyPrice: buyPrice,
                         sellPrice: sellPrice
                     });
-
                     if(item.menge === 0) {
-                         if(confirm("Bestand ist 0. Löschen?")) {
-                             inventory.splice(index, 1);
-                         }
+                         if(confirm("Bestand ist 0. Löschen?")) inventory.splice(index, 1);
                     }
                     saveAll();
                     filterList();
@@ -408,12 +390,22 @@
 
         function saveItem() {
             const id = document.getElementById('editIndex').value;
-            // Markiert-Status beim Speichern erhalten, wenn Update
+            const newArtnr = document.getElementById('inpArtnr').value;
+            
+            // DUPLICATE CHECK
+            // Wir prüfen, ob die Nummer schon existiert UND ob es nicht der Artikel ist, den wir gerade bearbeiten.
+            const duplicate = inventory.some((item, idx) => item.artnr === newArtnr && idx != id);
+            
+            if (duplicate) {
+                alert("Fehler: Diese Artikelnummer existiert bereits!");
+                return;
+            }
+
             let markiertStatus = false;
             if(id !== "") markiertStatus = inventory[id].markiert;
 
             const newItem = {
-                artnr: document.getElementById('inpArtnr').value,
+                artnr: newArtnr,
                 name: document.getElementById('inpName').value,
                 menge: parseInt(document.getElementById('inpMenge').value) || 0,
                 preis: parseFloat(document.getElementById('inpPreis').value) || 0,
@@ -423,7 +415,7 @@
                 ort: document.getElementById('inpOrt').value,
                 notiz: document.getElementById('inpNotiz').value,
                 bild: document.getElementById('inpBild').value,
-                markiert: markiertStatus // Status übernehmen
+                markiert: markiertStatus
             };
 
             if (!newItem.name) return alert('Name fehlt!');
@@ -446,17 +438,47 @@
             }
         }
 
+        // --- AUTO ID GENERATOR ---
+
+        function generateNextArtnr() {
+            const currentYear = new Date().getFullYear(); // Nimmt automatisch z.B. 2026
+            let maxNum = 0;
+
+            // Wir suchen alle Artikel die mit " - 2026" (oder aktuellem Jahr) enden
+            inventory.forEach(item => {
+                if (item.artnr && item.artnr.includes(currentYear)) {
+                    // Versuche die Nummer vorne auszulesen (Alles vor dem Bindestrich)
+                    const parts = item.artnr.split(/[\s-]/); 
+                    const num = parseInt(parts[0]);
+                    if (!isNaN(num) && num > maxNum) {
+                        maxNum = num;
+                    }
+                }
+            });
+
+            // Nächste Nummer, formatiert mit führenden Nullen (001, 002...)
+            const nextNum = maxNum + 1;
+            const paddedNum = String(nextNum).padStart(3, '0');
+            return `${paddedNum} - ${currentYear}`;
+        }
+
         // --- TECH / UI ---
 
         function openEditModal(index = null) {
             document.getElementById('modalEdit').style.display = 'flex';
             document.body.style.overflow = 'hidden';
             if (index === null) {
+                // NEU ANLEGEN
                 document.getElementById('modalTitle').innerText = "Neuer Artikel";
                 document.getElementById('editIndex').value = "";
                 document.getElementById('btnDelete').classList.add('hidden');
                 clearForm();
+                
+                // Automatische Nummer generieren
+                document.getElementById('inpArtnr').value = generateNextArtnr();
+                
             } else {
+                // BEARBEITEN
                 const item = inventory[index];
                 document.getElementById('modalTitle').innerText = "Bearbeiten";
                 document.getElementById('editIndex').value = index;
@@ -493,6 +515,7 @@
         function clearForm() {
             document.querySelectorAll('#modalEdit input:not([type=hidden]), #modalEdit textarea').forEach(e => e.value = '');
             document.getElementById('imgPreview').style.display = 'none';
+            document.getElementById('inpZustand').value = "Neu";
         }
 
         function handleImage(input) {
