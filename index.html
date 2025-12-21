@@ -300,6 +300,7 @@ textarea{min-height:90px;resize:vertical}
 <script>
 
 
+
 const $ = (id)=>document.getElementById(id);
 
 function bindTap(el, handler){
@@ -371,8 +372,67 @@ function extractItems(parsed){
       }
     }
   }
-  return null;
+  return findItemsDeep(parsed) || null;
 }
+
+function looksLikeItem(obj){
+  if(!obj || typeof obj!=="object") return false;
+  const keys = Object.keys(obj);
+  const hasNo = ("artNo" in obj) || ("artnr" in obj) || ("nr" in obj) || ("artikelnummer" in obj) || ("artikelNr" in obj);
+  const hasName = ("name" in obj) || ("artikel" in obj) || ("artikelname" in obj) || ("bezeichnung" in obj);
+  const hasQty = ("qty" in obj) || ("menge" in obj);
+  return (hasNo || hasName) && (hasQty || keys.length>=3);
+}
+function findItemsDeep(root){
+  // Breadth-first scan; choose the "best" array of objects that looks like items
+  const queue = [root];
+  let best = null;
+  let bestScore = 0;
+
+  const scoreArr = (arr)=>{
+    if(!Array.isArray(arr) || arr.length===0) return 0;
+    let hits = 0;
+    let objCount = 0;
+    for(const x of arr.slice(0, Math.min(50, arr.length))){
+      if(x && typeof x==="object" && !Array.isArray(x)){
+        objCount++;
+        if(looksLikeItem(x)) hits++;
+      }
+    }
+    if(objCount===0) return 0;
+    const ratio = hits/objCount;
+    if(ratio<0.25) return 0;
+    return Math.round(arr.length * (0.5 + ratio)); // size + quality
+  };
+
+  while(queue.length){
+    const cur = queue.shift();
+    if(!cur) continue;
+
+    if(Array.isArray(cur)){
+      const sc = scoreArr(cur);
+      if(sc > bestScore){ bestScore = sc; best = cur; }
+      for(const x of cur){
+        if(x && typeof x==="object") queue.push(x);
+      }
+      continue;
+    }
+
+    if(typeof cur === "object"){
+      for(const k of Object.keys(cur)){
+        const v = cur[k];
+        if(!v) continue;
+        if(Array.isArray(v)){
+          const sc = scoreArr(v);
+          if(sc > bestScore){ bestScore = sc; best = v; }
+        }
+        if(typeof v === "object") queue.push(v);
+      }
+    }
+  }
+  return best;
+}
+
 
 function normalizeItems(arr){
   return arr.map(x=>({
@@ -939,10 +999,28 @@ bindTap($("btnLoad"), ()=>{
     const r = new FileReader();
     r.onload = ()=>{
       try{
-        const parsed = JSON.parse(String(r.result||""));
+        let txt = String(r.result||"");
+        txt = txt.replace(/^\uFEFF/, "");
+        let parsed;
+        try{ parsed = JSON.parse(txt); }
+        catch(e){
+          // fallback: try to parse substring between first {/[ and last }/]
+          const a = txt.indexOf("[");
+          const o = txt.indexOf("{");
+          let start = -1;
+          if(a!==-1 && (o===-1 || a<o)) start = a; else start = o;
+          let end = Math.max(txt.lastIndexOf("]"), txt.lastIndexOf("}"));
+          if(start!==-1 && end!==-1 && end>start){
+            parsed = JSON.parse(txt.slice(start, end+1));
+          } else {
+            throw e;
+          }
+        }
         const arr = extractItems(parsed);
         if(!arr) throw new Error("Format falsch");
         items = normalizeItems(arr);
+        mainQuery = "";
+        const ms = $("mainSearch"); if(ms) ms.value = "";
 
         // fehlende Artikelnummern ergänzen (vorhandene NIE ändern)
         const yearCounters = {};
@@ -957,6 +1035,7 @@ bindTap($("btnLoad"), ()=>{
         saveLocal();
         selectedItemId = null;
         render();
+        updateStats();
       }catch(err){
         alert("Datei konnte nicht gelesen werden.");
       }
@@ -978,6 +1057,7 @@ adjust();
 setTimeout(adjust, 0);
 setTimeout(adjust, 200);
 setTimeout(adjust, 600);
+
 
 
 </script>
