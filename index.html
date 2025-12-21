@@ -173,7 +173,7 @@ textarea{min-height:70px;resize:vertical}
       <div class="stat"><div class="k">Artikel</div><div class="v" id="stArtikel">0</div></div>
       <div class="stat"><div class="k">Gegenstände</div><div class="v" id="stStueck">0</div></div>
       <div class="stat"><div class="k">Warenwert</div><div class="v" id="stWarenwert">0,00</div></div>
-      <div class="stat"><div class="k" id="stSalesCountLabel">Verkäufe</div><div class="v" id="stSalesCount">0</div></div>
+      <div class="stat"><div class="k" id="stWGLabel">Verkäufe</div><div class="v" id="stWG">0,00</div></div>
       <div class="stat"><div class="k">Umsatz</div><div class="v" id="stUmsatz">0,00</div></div>
       <div class="stat"><div class="k">Gewinn</div><div class="v" id="stGewinn">0,00</div></div>
     </div>
@@ -324,8 +324,6 @@ textarea{min-height:70px;resize:vertical}
 
 
 
-
-
 const $ = (id)=>document.getElementById(id);
 
 function bindTap(el, handler){
@@ -435,28 +433,6 @@ function normalizeItems(arr){
   }));
 }
 
-
-const LS_BACKUP_NO = "lager_backup_no_v1";
-
-function nextBackupName(){
-  const year = new Date().getFullYear();
-  let n = 0;
-  try{ n = Number(localStorage.getItem(LS_BACKUP_NO)||"0")||0; }catch(e){ n = 0; }
-  n += 1;
-  try{ localStorage.setItem(LS_BACKUP_NO, String(n)); }catch(e){}
-  const num = String(n).padStart(3,"0");
-  return `lager_backup_${num}-${year}.json`;
-}
-function downloadJSON(filename, obj){
-  const blob = new Blob([JSON.stringify(obj, null, 2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
-}
 function saveLocal(){ try{ localStorage.setItem(LS_ITEMS, JSON.stringify(items)); }catch(e){ alert("Speichern im Gerät nicht möglich."); } }
 function loadLocal(){
   try{
@@ -514,7 +490,6 @@ function updateStats(){
   }
 
   // Umsatz/Gewinn (ohne Storno)
-
   let umsatz = 0;
   let gewinn = 0;
   for(const s of sales){
@@ -531,8 +506,8 @@ function updateStats(){
   set("stArtikel", String(artikel));
   set("stStueck", String(stueck));
   set("stWarenwert", euro(warenwert));
-  const scLabel = $("stSalesCountLabel"); if(scLabel) scLabel.textContent = "Verkäufe " + year;
-  set("stSalesCount", String(salesCount));
+  const wgLabel = $("stWGLabel"); if(wgLabel) wgLabel.textContent = "Verkäufe " + year;
+  set("stWG", String(salesCount));
   set("stUmsatz", euro(umsatz));
   set("stGewinn", euro(gewinn));
 }
@@ -929,49 +904,16 @@ function deleteSale(sid){
 
 function renderSales(){
   const el = $("salesList");
-  if(!el) return;
   const q = ($("salesSearch")?.value || "").trim().toLowerCase();
   el.innerHTML = "";
-
-  const year = String(new Date().getFullYear());
-  const filtered = (sales||[])
-    .filter(s=>!!s)
-    .slice()
-    .sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")))  // neueste oben
-    .filter(s=>{
-      if(!q) return true;
-      const hay = (String(s.no||"")+" "+String(s.date||"")+" "+String(s.itemNo||"")+" "+String(s.itemName||"")+" "+String(s.place||"")).toLowerCase();
-      return hay.includes(q);
-    });
-
-  if(!filtered.length){
-    el.innerHTML = '<div style="color:#aaa;font-size:10px;padding:8px">Keine Verkäufe gefunden.</div>';
-    updateStats();
+  if(!sales.length){
+    el.innerHTML = '<div style="color:#aaa;font-size:10px;padding:8px">Noch keine Verkäufe gespeichert.</div>';
     return;
-  }
 
-  filtered.forEach((s)=>{
-    const row = document.createElement("div");
-    row.className = "salesRow" + (s.storno ? " storno" : "");
-    row.innerHTML = `
-      <div title="${esc(s.no||"")}">${esc(s.no||"")}</div>
-      <div>${toDEDate(String(s.date||""))}</div>
-      <div title="${esc(s.itemName||"")}">${esc(s.itemName||"")}</div>
-      <div>${toNum(s.qty)}</div>
-      <div>${fmt2(s.price||0)}</div>
-      <div title="${esc(s.place||"")}">${esc(s.place||"")}</div>
-      <div class="salesActions">
-        <div class="ico" data-sact="edit" data-sid="${esc(s.id)}" title="Bearbeiten">✏️</div>
-        <div class="ico" data-sact="storno" data-sid="${esc(s.id)}" title="Storno">↩️</div>
-        <div class="ico danger" data-sact="del" data-sid="${esc(s.id)}" title="Löschen">🗑️</div>
-      </div>
-    `;
-    el.appendChild(row);
-  });
-
-  // Delegierte Aktionen einmalig binden
-  if(!el._boundActions){
-    el._boundActions = true;
+  // Aktionen (delegiert, iOS-sicher)
+  const _salesList = $("salesList");
+  if(_salesList && !_salesList._bound){
+    _salesList._bound = true;
     const handler = (ev)=>{
       const btn = ev.target && ev.target.closest ? ev.target.closest(".ico") : null;
       if(!btn) return;
@@ -983,57 +925,44 @@ function renderSales(){
       else if(act==="storno") stornoSale(sid);
       else if(act==="del") deleteSale(sid);
     };
-    el.addEventListener("click", handler, true);
-    el.addEventListener("touchend", (ev)=>{ handler(ev); }, {passive:false, capture:true});
+    _salesList.addEventListener("click", handler, true);
+    _salesList.addEventListener("touchend", (ev)=>{ handler(ev); }, {passive:false, capture:true});
+  }
+  }
+  const arr = [...sales].slice().reverse().filter(s=>{
+    if(!q) return true;
+    const hay = (String(s.number||"")+" "+String(s.date||"")+" "+String(s.itemName||"")+" "+String(s.place||"")).toLowerCase();
+    return hay.includes(q);
+  });
+
+  if(!arr.length){
+    el.innerHTML = '<div style="color:#aaa;font-size:10px;padding:8px">Keine Treffer.</div>';
+    return;
   }
 
-  updateStats();
+  arr.forEach(s=>{
+    const row = document.createElement("div");
+    row.className = "salesRow";
+    const status = s.storno ? " (Storno)" : "";
+    row.innerHTML = `
+      <div>${esc(s.number||"")}${status}</div>
+      <div>${esc(toDEDate(s.date||""))}</div>
+      <div title="${esc(s.itemName||"")}">${esc(s.itemName||"")}</div>
+      <div>${Number(s.qty||0)}</div>
+      <div>${fmt2(s.price||0)}</div>
+      <div title="${esc(s.place||"")}">${esc(s.place||"")}</div>
+      <div class="salesActions">
+        <div class="ico" data-sact="edit" data-sid="${esc(s.id)}" title="Bearbeiten">✏️</div>
+        <div class="ico" data-sact="storno" data-sid="${esc(s.id)}" title="Storno">↩️</div>
+        <div class="ico danger" data-sact="del" data-sid="${esc(s.id)}" title="Löschen">🗑️</div>
+      </div>
+    `;
+    el.appendChild(row);
+  });
+  });
 }
 
 bindTap($("btnSalesTop"), ()=>{ renderSales(); showModal("salesModal"); });
-
-// Topbar: Sichern / Laden / PDF
-bindTap($("btnSave"), ()=>{
-  // Immer auch im Gerät speichern:
-  saveLocal();
-  saveSales();
-  const payload = { app:"lager", version: "v44+", exportedAt: new Date().toISOString(), items, sales };
-  downloadJSON(nextBackupName(), payload);
-});
-
-bindTap($("btnLoad"), ()=>{
-  const inp = document.createElement("input");
-  inp.type = "file";
-  inp.accept = ".json,application/json";
-  inp.onchange = ()=>{
-    const file = inp.files && inp.files[0];
-    if(!file) return;
-    const r = new FileReader();
-    r.onload = ()=>{
-      try{
-        const parsed = robustJsonParse(String(r.result||""));
-        if(!parsed) throw new Error("parse");
-        const its = normalizeItems(extractItems(parsed));
-        const sls = extractSales(parsed);
-        items = its;
-        sales = sls;
-        saveLocal();
-        saveSales();
-        render();
-        adjust();
-      }catch(e){
-        alert("Datei konnte nicht gelesen werden.");
-      }
-    };
-    r.onerror = ()=>alert("Datei konnte nicht gelesen werden.");
-    r.readAsText(file);
-  };
-  inp.click();
-});
-
-bindTap($("btnPDF"), ()=>{
-  generateInventurPDF();
-});
 $("salesSearch").addEventListener("input", ()=>renderSales());
 
 
@@ -1119,8 +1048,6 @@ function generateInventurPDF(){
       </table>
       <p class="small" style="margin-top:12px">Hinweis: „Ist“, „Diff“ und „Kommentar“ sind für die manuelle Inventur gedacht.</p>
       
-
-
 </script>
 </body>
 </html>
