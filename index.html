@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager Pro V4</title>
+    <title>Lager V5 Stats</title>
     <style>
         :root {
             --bg: #121212;
@@ -15,6 +15,7 @@
             --border: #333;
             --danger: #ef4444;
             --success: #10b981;
+            --profit: #eab308; /* Gelb für Gewinn */
             color-scheme: dark; 
         }
 
@@ -23,156 +24,147 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 0; /* Kein Padding am Body für Sticky Header */
-            padding-bottom: 100px;
+            padding: 0;
+            padding-bottom: 90px;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- STICKY HEADER & SUCHE --- */
+        /* --- STICKY HEADER (ULTRA COMPACT) --- */
         .app-header {
-            background-color: rgba(30, 30, 30, 0.95);
+            background-color: rgba(30, 30, 30, 0.98);
             backdrop-filter: blur(10px);
-            padding: 15px;
+            padding: 8px 12px;
             position: sticky;
             top: 0;
             z-index: 50;
             border-bottom: 1px solid var(--border);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
 
-        h1 { margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: 1px; }
+        h1 { margin: 0; font-size: 1rem; font-weight: 700; letter-spacing: 0.5px; }
 
-        .search-container { position: relative; }
+        .search-container { position: relative; width: 100%; }
         .search-input {
             width: 100%;
-            height: 44px;
+            height: 30px; /* NOCH KLEINER */
             background: var(--input-bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 0 15px 0 40px; /* Platz für Icon */
+            border-radius: 5px;
+            padding: 0 8px 0 30px;
             color: white;
-            font-size: 1rem;
+            font-size: 0.85rem;
             box-sizing: border-box;
         }
         .search-icon {
             position: absolute;
-            left: 12px;
-            top: 50%;
+            left: 8px; top: 50%;
             transform: translateY(-50%);
             opacity: 0.5;
+            font-size: 0.8rem;
         }
 
+        /* --- NEUE 4-SPALTEN STATS --- */
         .stats-bar {
-            display: flex;
-            gap: 15px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr; /* 4 Spalten */
+            gap: 5px;
             margin-top: 8px;
-            padding-left: 5px;
+            padding-top: 5px;
+            border-top: 1px solid #333;
         }
-        .stat-val { color: var(--primary); font-weight: bold; }
+
+        .stat-box {
+            text-align: center;
+        }
+        .stat-label { font-size: 0.65rem; color: #888; display: block; }
+        .stat-val { font-size: 0.8rem; font-weight: bold; display: block; }
+        
+        .c-blue { color: #60a5fa; }
+        .c-green { color: var(--success); }
+        .c-gold { color: var(--profit); }
 
         /* --- KOMPAKTE LISTE --- */
-        #itemList { padding: 10px; }
+        #itemList { padding: 0; }
 
         .item-row {
             background: var(--card);
-            border-bottom: 1px solid var(--border);
-            padding: 12px;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 6px 10px;
             display: grid;
-            grid-template-columns: 1fr auto; /* Links Info, Rechts Preis/Action */
-            gap: 10px;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
             align-items: center;
         }
-        .item-row:first-child { border-top-left-radius: 8px; border-top-right-radius: 8px; }
-        .item-row:last-child { border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; border-bottom: none; }
         
-        .item-main { display: flex; flex-direction: column; gap: 2px; }
-        .item-title { font-weight: 600; font-size: 1rem; color: white; line-height: 1.2; }
-        .item-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .item-main { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
         
-        .meta-tag { background: #333; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
+        .item-title { 
+            font-weight: 600; font-size: 0.9rem; color: white; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        }
+        
+        .item-meta { font-size: 0.7rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 5px; }
+        .meta-tag { background: #333; padding: 1px 4px; border-radius: 3px; }
         .tag-shop { color: #93c5fd; }
         .tag-size { color: #f9a8d4; }
 
-        .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-        .item-price { font-weight: bold; font-size: 1.1rem; color: var(--success); }
+        .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 65px; }
+        .item-price { font-weight: 600; font-size: 0.9rem; color: var(--success); }
+        
         .btn-mini {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 4px 10px;
-            font-size: 0.8rem;
-            border-radius: 6px;
-            cursor: pointer;
+            background: #2d2d2d; border: 1px solid #444; color: #ddd;
+            padding: 3px 6px; font-size: 0.7rem; border-radius: 4px; cursor: pointer;
         }
 
-        /* --- FAB & MODALS --- */
+        /* --- UI ELEMENTS --- */
         .fab {
-            position: fixed;
-            bottom: 25px; right: 25px;
-            background: var(--primary);
-            color: white;
-            width: 56px; height: 56px;
-            border-radius: 50%;
-            border: none;
-            font-size: 28px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            cursor: pointer;
-            z-index: 90;
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--primary); color: white;
+            width: 50px; height: 50px; border-radius: 50%; border: none;
+            font-size: 26px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            cursor: pointer; z-index: 90;
             display: flex; align-items: center; justify-content: center;
         }
 
-        .settings-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0; }
+        .settings-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; opacity: 0.8; }
 
-        /* Modal Styles (General) */
+        /* Modal */
         .modal-overlay {
-            display: none;
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9);
-            z-index: 200;
-            align-items: center; justify-content: center;
-            backdrop-filter: blur(5px);
-            padding: 20px;
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9); z-index: 200;
+            align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px;
         }
         .modal-box {
-            background: var(--card);
-            width: 100%; max-width: 500px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            display: flex; flex-direction: column;
-            max-height: 85vh;
-            overflow: hidden;
+            background: var(--card); width: 100%; max-width: 500px;
+            border-radius: 12px; border: 1px solid var(--border);
+            display: flex; flex-direction: column; max-height: 90vh; overflow: hidden;
         }
-        .modal-header { padding: 15px; border-bottom: 1px solid var(--border); font-weight: bold; text-align: center; background: #252525; }
-        .modal-body { padding: 20px; overflow-y: auto; }
-        .modal-footer { padding: 15px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #252525; }
+        .modal-header { padding: 10px; border-bottom: 1px solid var(--border); font-weight: bold; text-align: center; background: #252525; }
+        .modal-body { padding: 15px; overflow-y: auto; }
+        .modal-footer { padding: 12px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #252525; }
 
-        /* Settings Modal Specific */
-        .settings-row { margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 20px; }
-        .btn-full { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .settings-row { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .btn-full { width: 100%; padding: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem;}
         .btn-blue { background: var(--primary); color: white; }
         .btn-gray { background: #444; color: white; }
 
-        /* Form Elements Standardized */
-        .form-grid { display: grid; gap: 12px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+        .form-grid { display: grid; gap: 10px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 3px; }
         input, select, textarea {
-            width: 100%; height: 42px; padding: 0 10px;
+            width: 100%; height: 38px; padding: 0 10px;
             background: var(--input-bg); border: 1px solid var(--border);
-            color: white; border-radius: 6px; font-size: 0.95rem;
+            color: white; border-radius: 6px; font-size: 0.9rem;
             box-sizing: border-box; outline: none;
         }
-        textarea { height: 70px; padding: 8px; resize: vertical; }
-        
+        textarea { height: 60px; resize: vertical; padding: 8px;}
         .hidden { display: none; }
     </style>
 </head>
@@ -186,12 +178,26 @@
         
         <div class="search-container">
             <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" class="search-input" placeholder="Suchen nach Name, Größe, Shop..." onkeyup="filterList()">
+            <input type="text" id="searchInput" class="search-input" placeholder="Suche..." onkeyup="filterList()">
         </div>
 
         <div class="stats-bar">
-            <span>Artikel: <span id="statCount" class="stat-val">0</span></span>
-            <span>Wert: <span id="statValue" class="stat-val">0 €</span></span>
+            <div class="stat-box">
+                <span class="stat-label">Menge</span>
+                <span id="statCount" class="stat-val">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Lagerwert</span>
+                <span id="statValue" class="stat-val c-blue">0 €</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Umsatz</span>
+                <span id="statRevenue" class="stat-val c-green">0 €</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Gewinn</span>
+                <span id="statProfit" class="stat-val c-gold">0 €</span>
+            </div>
         </div>
     </div>
 
@@ -211,7 +217,7 @@
                     </div>
                     <div><label>Name</label><input type="text" id="inpName"></div>
                     <div class="form-row">
-                        <div><label>Preis (€)</label><input type="number" step="0.01" id="inpPreis"></div>
+                        <div><label>EK-Preis (€)</label><input type="number" step="0.01" id="inpPreis"></div>
                         <div><label>Größe</label><input type="text" id="inpGroesse"></div>
                     </div>
                     <div class="form-row">
@@ -222,14 +228,14 @@
                         </div>
                         <div><label>Kaufdatum</label><input type="date" id="inpDatum"></div>
                     </div>
-                    <div><label>Gekauft bei (Shop)</label><input type="text" id="inpOrt"></div>
+                    <div><label>Gekauft bei</label><input type="text" id="inpOrt"></div>
                     <div><label>Notiz</label><textarea id="inpNotiz"></textarea></div>
                     
                     <div>
-                         <label>Bild / Rechnung</label>
-                         <input type="file" id="inpFile" accept="image/*" onchange="handleImage(this)" style="padding-top:8px">
+                         <label>Rechnung</label>
+                         <input type="file" id="inpFile" accept="image/*" onchange="handleImage(this)" style="padding-top:6px; height:auto;">
                          <input type="hidden" id="inpBild">
-                         <img id="imgPreview" src="" style="width:100%; margin-top:10px; border-radius:6px; display:none;">
+                         <img id="imgPreview" src="" style="width:100%; margin-top:5px; border-radius:4px; display:none;">
                          <button class="btn-mini" onclick="removeImage()" style="margin-top:5px; width:100%">Bild entfernen</button>
                     </div>
                 </div>
@@ -244,22 +250,20 @@
 
     <div id="modalSettings" class="modal-overlay">
         <div class="modal-box" style="height:auto">
-            <div class="modal-header">Einstellungen & Backup</div>
+            <div class="modal-header">Daten</div>
             <div class="modal-body">
-                
                 <div class="settings-row">
-                    <p style="font-size:0.9rem; color:#aaa; margin-top:0">
-                        Um deine 300+ Artikel zu laden, wähle hier deine JSON-Datei aus.
-                    </p>
-                    <label>Backup importieren (JSON)</label>
-                    <input type="file" id="fileImport" accept=".json" onchange="importBackup(this)" style="padding-top:8px">
+                    <label>Importieren (JSON)</label>
+                    <input type="file" id="fileImport" accept=".json" onchange="importBackup(this)" style="padding-top:6px; height:auto;">
                 </div>
-
-                <div class="settings-row" style="border:none">
-                    <label>Backup exportieren</label>
-                    <button class="btn-full btn-blue" onclick="exportBackup()">💾 Daten herunterladen</button>
+                <div class="settings-row">
+                    <label>Exportieren</label>
+                    <button class="btn-full btn-blue" onclick="exportBackup()">Backup erstellen</button>
                 </div>
-
+                 <div class="settings-row" style="border:none">
+                    <label>Umsatz/Gewinn Reset</label>
+                    <button class="btn-full btn-gray" onclick="resetSales()">Statistik zurücksetzen</button>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1 / -1">Schließen</button>
@@ -268,15 +272,12 @@
     </div>
 
     <script>
-        // Start-Daten (Leer, da wir Import nutzen wollen)
+        // Artikel-Datenbank und Umsatz-Historie laden
         let inventory = JSON.parse(localStorage.getItem('lagerAppDB')) || [];
+        let salesLog = JSON.parse(localStorage.getItem('lagerAppSales')) || [];
 
-        // App Start
         renderList();
 
-        // -----------------------
-        // RENDER & SEARCH LOGIC
-        // -----------------------
         function renderList(filterText = "") {
             const list = document.getElementById('itemList');
             list.innerHTML = '';
@@ -285,12 +286,11 @@
             let totalVal = 0;
             const term = filterText.toLowerCase();
 
+            // 1. Inventar durchgehen
             inventory.forEach((item, index) => {
-                // Suchen: Wir prüfen Name, Ort, Größe und ArtNr
                 const searchString = `${item.name} ${item.ort} ${item.groesse} ${item.artnr}`.toLowerCase();
                 
                 if (filterText === "" || searchString.includes(term)) {
-                    
                     const qty = parseInt(item.menge) || 0;
                     const price = parseFloat(item.preis) || 0;
                     totalQty += qty;
@@ -298,9 +298,7 @@
 
                     const div = document.createElement('div');
                     div.className = 'item-row';
-                    // Bei Klick öffnen wir Bearbeiten
                     div.onclick = (e) => {
-                        // Verhindern, dass Button-Klicks das Modal öffnen
                         if(e.target.tagName !== 'BUTTON') openEditModal(index);
                     };
 
@@ -316,7 +314,7 @@
                         </div>
                         <div class="item-right">
                             <span class="item-price">${price.toFixed(2)} €</span>
-                            <div style="font-size:0.8rem; color:#666">${qty} Stk.</div>
+                            <div style="font-size:0.7rem; color:#666">${qty} Stk.</div>
                             <button class="btn-mini" onclick="sellItem(event, ${index})">Verkauf</button>
                         </div>
                     `;
@@ -324,22 +322,72 @@
                 }
             });
 
+            // 2. Umsatz & Gewinn berechnen (aus salesLog)
+            let totalRevenue = 0;
+            let totalProfit = 0;
+            
+            salesLog.forEach(sale => {
+                totalRevenue += sale.sellPrice;
+                totalProfit += (sale.sellPrice - sale.buyPrice);
+            });
+
+            // 3. Stats aktualisieren
             document.getElementById('statCount').innerText = totalQty;
-            document.getElementById('statValue').innerText = totalVal.toFixed(2) + ' €';
+            document.getElementById('statValue').innerText = formatCurrency(totalVal);
+            document.getElementById('statRevenue').innerText = formatCurrency(totalRevenue);
+            document.getElementById('statProfit').innerText = formatCurrency(totalProfit);
 
             if(inventory.length === 0) {
-                list.innerHTML = '<div style="text-align:center; padding:40px; color:#666">Keine Artikel.<br>Importiere dein Backup über ⚙️</div>';
+                list.innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:0.8rem">Keine Artikel.</div>';
             }
         }
 
-        function filterList() {
-            const input = document.getElementById('searchInput');
-            renderList(input.value);
+        function formatCurrency(val) {
+            if(val >= 10000) return (val/1000).toFixed(1) + 'k €'; // Kürzen bei großen Zahlen
+            return val.toFixed(2) + ' €';
         }
 
-        // -----------------------
-        // CRUD ACTIONS
-        // -----------------------
+        function filterList() {
+            renderList(document.getElementById('searchInput').value);
+        }
+
+        // --- CORE ACTIONS ---
+
+        function sellItem(e, index) {
+            e.stopPropagation();
+            const item = inventory[index];
+            if(item.menge > 0) {
+                // Frage nach dem Verkaufspreis für die Gewinnberechnung
+                let sellPriceStr = prompt(`Verkaufspreis für 1x ${item.name}?`, item.preis); // Standard = EK
+                
+                if (sellPriceStr !== null) {
+                    let sellPrice = parseFloat(sellPriceStr.replace(',', '.')) || 0;
+                    let buyPrice = parseFloat(item.preis) || 0;
+
+                    // Bestand senken
+                    item.menge--;
+                    
+                    // In Historie speichern
+                    salesLog.push({
+                        name: item.name,
+                        date: new Date().toISOString().split('T')[0],
+                        buyPrice: buyPrice,
+                        sellPrice: sellPrice
+                    });
+
+                    // Wenn leer, evtl löschen
+                    if(item.menge === 0) {
+                         if(confirm("Bestand ist 0. Artikel aus der Liste löschen?")) {
+                             inventory.splice(index, 1);
+                         }
+                    }
+
+                    saveAll();
+                    renderList(document.getElementById('searchInput').value);
+                }
+            }
+        }
+
         function saveItem() {
             const id = document.getElementById('editIndex').value;
             const newItem = {
@@ -357,105 +405,92 @@
 
             if (!newItem.name) return alert('Name fehlt!');
 
-            if (id === "") inventory.unshift(newItem); // Neue Artikel oben hin
+            if (id === "") inventory.unshift(newItem); 
             else inventory[id] = newItem;
 
-            saveToStorage();
+            saveAll();
             closeModals();
             renderList(document.getElementById('searchInput').value);
-        }
-
-        function sellItem(e, index) {
-            e.stopPropagation(); // Modal nicht öffnen
-            if(inventory[index].menge > 0) {
-                inventory[index].menge--;
-                if(inventory[index].menge === 0) {
-                     if(confirm("Bestand ist 0. Löschen?")) inventory.splice(index, 1);
-                }
-                saveToStorage();
-                renderList(document.getElementById('searchInput').value);
-            }
         }
 
         function deleteCurrentItem() {
             const index = document.getElementById('editIndex').value;
             if(index !== "" && confirm("Wirklich löschen?")) {
                 inventory.splice(index, 1);
-                saveToStorage();
+                saveAll();
                 closeModals();
                 renderList(document.getElementById('searchInput').value);
             }
         }
 
-        // -----------------------
-        // MODAL & UI HELPERS
-        // -----------------------
+        function resetSales() {
+            if(confirm("Umsatz und Gewinn wirklich auf 0 setzen?")) {
+                salesLog = [];
+                saveAll();
+                renderList(document.getElementById('searchInput').value);
+                closeModals();
+            }
+        }
+
+        // --- TECH STUFF ---
+
         function openEditModal(index = null) {
             document.getElementById('modalEdit').style.display = 'flex';
             document.body.style.overflow = 'hidden';
-            
             if (index === null) {
-                // NEU
                 document.getElementById('modalTitle').innerText = "Neuer Artikel";
                 document.getElementById('editIndex').value = "";
                 document.getElementById('btnDelete').classList.add('hidden');
                 clearForm();
             } else {
-                // BEARBEITEN
                 const item = inventory[index];
                 document.getElementById('modalTitle').innerText = "Bearbeiten";
                 document.getElementById('editIndex').value = index;
                 document.getElementById('btnDelete').classList.remove('hidden');
-                
-                document.getElementById('inpArtnr').value = item.artnr || "";
-                document.getElementById('inpName').value = item.name || "";
-                document.getElementById('inpMenge').value = item.menge || 0;
-                document.getElementById('inpPreis').value = item.preis || 0;
-                document.getElementById('inpGroesse').value = item.groesse || "";
-                document.getElementById('inpZustand').value = item.zustand || "Neu";
-                document.getElementById('inpDatum').value = item.datum || "";
-                document.getElementById('inpOrt').value = item.ort || "";
-                document.getElementById('inpNotiz').value = item.notiz || "";
-                
-                const imgVal = item.bild || "";
-                document.getElementById('inpBild').value = imgVal;
-                if(imgVal) {
-                    document.getElementById('imgPreview').src = imgVal;
-                    document.getElementById('imgPreview').style.display = 'block';
-                } else {
-                    document.getElementById('imgPreview').style.display = 'none';
-                }
+                fillForm(item);
             }
         }
 
-        function openSettings() {
-            document.getElementById('modalSettings').style.display = 'flex';
+        function fillForm(item) {
+            document.getElementById('inpArtnr').value = item.artnr || "";
+            document.getElementById('inpName').value = item.name || "";
+            document.getElementById('inpMenge').value = item.menge || 0;
+            document.getElementById('inpPreis').value = item.preis || 0;
+            document.getElementById('inpGroesse').value = item.groesse || "";
+            document.getElementById('inpZustand').value = item.zustand || "Neu";
+            document.getElementById('inpDatum').value = item.datum || "";
+            document.getElementById('inpOrt').value = item.ort || "";
+            document.getElementById('inpNotiz').value = item.notiz || "";
+            const imgVal = item.bild || "";
+            document.getElementById('inpBild').value = imgVal;
+            if(imgVal) {
+                document.getElementById('imgPreview').src = imgVal;
+                document.getElementById('imgPreview').style.display = 'block';
+            } else {
+                document.getElementById('imgPreview').style.display = 'none';
+            }
         }
 
+        function openSettings() { document.getElementById('modalSettings').style.display = 'flex'; }
         function closeModals() {
             document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
             document.body.style.overflow = 'auto';
         }
-
         function clearForm() {
             document.querySelectorAll('#modalEdit input:not([type=hidden]), #modalEdit textarea').forEach(e => e.value = '');
             document.getElementById('imgPreview').style.display = 'none';
         }
 
-        // -----------------------
-        // IMAGE HANDLING
-        // -----------------------
         function handleImage(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // Resize Logic
                     const img = new Image();
                     img.src = e.target.result;
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
-                        const maxWidth = 600; // Etwas kleiner für Performance bei 300 Items
+                        const maxWidth = 500; 
                         const scale = maxWidth / img.width;
                         const w = scale < 1 ? maxWidth : img.width;
                         const h = scale < 1 ? img.height * scale : img.height;
@@ -476,18 +511,18 @@
             document.getElementById('inpFile').value = "";
         }
 
-        // -----------------------
-        // IMPORT / EXPORT / STORAGE
-        // -----------------------
-        function saveToStorage() {
-            localStorage.setItem('lagerAppDB', JSON.stringify(inventory));
+        function saveAll() { 
+            localStorage.setItem('lagerAppDB', JSON.stringify(inventory)); 
+            localStorage.setItem('lagerAppSales', JSON.stringify(salesLog)); 
         }
 
         function exportBackup() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(inventory));
+            // Kombinierter Export (Inventar + Sales)
+            const exportData = { artikel: inventory, sales: salesLog };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
             const dlAnchorElem = document.createElement('a');
             dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", "lager_backup_" + new Date().toISOString().slice(0,10) + ".json");
+            dlAnchorElem.setAttribute("download", "lager_full_backup_" + new Date().toISOString().slice(0,10) + ".json");
             dlAnchorElem.click();
         }
 
@@ -498,23 +533,21 @@
                     try {
                         const loadedData = JSON.parse(e.target.result);
                         
-                        // Wir versuchen, ob es ein Array ist oder ein {artikel: [...]} Objekt
+                        // Check ob neues Format (mit Sales) oder altes Format
                         if(Array.isArray(loadedData)) {
-                            inventory = loadedData;
-                        } else if (loadedData.artikel && Array.isArray(loadedData.artikel)) {
+                            inventory = loadedData; // Altes Format
+                        } else if (loadedData.artikel) {
                             inventory = loadedData.artikel;
+                            if(loadedData.sales) salesLog = loadedData.sales;
                         } else {
-                            alert("Format nicht erkannt. Bitte gültige JSON wählen.");
-                            return;
+                            return alert("Format falsch.");
                         }
 
-                        saveToStorage();
+                        saveAll();
                         renderList();
                         closeModals();
-                        alert(inventory.length + " Artikel erfolgreich importiert!");
-                    } catch(err) {
-                        alert("Fehler beim Lesen der Datei: " + err);
-                    }
+                        alert("Daten erfolgreich importiert!");
+                    } catch(err) { alert("Fehler beim Import!"); }
                 };
                 reader.readAsText(input.files[0]);
             }
