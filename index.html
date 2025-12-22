@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V11 History</title>
+    <title>Lager V12 Rechnung</title>
     <style>
         :root {
             --bg: #121212;
@@ -23,9 +23,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            margin: 0;
-            padding: 0;
-            padding-bottom: 80px;
+            margin: 0; padding: 0; padding-bottom: 80px;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -38,10 +36,8 @@
             border-bottom: 1px solid var(--border);
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
-
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
         h1 { margin: 0; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.5px; }
-
         .header-actions { display: flex; gap: 15px; }
         .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; opacity: 0.9; }
 
@@ -76,41 +72,19 @@
         #itemList { padding: 0; }
 
         .item-row {
-            background: var(--card);
-            border-bottom: 1px solid #252525;
-            padding: 4px 6px; /* Maximal komprimiert */
-            display: grid;
-            grid-template-columns: auto 1fr auto; /* Menge - Info - Aktionen */
-            gap: 6px;
-            align-items: center;
-            border-left: 3px solid transparent;
-            min-height: 36px;
+            background: var(--card); border-bottom: 1px solid #252525;
+            padding: 4px 6px; display: grid;
+            grid-template-columns: auto 1fr auto; 
+            gap: 6px; align-items: center;
+            border-left: 3px solid transparent; min-height: 36px;
         }
-        
-        .item-row.marked {
-            background: rgba(234, 179, 8, 0.08);
-            border-left: 3px solid var(--profit);
-        }
+        .item-row.marked { background: rgba(234, 179, 8, 0.08); border-left: 3px solid var(--profit); }
 
-        /* MENGE ANZEIGE (Neu) */
-        .qty-badge {
-            font-size: 0.85rem; font-weight: bold; color: #60a5fa; 
-            min-width: 25px; text-align: center;
-        }
+        .qty-badge { font-size: 0.85rem; font-weight: bold; color: #60a5fa; min-width: 25px; text-align: center; }
         .qty-badge.low { color: #ef4444; }
 
         .item-main { display: flex; flex-direction: column; gap: 0px; overflow: hidden; }
-        
-        /* Titel: Kleiner, aber erlaubt Umbruch (white-space normal) */
-        .item-title { 
-            font-weight: 600; 
-            font-size: 0.75rem; /* Sehr klein */
-            color: white; 
-            line-height: 1.1;
-            white-space: normal; /* Mehrzeilig erlaubt */
-            word-break: break-word;
-        }
-        
+        .item-title { font-weight: 600; font-size: 0.75rem; color: white; line-height: 1.1; white-space: normal; word-break: break-word; }
         .item-meta { font-size: 0.65rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 1px;}
         .meta-tag { background: #333; padding: 0px 3px; border-radius: 2px; font-size: 0.6rem; }
         .tag-shop { color: #93c5fd; }
@@ -118,38 +92,22 @@
         .icon-symbol { font-size: 0.7rem; margin-left: 2px; }
 
         .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 65px; }
-        
         .item-price { font-weight: 500; font-size: 0.75rem; color: #bbb; }
         .item-total { font-size: 0.6rem; color: #666; }
 
         .star-btn { background: none; border: none; padding: 0; font-size: 0.9rem; cursor: pointer; color: #444; line-height: 1; }
         .star-btn.active { color: var(--profit); } 
-        
-        .btn-mini { 
-            background: #2d2d2d; border: 1px solid #444; color: #ddd; 
-            padding: 1px 5px; font-size: 0.65rem; border-radius: 3px; cursor: pointer; 
-            margin-top: 2px;
-        }
+        .btn-mini { background: #2d2d2d; border: 1px solid #444; color: #ddd; padding: 1px 5px; font-size: 0.65rem; border-radius: 3px; cursor: pointer; margin-top: 2px; }
 
-        /* --- HISTORY LISTE STYLE --- */
-        .history-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 8px; border-bottom: 1px solid #333; font-size: 0.8rem;
-        }
-        .hist-info { display: flex; flex-direction: column; }
+        /* --- HISTORY LISTE --- */
+        .history-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px; border-bottom: 1px solid #333; font-size: 0.8rem; }
+        .hist-info { display: flex; flex-direction: column; gap: 2px;}
         .hist-date { font-size: 0.65rem; color: #777; }
+        .hist-inv { color: var(--profit); font-family: monospace; font-size: 0.75rem; }
         .btn-undo { background: #331111; color: #ff7777; border: 1px solid #552222; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.7rem;}
 
-
-        /* --- FAB & MODALS --- */
-        .fab {
-            position: fixed; bottom: 20px; right: 20px;
-            background: var(--primary); color: white;
-            width: 48px; height: 48px; border-radius: 50%; border: none;
-            font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            cursor: pointer; z-index: 90; display: flex; align-items: center; justify-content: center;
-        }
-
+        /* --- MODALS GENERAL --- */
+        .fab { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; width: 48px; height: 48px; border-radius: 50%; border: none; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; z-index: 90; display: flex; align-items: center; justify-content: center; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 10px; }
         .modal-box { background: var(--card); width: 100%; max-width: 500px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 95vh; overflow: hidden; }
         .modal-header { padding: 8px; border-bottom: 1px solid var(--border); font-weight: bold; text-align: center; background: #252525; font-size: 0.9rem;}
@@ -169,12 +127,17 @@
             width: 100%; height: 34px; padding: 0 8px;
             background: var(--input-bg); border: 1px solid var(--border);
             color: white; border-radius: 4px; font-size: 0.9rem;
-            box-sizing: border-box; outline: none;
-            -webkit-appearance: none; appearance: none; font-family: inherit;
+            box-sizing: border-box; outline: none; -webkit-appearance: none; appearance: none; font-family: inherit;
         }
         input[type="date"] { display: block; line-height: 34px; }
         textarea { height: 50px; resize: vertical; padding: 6px; line-height: 1.3; }
         .hidden { display: none; }
+        
+        /* Rechnungsvorschau im Verkauf */
+        #sellInvoicePreview {
+            font-family: monospace; color: var(--profit); font-weight: bold; text-align: center; 
+            margin-bottom: 10px; background: #222; padding: 5px; border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -195,27 +158,14 @@
         </div>
 
         <div class="stats-bar">
-            <div class="stat-box">
-                <span class="stat-label">Menge</span>
-                <span id="statCount" class="stat-val">0</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-label">Lagerwert</span>
-                <span id="statValue" class="stat-val c-blue">0 €</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-label">Umsatz</span>
-                <span id="statRevenue" class="stat-val c-green">0 €</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-label">Gewinn</span>
-                <span id="statProfit" class="stat-val c-gold">0 €</span>
-            </div>
+            <div class="stat-box"><span class="stat-label">Menge</span><span id="statCount" class="stat-val">0</span></div>
+            <div class="stat-box"><span class="stat-label">Lagerwert</span><span id="statValue" class="stat-val c-blue">0 €</span></div>
+            <div class="stat-box"><span class="stat-label">Umsatz</span><span id="statRevenue" class="stat-val c-green">0 €</span></div>
+            <div class="stat-box"><span class="stat-label">Gewinn</span><span id="statProfit" class="stat-val c-gold">0 €</span></div>
         </div>
     </div>
 
     <div id="itemList"></div>
-
     <button class="fab" onclick="openEditModal()">+</button>
 
     <div id="modalEdit" class="modal-overlay">
@@ -235,9 +185,7 @@
                     </div>
                     <div class="form-row">
                         <div><label>Zustand</label>
-                            <select id="inpZustand">
-                                <option>Neu</option><option>Wie neu</option><option>Gebraucht</option>
-                            </select>
+                            <select id="inpZustand"><option>Neu</option><option>Wie neu</option><option>Gebraucht</option></select>
                         </div>
                         <div><label>Kaufdatum</label><input type="date" id="inpDatum"></div>
                     </div>
@@ -245,11 +193,11 @@
                     <div><label>Notiz</label><textarea id="inpNotiz"></textarea></div>
                     
                     <div>
-                         <label>Rechnung / Bild</label>
-                         <input type="file" id="inpFile" accept="image/*" onchange="handleImage(this)" style="padding-top:6px; height:auto;">
+                         <label>Bild</label>
+                         <input type="file" id="inpFile" accept="image/*" onchange="handleImage(this, 'inpBild', 'imgPreview')" style="padding-top:6px; height:auto;">
                          <input type="hidden" id="inpBild">
                          <img id="imgPreview" src="" style="width:100%; margin-top:5px; border-radius:4px; display:none;">
-                         <button class="btn-mini" onclick="removeImage()" style="margin-top:5px; width:100%">Entfernen</button>
+                         <button class="btn-mini" onclick="removeImage('inpBild', 'imgPreview', 'inpFile')" style="margin-top:5px; width:100%">Entfernen</button>
                     </div>
                 </div>
             </div>
@@ -261,33 +209,71 @@
         </div>
     </div>
 
+    <div id="modalSell" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">Verkauf erfassen</div>
+            <div class="modal-body">
+                <input type="hidden" id="sellIndex">
+                <div id="sellInvoicePreview">Rechnungs-Nr: Lädt...</div>
+
+                <div class="form-grid">
+                    <div class="form-row">
+                        <div>
+                            <label>Plattform (Wo?)</label>
+                            <select id="sellPlatform" onchange="updateInvoicePreview()">
+                                <option value="Vinted">Vinted</option>
+                                <option value="eBay">eBay</option>
+                                <option value="Kleinanzeigen">Kleinanzeigen</option>
+                                <option value="Sonstiges">Sonstiges</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Datum</label>
+                            <input type="date" id="sellDate">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                         <div><label>Verkaufspreis (€)</label><input type="number" step="0.01" id="sellPrice" oninput="calcSellTotal()"></div>
+                         <div><label>Menge</label><input type="number" id="sellQty" value="1" min="1" oninput="calcSellTotal()"></div>
+                    </div>
+
+                    <div>
+                        <label>Gesamtsumme (Umsatz)</label>
+                        <input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold;">
+                    </div>
+
+                    <div>
+                         <label>Rechnung / Beleg (Bild)</label>
+                         <input type="file" id="sellFile" accept="image/*" onchange="handleImage(this, 'sellBild', 'sellImgPreview')" style="padding-top:6px; height:auto;">
+                         <input type="hidden" id="sellBild">
+                         <img id="sellImgPreview" src="" style="width:100%; margin-top:5px; border-radius:4px; display:none;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-full btn-gray" onclick="closeModals()">Abbrechen</button>
+                <button class="btn-full btn-blue" onclick="performSell()">Verkaufen!</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modalSettings" class="modal-overlay">
         <div class="modal-box" style="height:auto">
             <div class="modal-header">Daten</div>
             <div class="modal-body">
-                <div class="settings-row">
-                    <label>Importieren (JSON)</label>
-                    <input type="file" id="fileImport" accept=".json" onchange="importBackup(this)" style="padding-top:6px; height:auto;">
-                </div>
-                <div class="settings-row" style="border:none">
-                    <label>Exportieren</label>
-                    <button class="btn-full btn-blue" onclick="exportBackup()">Backup erstellen</button>
-                </div>
+                <div class="settings-row"><label>Importieren (JSON)</label><input type="file" id="fileImport" accept=".json" onchange="importBackup(this)" style="padding-top:6px; height:auto;"></div>
+                <div class="settings-row" style="border:none"><label>Exportieren</label><button class="btn-full btn-blue" onclick="exportBackup()">Backup erstellen</button></div>
             </div>
-            <div class="modal-footer">
-                <button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1 / -1">Schließen</button>
-            </div>
+            <div class="modal-footer"><button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1 / -1">Schließen</button></div>
         </div>
     </div>
 
     <div id="modalHistory" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">Verkaufsprotokoll</div>
-            <div class="modal-body" id="historyList">
-                </div>
-            <div class="modal-footer">
-                <button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1 / -1">Schließen</button>
-            </div>
+            <div class="modal-body" id="historyList"></div>
+            <div class="modal-footer"><button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1 / -1">Schließen</button></div>
         </div>
     </div>
 
@@ -295,17 +281,15 @@
         let inventory = JSON.parse(localStorage.getItem('lagerAppDB')) || [];
         let salesLog = JSON.parse(localStorage.getItem('lagerAppSales')) || [];
 
+        // App Start
         renderList();
 
         function renderList(filterText = "") {
             const list = document.getElementById('itemList');
             list.innerHTML = '';
-            
-            const clearBtn = document.getElementById('clearSearchBtn');
-            clearBtn.style.display = filterText.length > 0 ? 'flex' : 'none';
+            document.getElementById('clearSearchBtn').style.display = filterText.length > 0 ? 'flex' : 'none';
 
-            let totalQty = 0;
-            let totalVal = 0;
+            let totalQty = 0; let totalVal = 0;
             const term = filterText.toLowerCase();
 
             inventory.forEach((item, index) => {
@@ -321,18 +305,12 @@
                     const starClass = item.markiert ? 'star-btn active' : 'star-btn';
                     const starIcon = item.markiert ? '★' : '☆';
 
-                    // Summe nur wenn >1 Stück
                     let priceDisplay = `<span class="item-price">${price.toFixed(2)} €</span>`;
-                    if (qty > 1) {
-                        priceDisplay += `<div class="item-total">Sum: ${(price * qty).toFixed(2)} €</div>`;
-                    }
+                    if (qty > 1) priceDisplay += `<div class="item-total">Sum: ${(price * qty).toFixed(2)} €</div>`;
 
                     const div = document.createElement('div');
                     div.className = markedClass;
-                    div.onclick = (e) => {
-                        if(e.target.tagName !== 'BUTTON') openEditModal(index);
-                    };
-
+                    div.onclick = (e) => { if(e.target.tagName !== 'BUTTON') openEditModal(index); };
                     div.innerHTML = `
                         <div class="qty-badge ${qty < 2 ? 'low' : ''}">${qty}x</div>
                         <div class="item-main">
@@ -348,19 +326,18 @@
                         <div class="item-right">
                             <button class="${starClass}" onclick="toggleStar(event, ${index})">${starIcon}</button>
                             ${priceDisplay}
-                            <button class="btn-mini" onclick="sellItem(event, ${index})">Verkauf</button>
+                            <button class="btn-mini" onclick="openSellModal(event, ${index})">Verkauf</button>
                         </div>
                     `;
                     list.appendChild(div);
                 }
             });
 
-            // Stats
-            let totalRevenue = 0;
-            let totalProfit = 0;
+            // Stats Logic
+            let totalRevenue = 0; let totalProfit = 0;
             salesLog.forEach(sale => {
-                totalRevenue += sale.sellPrice;
-                totalProfit += (sale.sellPrice - sale.buyPrice);
+                totalRevenue += sale.total; // Gesamtsumme dieses Verkaufs
+                totalProfit += (sale.total - (sale.buyPrice * sale.qty));
             });
 
             document.getElementById('statCount').innerText = totalQty;
@@ -368,12 +345,115 @@
             document.getElementById('statRevenue').innerText = formatCurrency(totalRevenue);
             document.getElementById('statProfit').innerText = formatCurrency(totalProfit);
 
-            if(inventory.length === 0) {
-                list.innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:0.8rem">Keine Artikel.</div>';
-            }
+            if(inventory.length === 0) list.innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:0.8rem">Keine Artikel.</div>';
         }
 
-        // --- HISTORY & RESTORE ---
+        // --- VERKAUF LOGIK (NEU) ---
+        
+        function openSellModal(e, index) {
+            e.stopPropagation();
+            const item = inventory[index];
+            if(item.menge <= 0) return alert("Bestand ist 0!");
+
+            document.getElementById('sellIndex').value = index;
+            document.getElementById('sellPrice').value = item.preis; // Vorschlag: EK Preis
+            document.getElementById('sellQty').value = 1;
+            document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('sellPlatform').value = "Vinted";
+            
+            // Bild Reset
+            document.getElementById('sellBild').value = "";
+            document.getElementById('sellImgPreview').style.display = "none";
+            document.getElementById('sellFile').value = "";
+
+            updateInvoicePreview();
+            calcSellTotal();
+
+            document.getElementById('modalSell').style.display = 'flex';
+        }
+
+        function updateInvoicePreview() {
+            const platform = document.getElementById('sellPlatform').value;
+            const preview = generateInvoiceNr(platform, true); // true = nur Vorschau, nicht hochzählen
+            document.getElementById('sellInvoicePreview').innerText = "Rechnung: " + preview;
+        }
+
+        function generateInvoiceNr(platform) {
+            const currentYear = new Date().getFullYear();
+            let prefix = "R"; // Standard
+            if(platform === "Vinted") prefix = "V";
+            if(platform === "eBay") prefix = "E";
+            if(platform === "Kleinanzeigen") prefix = "K";
+
+            // Wir suchen die höchste Nummer für DIESES Jahr und DIESEN Prefix
+            let maxNum = 0;
+            salesLog.forEach(sale => {
+                if(sale.invoiceNr && sale.invoiceNr.includes(currentYear) && sale.invoiceNr.startsWith(prefix)) {
+                    // Format: V 001 - 2025 -> Split bei Leerzeichen
+                    const parts = sale.invoiceNr.split(' ');
+                    // parts[0] = V, parts[1] = 001
+                    const num = parseInt(parts[1]);
+                    if(!isNaN(num) && num > maxNum) maxNum = num;
+                }
+            });
+
+            const nextNum = maxNum + 1;
+            const paddedNum = String(nextNum).padStart(3, '0');
+            return `${prefix} ${paddedNum} - ${currentYear}`;
+        }
+
+        function calcSellTotal() {
+            const p = parseFloat(document.getElementById('sellPrice').value) || 0;
+            const q = parseInt(document.getElementById('sellQty').value) || 0;
+            document.getElementById('sellTotal').value = (p * q).toFixed(2) + " €";
+        }
+
+        function performSell() {
+            const index = document.getElementById('sellIndex').value;
+            const item = inventory[index];
+            
+            const qtySold = parseInt(document.getElementById('sellQty').value);
+            const pricePerItem = parseFloat(document.getElementById('sellPrice').value);
+            const platform = document.getElementById('sellPlatform').value;
+            const date = document.getElementById('sellDate').value;
+            const img = document.getElementById('sellBild').value;
+
+            if(qtySold > item.menge) return alert("So viel hast du nicht auf Lager!");
+            if(!pricePerItem) return alert("Preis fehlt!");
+
+            // Rechnungsnummer generieren (Jetzt final)
+            const invNr = generateInvoiceNr(platform);
+
+            // Inventar anpassen
+            item.menge -= qtySold;
+
+            // Log Eintrag
+            salesLog.push({
+                name: item.name,
+                artnr: item.artnr,
+                date: date,
+                buyPrice: item.preis, // EK pro Stück
+                sellPrice: pricePerItem, // VK pro Stück
+                qty: qtySold,
+                total: pricePerItem * qtySold,
+                platform: platform,
+                invoiceNr: invNr,
+                invoiceImg: img
+            });
+
+            if(item.menge === 0) {
+                 if(confirm("Bestand ist 0. Artikel aus Lagerliste entfernen?")) {
+                     inventory.splice(index, 1);
+                 }
+            }
+
+            saveAll();
+            closeModals();
+            renderList(document.getElementById('searchInput').value);
+            alert(`Verkauft! Rechnungsnummer: ${invNr}`);
+        }
+
+        // --- HISTORY ---
         function openHistory() {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
@@ -384,17 +464,17 @@
                 return;
             }
 
-            // Rückwärts durchlaufen (Neueste zuerst)
             [...salesLog].reverse().forEach((sale, revIndex) => {
-                // Echten Index im Original-Array finden
                 const realIndex = salesLog.length - 1 - revIndex;
                 
                 const div = document.createElement('div');
                 div.className = 'history-row';
                 div.innerHTML = `
                     <div class="hist-info">
-                        <span style="font-weight:bold">${sale.name}</span>
-                        <span class="hist-date">${formatDate(sale.date)} | VK: ${sale.sellPrice.toFixed(2)}€</span>
+                        <span style="font-weight:bold">${sale.name} (${sale.qty}x)</span>
+                        <span class="hist-inv">${sale.invoiceNr} | ${sale.platform}</span>
+                        <span class="hist-date">${formatDate(sale.date)} | Summe: ${sale.total.toFixed(2)}€</span>
+                        ${sale.invoiceImg ? '<a href="#" onclick="showInvoiceImage('+realIndex+'); return false;" style="font-size:0.7rem; color:var(--primary)">Beleg anzeigen</a>' : ''}
                     </div>
                     <button class="btn-undo" onclick="restoreSale(${realIndex})">Storno</button>
                 `;
@@ -402,73 +482,54 @@
             });
         }
 
-        function restoreSale(index) {
-            if(!confirm("Verkauf wirklich stornieren und Artikelbestand erhöhen?")) return;
-            
-            const sale = salesLog[index];
-            
-            // Artikel im Inventar suchen (via Name)
-            let item = inventory.find(i => i.name === sale.name);
-            
-            if(item) {
-                item.menge++; // Bestand erhöhen
-                alert(`Bestand von "${item.name}" wurde auf ${item.menge} erhöht.`);
-            } else {
-                // Falls Artikel gelöscht war: Neu anlegen (Basic)
-                const newItem = {
-                    artnr: 'RESTORED', // Placeholder
-                    name: sale.name,
-                    menge: 1,
-                    preis: sale.buyPrice,
-                    groesse: '', zustand: 'Neu', datum: '', ort: '', notiz: 'Wiederhergestellt', bild: '', markiert: false
-                };
-                inventory.unshift(newItem);
-                alert(`Artikel "${sale.name}" war gelöscht und wurde neu angelegt.`);
-            }
-
-            // Aus Log entfernen
-            salesLog.splice(index, 1);
-            saveAll();
-            openHistory(); // Refresh Modal
-            renderList(); // Refresh List
+        function showInvoiceImage(index) {
+            const win = window.open("");
+            win.document.write('<img src="' + salesLog[index].invoiceImg + '" style="max-width:100%">');
         }
 
-        // --- CORE ACTIONS ---
+        function restoreSale(index) {
+            if(!confirm("Verkauf stornieren?")) return;
+            const sale = salesLog[index];
+            let item = inventory.find(i => i.name === sale.name); // Einfache Suche per Name
+            
+            // Besser: Suche per ArtNr wenn vorhanden, sonst Name
+            if(sale.artnr) {
+                const found = inventory.find(i => i.artnr === sale.artnr);
+                if(found) item = found;
+            }
+
+            if(item) {
+                item.menge += sale.qty;
+                alert(`Bestand von "${item.name}" wurde wiederhergestellt.`);
+            } else {
+                const newItem = {
+                    artnr: sale.artnr || 'RESTORED',
+                    name: sale.name,
+                    menge: sale.qty,
+                    preis: sale.buyPrice,
+                    groesse: '', zustand: 'Neu', datum: '', ort: '', notiz: 'Storno-Rückläufer', bild: '', markiert: false
+                };
+                inventory.unshift(newItem);
+                alert("Artikel neu angelegt (war gelöscht).");
+            }
+            salesLog.splice(index, 1);
+            saveAll();
+            openHistory();
+            renderList();
+        }
+
+
+        // --- STANDARD FUNKTIONEN ---
         function toggleStar(e, index) {
             e.stopPropagation();
             inventory[index].markiert = !inventory[index].markiert;
             saveAll();
-            filterList();
-        }
-
-        function sellItem(e, index) {
-            e.stopPropagation();
-            const item = inventory[index];
-            if(item.menge > 0) {
-                let sellPriceStr = prompt(`Verkaufspreis für 1x ${item.name}?`, item.preis);
-                if (sellPriceStr !== null) {
-                    let sellPrice = parseFloat(sellPriceStr.replace(',', '.')) || 0;
-                    let buyPrice = parseFloat(item.preis) || 0;
-                    item.menge--;
-                    salesLog.push({
-                        name: item.name,
-                        date: new Date().toISOString().split('T')[0],
-                        buyPrice: buyPrice,
-                        sellPrice: sellPrice
-                    });
-                    if(item.menge === 0) {
-                         if(confirm("Bestand ist 0. Löschen?")) inventory.splice(index, 1);
-                    }
-                    saveAll();
-                    filterList();
-                }
-            }
+            renderList(document.getElementById('searchInput').value);
         }
 
         function saveItem() {
             const id = document.getElementById('editIndex').value;
             const newArtnr = document.getElementById('inpArtnr').value;
-            
             const duplicate = inventory.some((item, idx) => item.artnr === newArtnr && idx != id);
             if (duplicate) { alert("Nummer existiert schon!"); return; }
 
@@ -490,22 +551,15 @@
             };
 
             if (!newItem.name) return alert('Name fehlt!');
+            if (id === "") inventory.unshift(newItem); else inventory[id] = newItem;
 
-            if (id === "") inventory.unshift(newItem); 
-            else inventory[id] = newItem;
-
-            saveAll();
-            closeModals();
-            filterList();
+            saveAll(); closeModals(); renderList(document.getElementById('searchInput').value);
         }
 
         function deleteCurrentItem() {
-            const index = document.getElementById('editIndex').value;
-            if(index !== "" && confirm("Löschen?")) {
-                inventory.splice(index, 1);
-                saveAll();
-                closeModals();
-                filterList();
+            if(confirm("Löschen?")) {
+                inventory.splice(document.getElementById('editIndex').value, 1);
+                saveAll(); closeModals(); renderList(document.getElementById('searchInput').value);
             }
         }
 
@@ -519,20 +573,38 @@
                     if (!isNaN(num) && num > maxNum) maxNum = num;
                 }
             });
-            const nextNum = maxNum + 1;
-            const paddedNum = String(nextNum).padStart(3, '0');
-            return `${paddedNum} - ${currentYear}`;
+            return `${String(maxNum + 1).padStart(3, '0')} - ${currentYear}`;
         }
 
-        // --- TECH / UI ---
-        function formatCurrency(val) {
-            if(val >= 10000) return (val/1000).toFixed(1) + 'k €';
-            return val.toFixed(2) + ' €';
+        // --- HELPER & BILDER ---
+        function handleImage(input, targetId, previewId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const maxWidth = 600; 
+                        const scale = maxWidth / img.width;
+                        const w = scale < 1 ? maxWidth : img.width;
+                        const h = scale < 1 ? img.height * scale : img.height;
+                        canvas.width = w; canvas.height = h;
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                        document.getElementById(targetId).value = dataUrl;
+                        document.getElementById(previewId).src = dataUrl;
+                        document.getElementById(previewId).style.display = 'block';
+                    }
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
         }
-        function formatDate(d) {
-            if(!d) return '';
-            const parts = d.split('-');
-            return `${parts[2]}.${parts[1]}.${parts[0].substring(2)}`;
+        function removeImage(targetId, previewId, fileId) {
+            document.getElementById(targetId).value = "";
+            document.getElementById(previewId).style.display = "none";
+            document.getElementById(fileId).value = "";
         }
 
         function openEditModal(index = null) {
@@ -542,117 +614,60 @@
                 document.getElementById('modalTitle').innerText = "Neuer Artikel";
                 document.getElementById('editIndex').value = "";
                 document.getElementById('btnDelete').classList.add('hidden');
-                clearForm();
+                document.querySelectorAll('#modalEdit input:not([type=hidden]), #modalEdit textarea').forEach(e => e.value = '');
+                document.getElementById('imgPreview').style.display = 'none';
                 document.getElementById('inpArtnr').value = generateNextArtnr();
             } else {
                 const item = inventory[index];
                 document.getElementById('modalTitle').innerText = "Bearbeiten";
                 document.getElementById('editIndex').value = index;
                 document.getElementById('btnDelete').classList.remove('hidden');
-                fillForm(item);
-            }
-        }
-
-        function fillForm(item) {
-            document.getElementById('inpArtnr').value = item.artnr || "";
-            document.getElementById('inpName').value = item.name || "";
-            document.getElementById('inpMenge').value = item.menge || 0;
-            document.getElementById('inpPreis').value = item.preis || 0;
-            document.getElementById('inpGroesse').value = item.groesse || "";
-            document.getElementById('inpZustand').value = item.zustand || "Neu";
-            document.getElementById('inpDatum').value = item.datum || "";
-            document.getElementById('inpOrt').value = item.ort || "";
-            document.getElementById('inpNotiz').value = item.notiz || "";
-            const imgVal = item.bild || "";
-            document.getElementById('inpBild').value = imgVal;
-            if(imgVal) {
-                document.getElementById('imgPreview').src = imgVal;
-                document.getElementById('imgPreview').style.display = 'block';
-            } else {
-                document.getElementById('imgPreview').style.display = 'none';
+                document.getElementById('inpArtnr').value = item.artnr || "";
+                document.getElementById('inpName').value = item.name || "";
+                document.getElementById('inpMenge').value = item.menge || 0;
+                document.getElementById('inpPreis').value = item.preis || 0;
+                document.getElementById('inpGroesse').value = item.groesse || "";
+                document.getElementById('inpZustand').value = item.zustand || "Neu";
+                document.getElementById('inpDatum').value = item.datum || "";
+                document.getElementById('inpOrt').value = item.ort || "";
+                document.getElementById('inpNotiz').value = item.notiz || "";
+                const imgVal = item.bild || "";
+                document.getElementById('inpBild').value = imgVal;
+                if(imgVal) { document.getElementById('imgPreview').src = imgVal; document.getElementById('imgPreview').style.display = 'block'; }
+                else document.getElementById('imgPreview').style.display = 'none';
             }
         }
 
         function openSettings() { document.getElementById('modalSettings').style.display = 'flex'; }
-        function closeModals() {
-            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
-            document.body.style.overflow = 'auto';
-        }
-        function clearForm() {
-            document.querySelectorAll('#modalEdit input:not([type=hidden]), #modalEdit textarea').forEach(e => e.value = '');
-            document.getElementById('imgPreview').style.display = 'none';
-            document.getElementById('inpZustand').value = "Neu";
-        }
-
-        function handleImage(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        const maxWidth = 500; 
-                        const scale = maxWidth / img.width;
-                        const w = scale < 1 ? maxWidth : img.width;
-                        const h = scale < 1 ? img.height * scale : img.height;
-                        canvas.width = w; canvas.height = h;
-                        ctx.drawImage(img, 0, 0, w, h);
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-                        document.getElementById('inpBild').value = dataUrl;
-                        document.getElementById('imgPreview').src = dataUrl;
-                        document.getElementById('imgPreview').style.display = 'block';
-                    }
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-        function removeImage() {
-            document.getElementById('inpBild').value = "";
-            document.getElementById('imgPreview').style.display = "none";
-            document.getElementById('inpFile').value = "";
-        }
-
-        function saveAll() { 
-            localStorage.setItem('lagerAppDB', JSON.stringify(inventory)); 
-            localStorage.setItem('lagerAppSales', JSON.stringify(salesLog)); 
-        }
-
+        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none'); document.body.style.overflow = 'auto'; }
+        function saveAll() { localStorage.setItem('lagerAppDB', JSON.stringify(inventory)); localStorage.setItem('lagerAppSales', JSON.stringify(salesLog)); }
+        
         function exportBackup() {
             const exportData = { artikel: inventory, sales: salesLog };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
             const dlAnchorElem = document.createElement('a');
             dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", "lager_full_backup_" + new Date().toISOString().slice(0,10) + ".json");
+            dlAnchorElem.setAttribute("download", "lager_backup_" + new Date().toISOString().slice(0,10) + ".json");
             dlAnchorElem.click();
         }
-
         function importBackup(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     try {
                         const loadedData = JSON.parse(e.target.result);
-                        if(Array.isArray(loadedData)) {
-                            inventory = loadedData;
-                        } else if (loadedData.artikel) {
-                            inventory = loadedData.artikel;
-                            if(loadedData.sales) salesLog = loadedData.sales;
-                        } else {
-                            return alert("Format falsch.");
-                        }
-                        saveAll();
-                        renderList();
-                        closeModals();
-                        alert("Daten importiert!");
+                        if(Array.isArray(loadedData)) inventory = loadedData;
+                        else if (loadedData.artikel) { inventory = loadedData.artikel; if(loadedData.sales) salesLog = loadedData.sales; }
+                        else return alert("Format falsch.");
+                        saveAll(); renderList(); closeModals(); alert("Import erfolgreich!");
                     } catch(err) { alert("Fehler beim Import!"); }
-                };
-                reader.readAsText(input.files[0]);
+                }; reader.readAsText(input.files[0]);
             }
         }
         function filterList() { renderList(document.getElementById('searchInput').value); }
         function clearSearch() { document.getElementById('searchInput').value = ''; renderList(""); }
+        function formatCurrency(val) { if(val >= 10000) return (val/1000).toFixed(1) + 'k €'; return val.toFixed(2) + ' €'; }
+        function formatDate(d) { if(!d) return ''; const parts = d.split('-'); return `${parts[2]}.${parts[1]}.${parts[0].substring(2)}`; }
     </script>
 </body>
 </html>
