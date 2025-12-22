@@ -3,83 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V12 Rechnung</title>
+    <title>Lager V13 Pro DB</title>
     <style>
         :root {
-            --bg: #121212;
-            --card: #1e1e1e;
-            --input-bg: #2d2d2d;
-            --primary: #3b82f6;
-            --text: #e5e7eb;
-            --text-muted: #9ca3af;
-            --border: #333;
-            --danger: #ef4444;
-            --success: #10b981;
-            --profit: #eab308;
+            --bg: #121212; --card: #1e1e1e; --input-bg: #2d2d2d;
+            --primary: #3b82f6; --text: #e5e7eb; --text-muted: #9ca3af;
+            --border: #333; --danger: #ef4444; --success: #10b981; --profit: #eab308;
             color-scheme: dark; 
         }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; -webkit-tap-highlight-color: transparent; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0; padding: 0; padding-bottom: 80px;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* --- HEADER --- */
-        .app-header {
-            background-color: rgba(30, 30, 30, 0.98);
-            backdrop-filter: blur(10px);
-            padding: 5px 8px; 
-            position: sticky; top: 0; z-index: 50;
-            border-bottom: 1px solid var(--border);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
+        /* HEADER & SEARCH */
+        .app-header { background: rgba(30,30,30,0.98); backdrop-filter: blur(10px); padding: 5px 8px; position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        h1 { margin: 0; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.5px; }
+        h1 { margin: 0; font-size: 0.9rem; font-weight: 700; }
         .header-actions { display: flex; gap: 15px; }
         .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; opacity: 0.9; }
 
-        /* --- SUCHE --- */
         .search-container { position: relative; width: 100%; margin-top: 2px;}
-        .search-input {
-            width: 100%; height: 28px;
-            background: var(--input-bg); border: 1px solid var(--border);
-            border-radius: 4px; padding: 0 25px; 
-            color: white; font-size: 0.8rem; box-sizing: border-box;
-        }
+        .search-input { width: 100%; height: 28px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 25px; color: white; font-size: 0.8rem; box-sizing: border-box; }
         .search-icon { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); opacity: 0.5; font-size: 0.7rem; pointer-events: none; }
-        .search-clear {
-            position: absolute; right: 0; top: 0; bottom: 0; width: 30px;
-            background: none; border: none; color: #999; font-size: 1rem;
-            cursor: pointer; display: none; align-items: center; justify-content: center;
-        }
+        .search-clear { position: absolute; right: 0; top: 0; bottom: 0; width: 30px; background: none; border: none; color: #999; font-size: 1rem; cursor: pointer; display: none; align-items: center; justify-content: center; }
 
-        /* --- STATS --- */
-        .stats-bar {
-            display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 2px; margin-top: 4px; padding-top: 4px; border-top: 1px solid #333;
-        }
+        /* STATS */
+        .stats-bar { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 2px; margin-top: 4px; padding-top: 4px; border-top: 1px solid #333; }
         .stat-box { text-align: center; }
         .stat-label { font-size: 0.55rem; color: #777; display: block; }
         .stat-val { font-size: 0.7rem; font-weight: bold; display: block; }
-        .c-blue { color: #60a5fa; }
-        .c-green { color: var(--success); }
-        .c-gold { color: var(--profit); }
+        .c-blue { color: #60a5fa; } .c-green { color: var(--success); } .c-gold { color: var(--profit); }
 
-        /* --- LISTE --- */
+        /* LISTE */
         #itemList { padding: 0; }
-
-        .item-row {
-            background: var(--card); border-bottom: 1px solid #252525;
-            padding: 4px 6px; display: grid;
-            grid-template-columns: auto 1fr auto; 
-            gap: 6px; align-items: center;
-            border-left: 3px solid transparent; min-height: 36px;
-        }
+        .item-row { background: var(--card); border-bottom: 1px solid #252525; padding: 4px 6px; display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; border-left: 3px solid transparent; min-height: 36px; }
         .item-row.marked { background: rgba(234, 179, 8, 0.08); border-left: 3px solid var(--profit); }
-
+        
         .qty-badge { font-size: 0.85rem; font-weight: bold; color: #60a5fa; min-width: 25px; text-align: center; }
         .qty-badge.low { color: #ef4444; }
 
@@ -87,26 +44,23 @@
         .item-title { font-weight: 600; font-size: 0.75rem; color: white; line-height: 1.1; white-space: normal; word-break: break-word; }
         .item-meta { font-size: 0.65rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 1px;}
         .meta-tag { background: #333; padding: 0px 3px; border-radius: 2px; font-size: 0.6rem; }
-        .tag-shop { color: #93c5fd; }
-        .tag-size { color: #f9a8d4; }
-        .icon-symbol { font-size: 0.7rem; margin-left: 2px; }
+        .tag-shop { color: #93c5fd; } .tag-size { color: #f9a8d4; } .icon-symbol { font-size: 0.7rem; margin-left: 2px; }
 
         .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 65px; }
         .item-price { font-weight: 500; font-size: 0.75rem; color: #bbb; }
         .item-total { font-size: 0.6rem; color: #666; }
-
         .star-btn { background: none; border: none; padding: 0; font-size: 0.9rem; cursor: pointer; color: #444; line-height: 1; }
         .star-btn.active { color: var(--profit); } 
         .btn-mini { background: #2d2d2d; border: 1px solid #444; color: #ddd; padding: 1px 5px; font-size: 0.65rem; border-radius: 3px; cursor: pointer; margin-top: 2px; }
 
-        /* --- HISTORY LISTE --- */
+        /* HISTORY */
         .history-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px; border-bottom: 1px solid #333; font-size: 0.8rem; }
         .hist-info { display: flex; flex-direction: column; gap: 2px;}
         .hist-date { font-size: 0.65rem; color: #777; }
         .hist-inv { color: var(--profit); font-family: monospace; font-size: 0.75rem; }
         .btn-undo { background: #331111; color: #ff7777; border: 1px solid #552222; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.7rem;}
 
-        /* --- MODALS GENERAL --- */
+        /* FAB & MODALS */
         .fab { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; width: 48px; height: 48px; border-radius: 50%; border: none; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; z-index: 90; display: flex; align-items: center; justify-content: center; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 10px; }
         .modal-box { background: var(--card); width: 100%; max-width: 500px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 95vh; overflow: hidden; }
@@ -122,41 +76,29 @@
         .form-grid { display: grid; gap: 8px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 2px; }
-        
-        input, select, textarea {
-            width: 100%; height: 34px; padding: 0 8px;
-            background: var(--input-bg); border: 1px solid var(--border);
-            color: white; border-radius: 4px; font-size: 0.9rem;
-            box-sizing: border-box; outline: none; -webkit-appearance: none; appearance: none; font-family: inherit;
-        }
+        input, select, textarea { width: 100%; height: 34px; padding: 0 8px; background: var(--input-bg); border: 1px solid var(--border); color: white; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; outline: none; -webkit-appearance: none; appearance: none; font-family: inherit; }
         input[type="date"] { display: block; line-height: 34px; }
         textarea { height: 50px; resize: vertical; padding: 6px; line-height: 1.3; }
         .hidden { display: none; }
         
-        /* Rechnungsvorschau im Verkauf */
-        #sellInvoicePreview {
-            font-family: monospace; color: var(--profit); font-weight: bold; text-align: center; 
-            margin-bottom: 10px; background: #222; padding: 5px; border-radius: 4px;
-        }
+        #sellInvoiceNr { color: var(--profit); font-family: monospace; font-weight: bold; text-align: center; border-color: var(--profit); }
     </style>
 </head>
 <body>
 
     <div class="app-header">
         <div class="header-top">
-            <h1>📦 MEIN LAGER</h1>
+            <h1>📦 MEIN LAGER (DB)</h1>
             <div class="header-actions">
                 <button class="icon-btn" onclick="openHistory()" title="Verlauf">🕒</button>
                 <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
             </div>
         </div>
-        
         <div class="search-container">
             <span class="search-icon">🔍</span>
             <input type="text" id="searchInput" class="search-input" placeholder="Suche..." onkeyup="filterList()">
             <button id="clearSearchBtn" class="search-clear" onclick="clearSearch()">✕</button>
         </div>
-
         <div class="stats-bar">
             <div class="stat-box"><span class="stat-label">Menge</span><span id="statCount" class="stat-val">0</span></div>
             <div class="stat-box"><span class="stat-label">Lagerwert</span><span id="statValue" class="stat-val c-blue">0 €</span></div>
@@ -172,7 +114,7 @@
         <div class="modal-box">
             <div class="modal-header" id="modalTitle">Artikel</div>
             <div class="modal-body">
-                <input type="hidden" id="editIndex"> 
+                <input type="hidden" id="editId"> 
                 <div class="form-grid">
                     <div class="form-row">
                         <div><label>Art.-Nr.</label><input type="text" id="inpArtnr" placeholder="Lädt..."></div>
@@ -184,14 +126,11 @@
                         <div><label>Größe</label><input type="text" id="inpGroesse"></div>
                     </div>
                     <div class="form-row">
-                        <div><label>Zustand</label>
-                            <select id="inpZustand"><option>Neu</option><option>Wie neu</option><option>Gebraucht</option></select>
-                        </div>
+                        <div><label>Zustand</label><select id="inpZustand"><option>Neu</option><option>Wie neu</option><option>Gebraucht</option></select></div>
                         <div><label>Kaufdatum</label><input type="date" id="inpDatum"></div>
                     </div>
                     <div><label>Gekauft bei</label><input type="text" id="inpOrt"></div>
                     <div><label>Notiz</label><textarea id="inpNotiz"></textarea></div>
-                    
                     <div>
                          <label>Bild</label>
                          <input type="file" id="inpFile" accept="image/*" onchange="handleImage(this, 'inpBild', 'imgPreview')" style="padding-top:6px; height:auto;">
@@ -213,38 +152,24 @@
         <div class="modal-box">
             <div class="modal-header">Verkauf erfassen</div>
             <div class="modal-body">
-                <input type="hidden" id="sellIndex">
-                <div id="sellInvoicePreview">Rechnungs-Nr: Lädt...</div>
-
+                <input type="hidden" id="sellId">
+                
                 <div class="form-grid">
-                    <div class="form-row">
-                        <div>
-                            <label>Plattform (Wo?)</label>
-                            <select id="sellPlatform" onchange="updateInvoicePreview()">
-                                <option value="Vinted">Vinted</option>
-                                <option value="eBay">eBay</option>
-                                <option value="Kleinanzeigen">Kleinanzeigen</option>
-                                <option value="Sonstiges">Sonstiges</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label>Datum</label>
-                            <input type="date" id="sellDate">
-                        </div>
+                    <div>
+                        <label style="color:var(--profit); font-weight:bold;">Rechnungs-Nr. (Editierbar)</label>
+                        <input type="text" id="sellInvoiceNr">
                     </div>
-
+                    <div class="form-row">
+                        <div><label>Plattform</label><select id="sellPlatform" onchange="updateInvoicePreview()"><option value="Vinted">Vinted</option><option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option><option value="Sonstiges">Sonstiges</option></select></div>
+                        <div><label>Datum</label><input type="date" id="sellDate"></div>
+                    </div>
                     <div class="form-row">
                          <div><label>Verkaufspreis (€)</label><input type="number" step="0.01" id="sellPrice" oninput="calcSellTotal()"></div>
                          <div><label>Menge</label><input type="number" id="sellQty" value="1" min="1" oninput="calcSellTotal()"></div>
                     </div>
-
+                    <div><label>Gesamtsumme</label><input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold;"></div>
                     <div>
-                        <label>Gesamtsumme (Umsatz)</label>
-                        <input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold;">
-                    </div>
-
-                    <div>
-                         <label>Rechnung / Beleg (Bild)</label>
+                         <label>Beleg / Bild (Übernommen vom Artikel)</label>
                          <input type="file" id="sellFile" accept="image/*" onchange="handleImage(this, 'sellBild', 'sellImgPreview')" style="padding-top:6px; height:auto;">
                          <input type="hidden" id="sellBild">
                          <img id="sellImgPreview" src="" style="width:100%; margin-top:5px; border-radius:4px; display:none;">
@@ -260,29 +185,105 @@
 
     <div id="modalSettings" class="modal-overlay">
         <div class="modal-box" style="height:auto">
-            <div class="modal-header">Daten</div>
+            <div class="modal-header">Daten (IndexedDB)</div>
             <div class="modal-body">
-                <div class="settings-row"><label>Importieren (JSON)</label><input type="file" id="fileImport" accept=".json" onchange="importBackup(this)" style="padding-top:6px; height:auto;"></div>
-                <div class="settings-row" style="border:none"><label>Exportieren</label><button class="btn-full btn-blue" onclick="exportBackup()">Backup erstellen</button></div>
+                <div class="settings-row"><label>Backup Importieren (JSON)</label><input type="file" id="fileImport" accept=".json" onchange="importBackup(this)" style="padding-top:6px; height:auto;"></div>
+                <div class="settings-row" style="border:none"><label>Backup Exportieren</label><button class="btn-full btn-blue" onclick="exportBackup()">Backup herunterladen</button></div>
             </div>
             <div class="modal-footer"><button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1 / -1">Schließen</button></div>
         </div>
     </div>
-
     <div id="modalHistory" class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-header">Verkaufsprotokoll</div>
+            <div class="modal-header">Verkäufe</div>
             <div class="modal-body" id="historyList"></div>
             <div class="modal-footer"><button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1 / -1">Schließen</button></div>
         </div>
     </div>
 
     <script>
-        let inventory = JSON.parse(localStorage.getItem('lagerAppDB')) || [];
-        let salesLog = JSON.parse(localStorage.getItem('lagerAppSales')) || [];
+        // --- INDEXED DB HELPER ---
+        const DB_NAME = 'LagerDB_V1';
+        const DB_VERSION = 1;
+        let db;
+
+        // Init DB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    if (!db.objectStoreNames.contains('inventory')) {
+                        const store = db.createObjectStore('inventory', { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('artnr', 'artnr', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains('sales')) {
+                        db.createObjectStore('sales', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onerror = (e) => reject("DB Error");
+            });
+        }
+
+        // DB Operations Wrapper
+        async function dbGetAll(storeName) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+            });
+        }
+        async function dbAdd(storeName, item) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                store.add(item);
+                tx.oncomplete = () => resolve();
+            });
+        }
+        async function dbPut(storeName, item) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                store.put(item);
+                tx.oncomplete = () => resolve();
+            });
+        }
+        async function dbDelete(storeName, id) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                store.delete(id);
+                tx.oncomplete = () => resolve();
+            });
+        }
+        async function dbClear(storeName) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                tx.objectStore(storeName).clear();
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        // Global State (cached for performance, but syncs with DB)
+        let inventory = [];
+        let salesLog = [];
 
         // App Start
-        renderList();
+        initDB().then(async () => {
+            await loadData();
+            renderList();
+        });
+
+        async function loadData() {
+            inventory = await dbGetAll('inventory');
+            salesLog = await dbGetAll('sales');
+        }
 
         function renderList(filterText = "") {
             const list = document.getElementById('itemList');
@@ -292,7 +293,11 @@
             let totalQty = 0; let totalVal = 0;
             const term = filterText.toLowerCase();
 
-            inventory.forEach((item, index) => {
+            // Inventory sorted: Newest first (by ID descending usually matches sort)
+            // We'll just reverse the array for display to show newest added on top if needed, 
+            // or keep existing order. Let's assume inventory is sorted as is.
+            
+            [...inventory].reverse().forEach((item) => {
                 const searchString = `${item.name} ${item.ort} ${item.groesse} ${item.artnr}`.toLowerCase();
                 
                 if (filterText === "" || searchString.includes(term)) {
@@ -310,7 +315,7 @@
 
                     const div = document.createElement('div');
                     div.className = markedClass;
-                    div.onclick = (e) => { if(e.target.tagName !== 'BUTTON') openEditModal(index); };
+                    div.onclick = (e) => { if(e.target.tagName !== 'BUTTON') openEditModal(item.id); };
                     div.innerHTML = `
                         <div class="qty-badge ${qty < 2 ? 'low' : ''}">${qty}x</div>
                         <div class="item-main">
@@ -324,19 +329,19 @@
                             </div>
                         </div>
                         <div class="item-right">
-                            <button class="${starClass}" onclick="toggleStar(event, ${index})">${starIcon}</button>
+                            <button class="${starClass}" onclick="toggleStar(event, ${item.id})">${starIcon}</button>
                             ${priceDisplay}
-                            <button class="btn-mini" onclick="openSellModal(event, ${index})">Verkauf</button>
+                            <button class="btn-mini" onclick="openSellModal(event, ${item.id})">Verkauf</button>
                         </div>
                     `;
                     list.appendChild(div);
                 }
             });
 
-            // Stats Logic
+            // Stats
             let totalRevenue = 0; let totalProfit = 0;
             salesLog.forEach(sale => {
-                totalRevenue += sale.total; // Gesamtsumme dieses Verkaufs
+                totalRevenue += sale.total;
                 totalProfit += (sale.total - (sale.buyPrice * sale.qty));
             });
 
@@ -345,26 +350,42 @@
             document.getElementById('statRevenue').innerText = formatCurrency(totalRevenue);
             document.getElementById('statProfit').innerText = formatCurrency(totalProfit);
 
-            if(inventory.length === 0) list.innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:0.8rem">Keine Artikel.</div>';
+            if(inventory.length === 0) list.innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:0.8rem">Keine Artikel.<br>Bitte Backup importieren!</div>';
         }
 
-        // --- VERKAUF LOGIK (NEU) ---
-        
-        function openSellModal(e, index) {
-            e.stopPropagation();
-            const item = inventory[index];
-            if(item.menge <= 0) return alert("Bestand ist 0!");
+        // --- ACTIONS ---
 
-            document.getElementById('sellIndex').value = index;
-            document.getElementById('sellPrice').value = item.preis; // Vorschlag: EK Preis
+        async function toggleStar(e, id) {
+            e.stopPropagation();
+            const item = inventory.find(i => i.id === id);
+            if(item) {
+                item.markiert = !item.markiert;
+                await dbPut('inventory', item);
+                renderList(document.getElementById('searchInput').value);
+            }
+        }
+
+        async function openSellModal(e, id) {
+            e.stopPropagation();
+            const item = inventory.find(i => i.id === id);
+            if(!item || item.menge <= 0) return alert("Bestand ist 0!");
+
+            document.getElementById('sellId').value = id;
+            document.getElementById('sellPrice').value = item.preis;
             document.getElementById('sellQty').value = 1;
             document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('sellPlatform').value = "Vinted";
             
-            // Bild Reset
-            document.getElementById('sellBild').value = "";
-            document.getElementById('sellImgPreview').style.display = "none";
-            document.getElementById('sellFile').value = "";
+            // BILD VERERBUNG: Hat Artikel ein Bild? Dann als Default setzen
+            if (item.bild) {
+                document.getElementById('sellBild').value = item.bild;
+                document.getElementById('sellImgPreview').src = item.bild;
+                document.getElementById('sellImgPreview').style.display = 'block';
+            } else {
+                document.getElementById('sellBild').value = "";
+                document.getElementById('sellImgPreview').style.display = "none";
+            }
+            document.getElementById('sellFile').value = ""; // Reset File Input
 
             updateInvoicePreview();
             calcSellTotal();
@@ -374,32 +395,31 @@
 
         function updateInvoicePreview() {
             const platform = document.getElementById('sellPlatform').value;
-            const preview = generateInvoiceNr(platform, true); // true = nur Vorschau, nicht hochzählen
-            document.getElementById('sellInvoicePreview').innerText = "Rechnung: " + preview;
+            const nextNr = generateInvoiceNr(platform);
+            // Das Feld ist jetzt ein INPUT, also setzen wir den Value
+            document.getElementById('sellInvoiceNr').value = nextNr;
         }
 
         function generateInvoiceNr(platform) {
             const currentYear = new Date().getFullYear();
-            let prefix = "R"; // Standard
+            let prefix = "R";
             if(platform === "Vinted") prefix = "V";
             if(platform === "eBay") prefix = "E";
             if(platform === "Kleinanzeigen") prefix = "K";
 
-            // Wir suchen die höchste Nummer für DIESES Jahr und DIESEN Prefix
             let maxNum = 0;
             salesLog.forEach(sale => {
                 if(sale.invoiceNr && sale.invoiceNr.includes(currentYear) && sale.invoiceNr.startsWith(prefix)) {
-                    // Format: V 001 - 2025 -> Split bei Leerzeichen
                     const parts = sale.invoiceNr.split(' ');
-                    // parts[0] = V, parts[1] = 001
-                    const num = parseInt(parts[1]);
-                    if(!isNaN(num) && num > maxNum) maxNum = num;
+                    // Format angenommen: "V 001 - 2025" -> parts[1] is number
+                    if(parts.length > 1) {
+                         const num = parseInt(parts[1]);
+                         if(!isNaN(num) && num > maxNum) maxNum = num;
+                    }
                 }
             });
-
             const nextNum = maxNum + 1;
-            const paddedNum = String(nextNum).padStart(3, '0');
-            return `${prefix} ${paddedNum} - ${currentYear}`;
+            return `${prefix} ${String(nextNum).padStart(3, '0')} - ${currentYear}`;
         }
 
         function calcSellTotal() {
@@ -408,133 +428,63 @@
             document.getElementById('sellTotal').value = (p * q).toFixed(2) + " €";
         }
 
-        function performSell() {
-            const index = document.getElementById('sellIndex').value;
-            const item = inventory[index];
+        async function performSell() {
+            const id = parseInt(document.getElementById('sellId').value);
+            const item = inventory.find(i => i.id === id);
             
             const qtySold = parseInt(document.getElementById('sellQty').value);
             const pricePerItem = parseFloat(document.getElementById('sellPrice').value);
             const platform = document.getElementById('sellPlatform').value;
             const date = document.getElementById('sellDate').value;
             const img = document.getElementById('sellBild').value;
+            const invNr = document.getElementById('sellInvoiceNr').value; // MANUELLER WERT
 
-            if(qtySold > item.menge) return alert("So viel hast du nicht auf Lager!");
-            if(!pricePerItem) return alert("Preis fehlt!");
+            if(qtySold > item.menge) return alert("Bestand zu niedrig!");
+            if(!invNr) return alert("Rechnungsnummer fehlt!");
 
-            // Rechnungsnummer generieren (Jetzt final)
-            const invNr = generateInvoiceNr(platform);
-
-            // Inventar anpassen
             item.menge -= qtySold;
 
-            // Log Eintrag
-            salesLog.push({
+            const sale = {
                 name: item.name,
                 artnr: item.artnr,
                 date: date,
-                buyPrice: item.preis, // EK pro Stück
-                sellPrice: pricePerItem, // VK pro Stück
+                buyPrice: item.preis,
+                sellPrice: pricePerItem,
                 qty: qtySold,
                 total: pricePerItem * qtySold,
                 platform: platform,
                 invoiceNr: invNr,
                 invoiceImg: img
-            });
+            };
+
+            await dbAdd('sales', sale);
+            salesLog.push(sale); // Sync local
 
             if(item.menge === 0) {
-                 if(confirm("Bestand ist 0. Artikel aus Lagerliste entfernen?")) {
-                     inventory.splice(index, 1);
+                 if(confirm("Bestand ist 0. Artikel löschen?")) {
+                     await dbDelete('inventory', id);
+                     inventory = inventory.filter(i => i.id !== id);
+                 } else {
+                     await dbPut('inventory', item);
                  }
+            } else {
+                await dbPut('inventory', item);
             }
 
-            saveAll();
             closeModals();
             renderList(document.getElementById('searchInput').value);
-            alert(`Verkauft! Rechnungsnummer: ${invNr}`);
         }
 
-        // --- HISTORY ---
-        function openHistory() {
-            const list = document.getElementById('historyList');
-            list.innerHTML = '';
-            document.getElementById('modalHistory').style.display = 'flex';
+        // --- ITEM EDIT ---
 
-            if(salesLog.length === 0) {
-                list.innerHTML = '<p style="text-align:center; color:#777">Keine Verkäufe.</p>';
-                return;
-            }
-
-            [...salesLog].reverse().forEach((sale, revIndex) => {
-                const realIndex = salesLog.length - 1 - revIndex;
-                
-                const div = document.createElement('div');
-                div.className = 'history-row';
-                div.innerHTML = `
-                    <div class="hist-info">
-                        <span style="font-weight:bold">${sale.name} (${sale.qty}x)</span>
-                        <span class="hist-inv">${sale.invoiceNr} | ${sale.platform}</span>
-                        <span class="hist-date">${formatDate(sale.date)} | Summe: ${sale.total.toFixed(2)}€</span>
-                        ${sale.invoiceImg ? '<a href="#" onclick="showInvoiceImage('+realIndex+'); return false;" style="font-size:0.7rem; color:var(--primary)">Beleg anzeigen</a>' : ''}
-                    </div>
-                    <button class="btn-undo" onclick="restoreSale(${realIndex})">Storno</button>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function showInvoiceImage(index) {
-            const win = window.open("");
-            win.document.write('<img src="' + salesLog[index].invoiceImg + '" style="max-width:100%">');
-        }
-
-        function restoreSale(index) {
-            if(!confirm("Verkauf stornieren?")) return;
-            const sale = salesLog[index];
-            let item = inventory.find(i => i.name === sale.name); // Einfache Suche per Name
-            
-            // Besser: Suche per ArtNr wenn vorhanden, sonst Name
-            if(sale.artnr) {
-                const found = inventory.find(i => i.artnr === sale.artnr);
-                if(found) item = found;
-            }
-
-            if(item) {
-                item.menge += sale.qty;
-                alert(`Bestand von "${item.name}" wurde wiederhergestellt.`);
-            } else {
-                const newItem = {
-                    artnr: sale.artnr || 'RESTORED',
-                    name: sale.name,
-                    menge: sale.qty,
-                    preis: sale.buyPrice,
-                    groesse: '', zustand: 'Neu', datum: '', ort: '', notiz: 'Storno-Rückläufer', bild: '', markiert: false
-                };
-                inventory.unshift(newItem);
-                alert("Artikel neu angelegt (war gelöscht).");
-            }
-            salesLog.splice(index, 1);
-            saveAll();
-            openHistory();
-            renderList();
-        }
-
-
-        // --- STANDARD FUNKTIONEN ---
-        function toggleStar(e, index) {
-            e.stopPropagation();
-            inventory[index].markiert = !inventory[index].markiert;
-            saveAll();
-            renderList(document.getElementById('searchInput').value);
-        }
-
-        function saveItem() {
-            const id = document.getElementById('editIndex').value;
+        async function saveItem() {
+            const id = document.getElementById('editId').value; // String or empty
             const newArtnr = document.getElementById('inpArtnr').value;
-            const duplicate = inventory.some((item, idx) => item.artnr === newArtnr && idx != id);
+            
+            // Check Duplicate
+            const isEdit = (id !== "");
+            const duplicate = inventory.some(i => i.artnr === newArtnr && (!isEdit || i.id != id));
             if (duplicate) { alert("Nummer existiert schon!"); return; }
-
-            let markiertStatus = false;
-            if(id !== "") markiertStatus = inventory[id].markiert;
 
             const newItem = {
                 artnr: newArtnr,
@@ -547,23 +497,59 @@
                 ort: document.getElementById('inpOrt').value,
                 notiz: document.getElementById('inpNotiz').value,
                 bild: document.getElementById('inpBild').value,
-                markiert: markiertStatus
+                markiert: false // Default
             };
 
             if (!newItem.name) return alert('Name fehlt!');
-            if (id === "") inventory.unshift(newItem); else inventory[id] = newItem;
 
-            saveAll(); closeModals(); renderList(document.getElementById('searchInput').value);
+            if (isEdit) {
+                // Keep ID and Markiert status
+                const original = inventory.find(i => i.id == id);
+                newItem.id = parseInt(id);
+                newItem.markiert = original.markiert;
+                await dbPut('inventory', newItem);
+                // Update local array
+                const idx = inventory.findIndex(i => i.id == id);
+                inventory[idx] = newItem;
+            } else {
+                await dbAdd('inventory', newItem);
+                // Reload entire inventory to get IDs is safest
+                inventory = await dbGetAll('inventory');
+            }
+
+            closeModals();
+            renderList(document.getElementById('searchInput').value);
         }
 
-        function deleteCurrentItem() {
-            if(confirm("Löschen?")) {
-                inventory.splice(document.getElementById('editIndex').value, 1);
-                saveAll(); closeModals(); renderList(document.getElementById('searchInput').value);
+        async function deleteCurrentItem() {
+            const id = document.getElementById('editId').value;
+            if(id !== "" && confirm("Löschen?")) {
+                await dbDelete('inventory', parseInt(id));
+                inventory = inventory.filter(i => i.id != id);
+                closeModals();
+                renderList(document.getElementById('searchInput').value);
             }
         }
 
-        function generateNextArtnr() {
+        function openEditModal(id = null) {
+            document.getElementById('modalEdit').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            if (id === null) {
+                document.getElementById('modalTitle').innerText = "Neuer Artikel";
+                document.getElementById('editId').value = "";
+                document.getElementById('btnDelete').classList.add('hidden');
+                clearForm();
+                document.getElementById('inpArtnr').value = generateNextArtnrInventory();
+            } else {
+                const item = inventory.find(i => i.id === id);
+                document.getElementById('modalTitle').innerText = "Bearbeiten";
+                document.getElementById('editId').value = id;
+                document.getElementById('btnDelete').classList.remove('hidden');
+                fillForm(item);
+            }
+        }
+
+        function generateNextArtnrInventory() {
             const currentYear = new Date().getFullYear();
             let maxNum = 0;
             inventory.forEach(item => {
@@ -576,94 +562,152 @@
             return `${String(maxNum + 1).padStart(3, '0')} - ${currentYear}`;
         }
 
-        // --- HELPER & BILDER ---
+        // --- HISTORY & RESTORE ---
+        function openHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            document.getElementById('modalHistory').style.display = 'flex';
+
+            if(salesLog.length === 0) { list.innerHTML = '<p style="text-align:center; color:#777">Keine Verkäufe.</p>'; return; }
+
+            [...salesLog].reverse().forEach((sale) => {
+                const div = document.createElement('div');
+                div.className = 'history-row';
+                div.innerHTML = `
+                    <div class="hist-info">
+                        <span style="font-weight:bold">${sale.name} (${sale.qty}x)</span>
+                        <span class="hist-inv">${sale.invoiceNr} | ${sale.platform}</span>
+                        <span class="hist-date">${formatDate(sale.date)} | Sum: ${sale.total.toFixed(2)}€</span>
+                        ${sale.invoiceImg ? `<a href="#" onclick="showImg('${sale.invoiceImg}'); return false;" style="font-size:0.7rem; color:var(--primary)">Beleg</a>` : ''}
+                    </div>
+                    <button class="btn-undo" onclick="restoreSale(${sale.id})">Storno</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function showImg(src) {
+            const win = window.open("");
+            win.document.write('<img src="' + src + '" style="max-width:100%">');
+        }
+
+        async function restoreSale(saleId) {
+            if(!confirm("Verkauf stornieren?")) return;
+            const sale = salesLog.find(s => s.id === saleId);
+            
+            // Item restore logic
+            let item = inventory.find(i => i.artnr === sale.artnr); 
+            if(!item && sale.name) item = inventory.find(i => i.name === sale.name);
+
+            if(item) {
+                item.menge += sale.qty;
+                await dbPut('inventory', item);
+                alert("Bestand erhöht.");
+            } else {
+                const newItem = {
+                    artnr: sale.artnr || 'RESTORED',
+                    name: sale.name,
+                    menge: sale.qty,
+                    preis: sale.buyPrice,
+                    groesse: '', zustand: 'Neu', datum: '', ort: '', notiz: 'Storno', bild: '', markiert: false
+                };
+                await dbAdd('inventory', newItem);
+                alert("Artikel neu angelegt.");
+            }
+
+            await dbDelete('sales', saleId);
+            await loadData(); // Reload all
+            openHistory();
+            renderList();
+        }
+
+        // --- IMPORT / EXPORT (MIGRATION) ---
+        async function exportBackup() {
+            const exportData = { artikel: inventory, sales: salesLog };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "lager_db_backup_" + new Date().toISOString().slice(0,10) + ".json");
+            dlAnchorElem.click();
+        }
+
+        async function importBackup(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const loadedData = JSON.parse(e.target.result);
+                        let newItems = [];
+                        let newSales = [];
+
+                        if(Array.isArray(loadedData)) {
+                            newItems = loadedData; // Old format just items
+                        } else if (loadedData.artikel) {
+                            newItems = loadedData.artikel;
+                            if(loadedData.sales) newSales = loadedData.sales;
+                        }
+
+                        // Write to DB
+                        // We do not clear DB, we append/merge or verify duplicates?
+                        // Simple approach: Clear and fill (Restore style)
+                        if(confirm("Datenbank leeren und mit Backup überschreiben?")) {
+                            await dbClear('inventory');
+                            await dbClear('sales');
+                            
+                            for(let item of newItems) {
+                                delete item.id; // Let DB assign new IDs
+                                await dbAdd('inventory', item);
+                            }
+                            for(let sale of newSales) {
+                                delete sale.id;
+                                await dbAdd('sales', sale);
+                            }
+                            
+                            await loadData();
+                            renderList();
+                            closeModals();
+                            alert("Datenbank erfolgreich wiederhergestellt!");
+                        }
+
+                    } catch(err) { console.error(err); alert("Fehler beim Import! " + err); }
+                };
+                reader.readAsText(input.files[0]);
+            }
+        }
+
+        // --- HELPER ---
+        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none'); document.body.style.overflow = 'auto'; }
+        function clearForm() { document.querySelectorAll('#modalEdit input:not([type=hidden]), #modalEdit textarea').forEach(e => e.value = ''); document.getElementById('imgPreview').style.display = 'none'; document.getElementById('inpZustand').value = "Neu"; }
+        function fillForm(item) {
+            document.getElementById('inpArtnr').value = item.artnr || ""; document.getElementById('inpName').value = item.name || "";
+            document.getElementById('inpMenge').value = item.menge || 0; document.getElementById('inpPreis').value = item.preis || 0;
+            document.getElementById('inpGroesse').value = item.groesse || ""; document.getElementById('inpZustand').value = item.zustand || "Neu";
+            document.getElementById('inpDatum').value = item.datum || ""; document.getElementById('inpOrt').value = item.ort || "";
+            document.getElementById('inpNotiz').value = item.notiz || "";
+            const imgVal = item.bild || ""; document.getElementById('inpBild').value = imgVal;
+            if(imgVal) { document.getElementById('imgPreview').src = imgVal; document.getElementById('imgPreview').style.display = 'block'; }
+            else document.getElementById('imgPreview').style.display = 'none';
+        }
         function handleImage(input, targetId, previewId) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = new Image();
-                    img.src = e.target.result;
+                    const img = new Image(); img.src = e.target.result;
                     img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        const maxWidth = 600; 
+                        const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                        const maxWidth = 800; // Mehr Quali für Rechnungen
                         const scale = maxWidth / img.width;
-                        const w = scale < 1 ? maxWidth : img.width;
-                        const h = scale < 1 ? img.height * scale : img.height;
-                        canvas.width = w; canvas.height = h;
-                        ctx.drawImage(img, 0, 0, w, h);
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                        const w = scale < 1 ? maxWidth : img.width; const h = scale < 1 ? img.height * scale : img.height;
+                        canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                         document.getElementById(targetId).value = dataUrl;
-                        document.getElementById(previewId).src = dataUrl;
-                        document.getElementById(previewId).style.display = 'block';
+                        document.getElementById(previewId).src = dataUrl; document.getElementById(previewId).style.display = 'block';
                     }
                 }
                 reader.readAsDataURL(input.files[0]);
             }
         }
-        function removeImage(targetId, previewId, fileId) {
-            document.getElementById(targetId).value = "";
-            document.getElementById(previewId).style.display = "none";
-            document.getElementById(fileId).value = "";
-        }
-
-        function openEditModal(index = null) {
-            document.getElementById('modalEdit').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-            if (index === null) {
-                document.getElementById('modalTitle').innerText = "Neuer Artikel";
-                document.getElementById('editIndex').value = "";
-                document.getElementById('btnDelete').classList.add('hidden');
-                document.querySelectorAll('#modalEdit input:not([type=hidden]), #modalEdit textarea').forEach(e => e.value = '');
-                document.getElementById('imgPreview').style.display = 'none';
-                document.getElementById('inpArtnr').value = generateNextArtnr();
-            } else {
-                const item = inventory[index];
-                document.getElementById('modalTitle').innerText = "Bearbeiten";
-                document.getElementById('editIndex').value = index;
-                document.getElementById('btnDelete').classList.remove('hidden');
-                document.getElementById('inpArtnr').value = item.artnr || "";
-                document.getElementById('inpName').value = item.name || "";
-                document.getElementById('inpMenge').value = item.menge || 0;
-                document.getElementById('inpPreis').value = item.preis || 0;
-                document.getElementById('inpGroesse').value = item.groesse || "";
-                document.getElementById('inpZustand').value = item.zustand || "Neu";
-                document.getElementById('inpDatum').value = item.datum || "";
-                document.getElementById('inpOrt').value = item.ort || "";
-                document.getElementById('inpNotiz').value = item.notiz || "";
-                const imgVal = item.bild || "";
-                document.getElementById('inpBild').value = imgVal;
-                if(imgVal) { document.getElementById('imgPreview').src = imgVal; document.getElementById('imgPreview').style.display = 'block'; }
-                else document.getElementById('imgPreview').style.display = 'none';
-            }
-        }
-
-        function openSettings() { document.getElementById('modalSettings').style.display = 'flex'; }
-        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none'); document.body.style.overflow = 'auto'; }
-        function saveAll() { localStorage.setItem('lagerAppDB', JSON.stringify(inventory)); localStorage.setItem('lagerAppSales', JSON.stringify(salesLog)); }
-        
-        function exportBackup() {
-            const exportData = { artikel: inventory, sales: salesLog };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", "lager_backup_" + new Date().toISOString().slice(0,10) + ".json");
-            dlAnchorElem.click();
-        }
-        function importBackup(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const loadedData = JSON.parse(e.target.result);
-                        if(Array.isArray(loadedData)) inventory = loadedData;
-                        else if (loadedData.artikel) { inventory = loadedData.artikel; if(loadedData.sales) salesLog = loadedData.sales; }
-                        else return alert("Format falsch.");
-                        saveAll(); renderList(); closeModals(); alert("Import erfolgreich!");
-                    } catch(err) { alert("Fehler beim Import!"); }
-                }; reader.readAsText(input.files[0]);
-            }
-        }
+        function removeImage(targetId, previewId, fileId) { document.getElementById(targetId).value = ""; document.getElementById(previewId).style.display = "none"; document.getElementById(fileId).value = ""; }
         function filterList() { renderList(document.getElementById('searchInput').value); }
         function clearSearch() { document.getElementById('searchInput').value = ''; renderList(""); }
         function formatCurrency(val) { if(val >= 10000) return (val/1000).toFixed(1) + 'k €'; return val.toFixed(2) + ' €'; }
