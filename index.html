@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V22 Final</title>
+    <title>Lager V20 Group-Sales</title>
     <style>
         :root {
             --bg: #121212; --card: #1e1e1e; --input-bg: #2d2d2d;
@@ -13,57 +13,79 @@
         }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; -webkit-tap-highlight-color: transparent; }
 
-        /* HEADER (Design V19/20) */
-        .app-header { background: rgba(30,30,30,0.98); backdrop-filter: blur(10px); padding: 8px; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border); }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        h1 { margin: 0; font-size: 1.1rem; font-weight: 800; }
-        .header-actions { display: flex; gap: 12px; }
-        
-        /* Fix für Einstellbutton */
-        .icon-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; padding: 5px; z-index: 1001; position: relative; }
+        /* HEADER */
+        .app-header { background: rgba(30,30,30,0.98); backdrop-filter: blur(10px); padding: 5px 8px; position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; position: relative; }
+        h1 { margin: 0; font-size: 0.9rem; font-weight: 700; flex-grow: 1; }
+        .header-actions { display: flex; gap: 15px; position: relative; z-index: 100; }
+        .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; opacity: 0.9; }
 
-        .search-container { position: relative; width: 100%; }
-        .search-input { width: 100%; height: 32px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px; padding: 0 30px; color: white; box-sizing: border-box; }
-        .search-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); opacity: 0.5; }
+        .search-container { position: relative; width: 100%; margin-top: 2px; z-index: 60;}
+        .search-input { width: 100%; height: 28px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 25px; color: white; font-size: 0.8rem; box-sizing: border-box; }
+        .search-icon { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); opacity: 0.5; font-size: 0.7rem; pointer-events: none; }
+        .search-clear { position: absolute; right: 0; top: 0; bottom: 0; width: 30px; background: none; border: none; color: #999; font-size: 1rem; cursor: pointer; display: none; align-items: center; justify-content: center; }
 
         /* STATS */
-        .stats-bar { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 4px; margin-top: 10px; padding-top: 8px; border-top: 1px solid #333; }
+        .stats-bar { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 2px; margin-top: 4px; padding-top: 4px; border-top: 1px solid #333; }
         .stat-box { text-align: center; }
-        .stat-label { font-size: 0.6rem; color: #777; display: block; }
-        .stat-val { font-size: 0.75rem; font-weight: bold; display: block; }
+        .stat-label { font-size: 0.55rem; color: #777; display: block; }
+        .stat-val { font-size: 0.65rem; font-weight: bold; display: block; }
         .c-blue { color: #60a5fa; } .c-green { color: var(--success); } .c-gold { color: var(--profit); }
 
-        /* LISTE */
-        .item-row { background: var(--card); border-bottom: 1px solid #252525; padding: 10px; display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
-        .qty-badge { font-weight: bold; color: var(--primary); min-width: 25px; }
-        .item-title { font-weight: 600; font-size: 0.85rem; display: block; }
-        .item-meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
-        .btn-mini { background: #2d2d2d; border: 1px solid #444; color: #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
+        /* LISTE ITEMS */
+        #itemList { padding: 0; }
+        .item-row { background: var(--card); border-bottom: 1px solid #252525; padding: 3px 6px; display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; border-left: 3px solid transparent; min-height: 32px; }
+        .item-row.marked { background: rgba(234, 179, 8, 0.08); border-left: 3px solid var(--profit); }
+        .qty-badge { font-size: 0.8rem; font-weight: bold; color: #60a5fa; min-width: 20px; text-align: center; }
+        .item-main { display: flex; flex-direction: column; gap: 0px; overflow: hidden; }
+        .item-title { font-weight: 600; font-size: 0.65rem; color: white; line-height: 1.1; white-space: normal; word-break: break-word; }
+        .item-meta { font-size: 0.6rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 3px; align-items: center; margin-top: 1px;}
+        .meta-tag { background: #333; padding: 0px 3px; border-radius: 2px; font-size: 0.55rem; }
+        .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 65px; }
+        .item-price { font-weight: 500; font-size: 0.75rem; color: #bbb; }
+        .btn-mini { background: #2d2d2d; border: 1px solid #444; color: #ddd; padding: 1px 5px; font-size: 0.6rem; border-radius: 3px; cursor: pointer; margin-top: 1px; }
 
-        /* GRUPPIERTER VERLAUF */
-        .sale-group { background: #1a1a1a; margin: 10px; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
-        .group-header { background: #2a2a2a; padding: 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; font-size: 0.7rem; color: var(--profit); font-family: monospace; }
-        .group-item { padding: 8px; border-bottom: 1px dotted #333; display: flex; justify-content: space-between; align-items: center; }
-        .group-footer { padding: 8px; background: #222; display: flex; justify-content: space-between; align-items: center; }
-        .btn-icon-sm { background: #333; border: 1px solid #444; color: #ccc; padding: 4px; border-radius: 4px; cursor: pointer; }
-        .btn-storno { color: #ff8888; border-color: #552222; }
+        /* --- GRUPPIERTER VERLAUF --- */
+        .sale-group { background: #1a1a1a; margin-bottom: 10px; border: 1px solid #333; border-radius: 6px; overflow: hidden; }
+        .group-header { background: #2a2a2a; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        .group-inv { color: var(--profit); font-family: monospace; font-size: 0.75rem; font-weight: bold; }
+        .group-date { font-size: 0.65rem; color: #aaa; }
+        
+        .group-item { padding: 4px 8px; border-bottom: 1px dotted #333; display: grid; grid-template-columns: 1fr auto; align-items: center; }
+        .group-item-title { font-size: 0.7rem; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .group-item-price { font-size: 0.65rem; color: #888; margin-top: 2px;}
+
+        .group-footer { padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; background: #222; }
+        .group-total { font-size: 0.75rem; font-weight: bold; color: var(--success); }
+        .hist-actions { display: flex; gap: 6px; }
+        .btn-icon-sm { width: 26px; height: 26px; border-radius: 4px; border: 1px solid #444; background: #2d2d2d; color: #ccc; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.85rem; }
+        .btn-storno { border-color: #552222; background: #331111; color: #ff8888; }
 
         /* MODALS */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-box { background: var(--card); width: 95%; max-width: 500px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
-        .modal-header { padding: 12px; font-weight: bold; text-align: center; border-bottom: 1px solid #333; }
-        .modal-body { padding: 15px; }
-        .modal-footer { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #1a1a1a; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 10px; }
+        .modal-box { background: var(--card); width: 100%; max-width: 500px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 95vh; overflow: hidden; }
+        .modal-header { padding: 8px; border-bottom: 1px solid var(--border); font-weight: bold; text-align: center; background: #252525; font-size: 0.9rem;}
+        .modal-body { padding: 10px; overflow-y: auto; }
+        .modal-footer { padding: 10px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #252525; }
 
-        .basket-item { background: #252525; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; }
-        #addItemSearch { width: 100%; padding: 10px; background: #111; border: 1px dashed #444; color: #888; border-radius: 8px; margin: 10px 0; outline: none; }
+        .basket-item { background: #252525; border: 1px solid #333; padding: 8px; border-radius: 4px; margin-bottom: 8px; }
+        .basket-head { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; color: #ddd; }
+        .basket-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         
-        input, select, textarea { width: 100%; height: 38px; background: #222; border: 1px solid #444; color: white; border-radius: 6px; padding: 0 10px; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
-        label { font-size: 0.7rem; color: #888; margin-bottom: 4px; display: block; }
-        .btn-full { width: 100%; padding: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
+        #addItemSearch { width: 100%; margin-top: 10px; border: 1px dashed #444; background: #222; color: #aaa; text-align: center; cursor: pointer; padding: 8px; border-radius: 4px; font-size: 0.8rem; }
+        #searchDropdown { display: none; background: #333; max-height: 150px; overflow-y: auto; border-radius: 4px; margin-top: 2px; border: 1px solid #444; }
+        .search-res-item { padding: 6px; border-bottom: 1px solid #444; font-size: 0.75rem; cursor: pointer; }
+
+        #modalImageViewer { z-index: 300; background: rgba(0,0,0,0.98); flex-direction: column; }
+        #fullImage { max-width: 100%; max-height: 80vh; object-fit: contain; margin-bottom: 15px; border-radius: 4px;}
+        .close-img-btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); color: white; border: 1px solid white; border-radius: 50%; width: 40px; height: 40px; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        input, select, textarea { width: 100%; height: 34px; padding: 0 8px; background: var(--input-bg); border: 1px solid var(--border); color: white; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; outline: none; -webkit-appearance: none; appearance: none; font-family: inherit; }
+        label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 2px; }
+        .btn-full { width: 100%; padding: 8px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem;}
         .btn-blue { background: var(--primary); color: white; }
         .btn-gray { background: #444; color: white; }
-        .fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 500; }
+        .fab { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; width: 48px; height: 48px; border-radius: 50%; border: none; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; z-index: 90; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -72,17 +94,18 @@
         <div class="header-top">
             <h1>📦 MEIN LAGER</h1>
             <div class="header-actions">
-                <button class="icon-btn" onclick="openHistory()">🕒</button>
-                <button class="icon-btn" onclick="openSettings()">⚙️</button>
+                <button class="icon-btn" onclick="openHistory()" title="Verlauf">🕒</button>
+                <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
             </div>
         </div>
         <div class="search-container">
             <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" class="search-input" placeholder="Suche..." onkeyup="renderList()">
+            <input type="text" id="searchInput" class="search-input" placeholder="Suche..." onkeyup="filterList()">
+            <button id="clearSearchBtn" class="search-clear" onclick="clearSearch()">✕</button>
         </div>
         <div class="stats-bar">
             <div class="stat-box"><span class="stat-label">Menge</span><span id="statCount" class="stat-val">0</span></div>
-            <div class="stat-box"><span class="stat-label">Wert</span><span id="statValue" class="stat-val c-blue">0 €</span></div>
+            <div class="stat-box"><span class="stat-label">Lagerwert</span><span id="statValue" class="stat-val c-blue">0 €</span></div>
             <div class="stat-box"><span class="stat-label">Umsatz</span><span id="statRevenue" class="stat-val c-green">0 €</span></div>
             <div class="stat-box"><span class="stat-label">Gewinn</span><span id="statProfit" class="stat-val c-gold">0 €</span></div>
         </div>
@@ -93,24 +116,32 @@
 
     <div id="modalEdit" class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-header" id="modalTitle">Artikel bearbeiten</div>
+            <div class="modal-header" id="modalTitle">Artikel</div>
             <div class="modal-body">
-                <input type="hidden" id="editId">
-                <label>Art.-Nr.</label><input type="text" id="inpArtnr">
-                <label>Name</label><input type="text" id="inpName">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <div><label>Menge</label><input type="number" id="inpMenge"></div>
-                    <div><label>EK-Preis (€)</label><input type="number" step="0.01" id="inpPreis"></div>
+                <input type="hidden" id="editId"> 
+                <div style="display:grid; gap:8px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <div><label>Art.-Nr.</label><input type="text" id="inpArtnr"></div>
+                        <div><label>Menge</label><input type="number" id="inpMenge"></div>
+                    </div>
+                    <div><label>Name</label><input type="text" id="inpName"></div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <div><label>EK-Preis (€)</label><input type="number" step="0.01" id="inpPreis"></div>
+                        <div><label>Größe</label><input type="text" id="inpGroesse"></div>
+                    </div>
+                    <div><label>Notiz</label><textarea id="inpNotiz"></textarea></div>
+                    <div>
+                         <label>Bild</label>
+                         <input type="file" id="inpFile" accept="image/*" onchange="handleImage(this, 'inpBild', 'imgPreview')">
+                         <input type="hidden" id="inpBild">
+                         <img id="imgPreview" src="" style="width:100%; margin-top:5px; border-radius:4px; display:none;">
+                    </div>
                 </div>
-                <label>Bild</label>
-                <input type="file" onchange="handleImage(this, 'inpBild', 'imgPreview')">
-                <input type="hidden" id="inpBild">
-                <img id="imgPreview" style="width:100%; display:none; border-radius:8px; margin-top:10px;">
             </div>
             <div class="modal-footer">
                 <button class="btn-full btn-gray" onclick="closeModals()">Abbrechen</button>
                 <button class="btn-full btn-blue" onclick="saveItem()">Speichern</button>
-                <button class="btn-full" style="background:#300; color:#f88; grid-column:1/-1" onclick="deleteItem()">Löschen</button>
+                <button id="btnDelete" class="btn-full" style="background:#330000; color:#ff9999; grid-column:1/-1" onclick="deleteCurrentItem()">Löschen</button>
             </div>
         </div>
     </div>
@@ -119,67 +150,89 @@
         <div class="modal-box">
             <div class="modal-header">Verkauf erfassen</div>
             <div class="modal-body">
-                <label>Rechnungsnummer</label>
-                <input type="text" id="sellInvoiceNr">
+                <div style="background:#252525; padding:10px; border-radius:5px; margin-bottom:10px;">
+                    <div><label>Rechnungs-Nr.</label><input type="text" id="sellInvoiceNr"></div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
+                        <div><label>Plattform</label><select id="sellPlatform" onchange="updateInvoicePreview()"><option value="Vinted">Vinted</option><option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option></select></div>
+                        <div><label>Datum</label><input type="date" id="sellDate"></div>
+                    </div>
+                </div>
                 <div id="sellBasketList"></div>
                 <input type="text" id="addItemSearch" placeholder="+ Weiteren Artikel suchen..." onkeyup="searchForItem(this)">
-                <div id="searchDropdown" style="display:none; background:#333; border-radius:8px; max-height:150px; overflow-y:auto; margin-bottom:10px; border:1px solid #444;"></div>
-                
-                <label>Versandkosten (€)</label>
-                <input type="number" id="sellShipping" value="0" oninput="calcBasketTotal()">
-                <label>Gesamterlös</label>
-                <input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold;">
-                
-                <label>Rechnungsbild</label>
-                <input type="file" onchange="handleImage(this, 'sellBild', 'sellImgPreview')">
-                <input type="hidden" id="sellBild">
-                <img id="sellImgPreview" style="width:100%; display:none; border-radius:8px; margin-top:10px;">
+                <div id="searchDropdown"></div>
+                <div style="margin-top:15px; border-top:1px solid #444; padding-top:10px;">
+                    <label>Versand (€)</label><input type="number" step="0.01" id="sellShipping" value="0" oninput="calcBasketTotal()">
+                    <label style="margin-top:8px;">Gesamtumsatz</label><input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold;">
+                    <label style="margin-top:8px;">Rechnungsbild</label>
+                    <input type="file" onchange="handleImage(this, 'sellBild', 'sellImgPreview')">
+                    <input type="hidden" id="sellBild">
+                    <img id="sellImgPreview" src="" style="width:100%; margin-top:5px; border-radius:4px; display:none;">
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn-full btn-gray" onclick="closeModals()">Abbrechen</button>
-                <button class="btn-full btn-blue" onclick="performSell()">Verkaufen</button>
+                <button class="btn-full btn-blue" onclick="performSell()">Verkaufen!</button>
             </div>
+        </div>
+    </div>
+
+    <div id="modalEditSale" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">Position bearbeiten</div>
+            <div class="modal-body">
+                <input type="hidden" id="editSaleId">
+                <label>Rechnungs-Nr.</label><input type="text" id="editSaleInv">
+                <label style="margin-top:8px;">Erlös für diesen Artikel (€)</label><input type="number" step="0.01" id="editSalePrice">
+                <label style="margin-top:8px;">Versand (€)</label><input type="number" step="0.01" id="editSaleShipping">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-full btn-gray" onclick="closeModals()">Abbrechen</button>
+                <button class="btn-full btn-blue" onclick="saveSaleChanges()">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalImageViewer" class="modal-overlay">
+        <button class="close-img-btn" onclick="closeImageViewer()">✕</button>
+        <img id="fullImage" src="">
+    </div>
+
+    <div id="modalSettings" class="modal-overlay">
+        <div class="modal-box" style="height:auto">
+            <div class="modal-header">Backup</div>
+            <div class="modal-body">
+                <button class="btn-full btn-blue" onclick="exportBackup()">Backup herunterladen</button>
+                <div style="margin-top:10px;"><label>Importieren</label><input type="file" accept=".json" onchange="importBackup(this)"></div>
+            </div>
+            <div class="modal-footer"><button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1/-1">Schließen</button></div>
         </div>
     </div>
 
     <div id="modalHistory" class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-header">Verkäufe (Gruppiert)</div>
-            <div id="historyList" style="padding-bottom:20px;"></div>
-            <div class="modal-footer">
-                <button class="btn-full btn-gray" onclick="closeModals()" style="grid-column:1/-1">Schließen</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalSettings" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-header">Einstellungen & Backup</div>
-            <div class="modal-body">
-                <button class="btn-full btn-blue" onclick="exportBackup()" style="margin-bottom:20px;">Backup exportieren</button>
-                <label>Backup importieren</label>
-                <input type="file" accept=".json" onchange="importBackup(this)">
-            </div>
-            <div class="modal-footer"><button class="btn-full btn-gray" onclick="closeModals()" style="grid-column:1/-1">Schließen</button></div>
+            <div class="modal-header">Verkäufe</div>
+            <div class="modal-body" id="historyList"></div>
+            <div class="modal-footer"><button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1/-1">Schließen</button></div>
         </div>
     </div>
 
     <script>
+        // --- DB & STATE ---
         const DB_NAME = 'LagerDB_V1';
-        let db, inventory = [], salesLog = [];
+        let db;
+        let inventory = [];
+        let salesLog = [];
 
-        async function init() {
-            db = await new Promise(r => {
+        function initDB() {
+            return new Promise((resolve) => {
                 const req = indexedDB.open(DB_NAME, 1);
-                req.onupgradeneeded = e => {
-                    const d = e.target.result;
-                    d.createObjectStore('inventory', { keyPath: 'id', autoIncrement: true });
-                    d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true });
+                req.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    db.createObjectStore('inventory', { keyPath: 'id', autoIncrement: true });
+                    db.createObjectStore('sales', { keyPath: 'id', autoIncrement: true });
                 };
-                req.onsuccess = e => r(e.target.result);
+                req.onsuccess = (e) => { db = e.target.result; resolve(); };
             });
-            await loadData();
-            renderList();
         }
 
         async function loadData() {
@@ -187,33 +240,38 @@
             salesLog = await dbOp('sales', 'getAll');
         }
 
-        function dbOp(store, method, data) {
-            return new Promise(r => {
-                const tx = db.transaction(store, 'readwrite');
-                const s = tx.objectStore(store);
-                const req = data ? s[method](data) : s[method]();
-                req.onsuccess = () => r(req.result);
+        async function dbOp(storeName, method, data = null) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = data ? store[method](data) : store[method]();
+                req.onsuccess = () => resolve(req.result);
             });
         }
 
-        function renderList() {
-            const term = document.getElementById('searchInput').value.toLowerCase();
+        // --- UI RENDER ---
+        function renderList(filter = "") {
             const list = document.getElementById('itemList');
             list.innerHTML = '';
-            let tQty=0, tVal=0, tRev=0, tProf=0;
+            let tQty = 0, tVal = 0, tRev = 0, tProf = 0;
+            const term = filter.toLowerCase();
 
             [...inventory].reverse().forEach(i => {
-                if(i.name.toLowerCase().includes(term) || i.artnr.toLowerCase().includes(term)) {
+                if (i.name.toLowerCase().includes(term) || i.artnr.includes(term)) {
                     tQty += i.menge; tVal += (i.preis * i.menge);
                     const div = document.createElement('div');
-                    div.className = 'item-row';
+                    div.className = i.markiert ? 'item-row marked' : 'item-row';
+                    div.onclick = (e) => { if(e.target.tagName !== 'BUTTON') openEditModal(i.id); };
                     div.innerHTML = `
                         <div class="qty-badge">${i.menge}x</div>
-                        <div onclick="openEditModal(${i.id})" style="flex-grow:1">
+                        <div class="item-main">
                             <span class="item-title">${i.name}</span>
-                            <span class="item-meta">#${i.artnr} | ${i.preis.toFixed(2)}€</span>
+                            <div class="item-meta"><span class="meta-tag">#${i.artnr}</span></div>
                         </div>
-                        <button class="btn-mini" onclick="openSellModal(${i.id})">Verkauf</button>
+                        <div class="item-right">
+                            <span class="item-price">${i.preis.toFixed(2)}€</span>
+                            <button class="btn-mini" onclick="openSellModal(event, ${i.id})">Verkauf</button>
+                        </div>
                     `;
                     list.appendChild(div);
                 }
@@ -230,87 +288,116 @@
             document.getElementById('statProfit').innerText = tProf.toFixed(2) + "€";
         }
 
-        // --- VERLAUF ---
+        // --- VERLAUF GRUPPIERT ---
         function openHistory() {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
             document.getElementById('modalHistory').style.display = 'flex';
-            
+
+            // Gruppieren nach Rechnungsnummer
             const groups = {};
             salesLog.forEach(s => {
-                if(!groups[s.invoiceNr]) groups[s.invoiceNr] = { items:[], total:0, date:s.date };
+                if (!groups[s.invoiceNr]) groups[s.invoiceNr] = { items: [], total: 0, date: s.date, img: s.invoiceImg, platform: s.platform };
                 groups[s.invoiceNr].items.push(s);
                 groups[s.invoiceNr].total += s.total;
             });
 
-            Object.keys(groups).reverse().forEach(inv => {
+            const sortedKeys = Object.keys(groups).sort().reverse();
+
+            sortedKeys.forEach(inv => {
                 const g = groups[inv];
                 const div = document.createElement('div');
                 div.className = 'sale-group';
-                let itemsHtml = g.items.map(it => `
+                
+                let itemHtml = '';
+                g.items.forEach(it => {
+                    itemHtml += `
                     <div class="group-item">
-                        <span style="font-size:0.75rem;">${it.name} (${it.qty}x)</span>
-                        <button class="btn-icon-sm btn-storno" onclick="restoreSale(${it.id})" title="Stornieren & Bestand zurück">↩️</button>
-                    </div>
-                `).join('');
+                        <div>
+                            <div class="group-item-title">${it.name} (${it.qty}x)</div>
+                            <div class="group-item-price">Erlös: ${(it.total - (it.shipping||0)).toFixed(2)}€</div>
+                        </div>
+                        <div class="hist-actions">
+                            <button class="btn-icon-sm" onclick="openEditSale(${it.id})">✏️</button>
+                            <button class="btn-icon-sm btn-storno" onclick="restoreSale(${it.id})">↩️</button>
+                        </div>
+                    </div>`;
+                });
+
                 div.innerHTML = `
-                    <div class="group-header"><span>RE: ${inv}</span><span>${g.date}</span></div>
-                    ${itemsHtml}
+                    <div class="group-header">
+                        <span class="group-inv">${inv} (${g.platform})</span>
+                        <span class="group-date">${formatDate(g.date)}</span>
+                    </div>
+                    ${itemHtml}
                     <div class="group-footer">
-                        <span style="font-weight:bold; color:var(--success)">Total: ${g.total.toFixed(2)}€</span>
-                        <button class="btn-icon-sm" onclick="deleteInvoiceOnly('${inv}')">🗑️</button>
+                        <span class="group-total">Gesamt: ${g.total.toFixed(2)}€</span>
+                        <div class="hist-actions">
+                            ${g.img ? `<button class="btn-icon-sm" onclick="viewImage('${g.img}')">👁️</button>` : ''}
+                            <button class="btn-icon-sm btn-del" onclick="deleteFullInvoice('${inv}')" title="Nur Liste löschen">🗑️</button>
+                        </div>
                     </div>
                 `;
                 list.appendChild(div);
             });
         }
 
-        async function restoreSale(id) {
-            const s = salesLog.find(x => x.id === id);
-            if(confirm(`Verkauf von ${s.name} stornieren und Artikel zurück ins Lager?`)) {
-                let it = inventory.find(x => x.artnr === s.artnr);
-                if(it) { it.menge += s.qty; await dbOp('inventory', 'put', it); }
-                else { await dbOp('inventory', 'add', { artnr:s.artnr, name:s.name, menge:s.qty, preis:s.buyPrice }); }
-                await dbOp('sales', 'delete', id);
-                await loadData(); openHistory(); renderList();
-            }
-        }
-
-        async function deleteInvoiceOnly(inv) {
-            if(confirm("Diese Rechnung komplett aus der Liste löschen? (Bestand bleibt gleich)")) {
-                const toDel = salesLog.filter(s => s.invoiceNr === inv);
-                for(let s of toDel) await dbOp('sales', 'delete', s.id);
-                await loadData(); openHistory(); renderList();
-            }
-        }
-
-        // --- VERKAUF ---
-        let basket = [];
-        function openSellModal(id) {
+        // --- VERKAUF MULTI ---
+        let currentBasket = [];
+        function openSellModal(e, id) {
+            e.stopPropagation();
             const it = inventory.find(x => x.id === id);
-            basket = [{ id: it.id, name: it.name, artnr: it.artnr, stock: it.menge, qty: 1, price: it.preis }];
-            document.getElementById('sellInvoiceNr').value = "RE-" + Date.now().toString().slice(-5);
+            currentBasket = [{ id: it.id, name: it.name, artnr: it.artnr, stock: it.menge, qty: 1, priceTotal: it.preis }];
+            
+            document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('sellShipping').value = 0;
             document.getElementById('sellBild').value = it.bild || "";
             document.getElementById('sellImgPreview').src = it.bild || "";
             document.getElementById('sellImgPreview').style.display = it.bild ? 'block' : 'none';
-            renderBasket();
+            
+            updateInvoicePreview(); renderBasket();
             document.getElementById('modalSell').style.display = 'flex';
+        }
+
+        function searchForItem(inp) {
+            const term = inp.value.toLowerCase();
+            const drop = document.getElementById('searchDropdown');
+            drop.innerHTML = '';
+            if (term.length < 2) { drop.style.display = 'none'; return; }
+            
+            inventory.filter(i => i.menge > 0 && i.name.toLowerCase().includes(term)).forEach(hit => {
+                const d = document.createElement('div');
+                d.className = 'search-res-item';
+                d.innerText = hit.name;
+                d.onclick = () => {
+                    if (!currentBasket.find(x => x.id === hit.id)) {
+                        currentBasket.push({ id: hit.id, name: hit.name, artnr: hit.artnr, stock: hit.menge, qty: 1, priceTotal: hit.preis });
+                        // AUTOMATISCH BILD ÜBERNEHMEN falls noch keins da
+                        if (!document.getElementById('sellBild').value && hit.bild) {
+                            document.getElementById('sellBild').value = hit.bild;
+                            document.getElementById('sellImgPreview').src = hit.bild;
+                            document.getElementById('sellImgPreview').style.display = 'block';
+                        }
+                        renderBasket();
+                    }
+                    inp.value = ''; drop.style.display = 'none';
+                };
+                drop.appendChild(d);
+            });
+            drop.style.display = 'block';
         }
 
         function renderBasket() {
             const list = document.getElementById('sellBasketList');
             list.innerHTML = '';
-            basket.forEach((p, idx) => {
+            currentBasket.forEach((p, idx) => {
                 const div = document.createElement('div');
                 div.className = 'basket-item';
                 div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">
-                        <b>${p.name}</b> <span onclick="basket.splice(${idx},1);renderBasket()" style="color:red">✕</span>
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <input type="number" value="${p.qty}" onchange="basket[${idx}].qty=parseInt(this.value);calcBasketTotal()">
-                        <input type="number" value="${p.price}" onchange="basket[${idx}].price=parseFloat(this.value);calcBasketTotal()">
+                    <div class="basket-head"><span>${p.name}</span><span onclick="currentBasket.splice(${idx},1);renderBasket();" style="color:red">✕</span></div>
+                    <div class="basket-inputs">
+                        <input type="number" value="${p.qty}" onchange="currentBasket[${idx}].qty=parseInt(this.value);calcBasketTotal()">
+                        <input type="number" value="${p.priceTotal}" onchange="currentBasket[${idx}].priceTotal=parseFloat(this.value);calcBasketTotal()">
                     </div>
                 `;
                 list.appendChild(div);
@@ -319,127 +406,138 @@
         }
 
         function calcBasketTotal() {
-            let sum = basket.reduce((a, b) => a + b.price, 0);
+            let sum = currentBasket.reduce((a, b) => a + b.priceTotal, 0);
             sum += parseFloat(document.getElementById('sellShipping').value || 0);
-            document.getElementById('sellTotal').value = sum.toFixed(2) + " €";
-        }
-
-        function searchForItem(inp) {
-            const term = inp.value.toLowerCase();
-            const drop = document.getElementById('searchDropdown');
-            drop.innerHTML = '';
-            if(term.length < 2) { drop.style.display='none'; return; }
-            inventory.filter(i => i.name.toLowerCase().includes(term) && i.menge > 0).forEach(hit => {
-                const d = document.createElement('div');
-                d.style.padding = '10px'; d.style.borderBottom = '1px solid #444'; d.innerText = hit.name;
-                d.onclick = () => {
-                    basket.push({ id: hit.id, name: hit.name, artnr: hit.artnr, stock: hit.menge, qty: 1, price: hit.preis });
-                    if(!document.getElementById('sellBild').value && hit.bild) {
-                        document.getElementById('sellBild').value = hit.bild;
-                        document.getElementById('sellImgPreview').src = hit.bild;
-                        document.getElementById('sellImgPreview').style.display = 'block';
-                    }
-                    inp.value = ''; drop.style.display = 'none'; renderBasket();
-                };
-                drop.appendChild(d);
-            });
-            drop.style.display = 'block';
+            document.getElementById('sellTotal').value = sum.toFixed(2) + "€";
         }
 
         async function performSell() {
             const inv = document.getElementById('sellInvoiceNr').value;
             const ship = parseFloat(document.getElementById('sellShipping').value || 0);
-            const date = new Date().toLocaleDateString();
+            const date = document.getElementById('sellDate').value;
             const img = document.getElementById('sellBild').value;
+            const plat = document.getElementById('sellPlatform').value;
 
-            for(let i=0; i < basket.length; i++) {
-                const p = basket[i];
+            for (let i=0; i < currentBasket.length; i++) {
+                const p = currentBasket[i];
                 const it = inventory.find(x => x.id === p.id);
                 it.menge -= p.qty;
                 await dbOp('inventory', 'put', it);
+                
                 await dbOp('sales', 'add', {
                     name: p.name, artnr: p.artnr, date: date, buyPrice: it.preis,
-                    qty: p.qty, shipping: (i===0 ? ship : 0), total: p.price + (i===0 ? ship : 0),
-                    invoiceNr: inv, invoiceImg: img
+                    qty: p.qty, shipping: (i===0 ? ship : 0),
+                    total: p.priceTotal + (i===0 ? ship : 0),
+                    platform: plat, invoiceNr: inv, invoiceImg: img
                 });
             }
             await loadData(); closeModals(); renderList();
         }
 
-        // --- EDIT ---
+        // --- STORNO & DELETE ---
+        async function restoreSale(id) {
+            const sale = salesLog.find(s => s.id === id);
+            if (confirm("Bestand von " + sale.name + " wieder erhöhen und Verkauf stornieren?")) {
+                let it = inventory.find(x => x.artnr === sale.artnr);
+                if (it) { it.menge += sale.qty; await dbOp('inventory', 'put', it); }
+                else { await dbOp('inventory', 'add', { artnr: sale.artnr, name: sale.name, menge: sale.qty, preis: sale.buyPrice, markiert:false }); }
+                await dbOp('sales', 'delete', id);
+                await loadData(); openHistory(); renderList();
+            }
+        }
+
+        async function deleteFullInvoice(inv) {
+            if (confirm("Ganze Rechnung " + inv + " NUR aus Liste löschen? (Bestand bleibt gleich)")) {
+                const toDel = salesLog.filter(s => s.invoiceNr === inv);
+                for (let s of toDel) await dbOp('sales', 'delete', s.id);
+                await loadData(); openHistory(); renderList();
+            }
+        }
+
+        // --- EDIT SALE POSITION ---
+        function openEditSale(id) {
+            const s = salesLog.find(x => x.id === id);
+            document.getElementById('editSaleId').value = id;
+            document.getElementById('editSaleInv').value = s.invoiceNr;
+            document.getElementById('editSalePrice').value = (s.total - (s.shipping||0));
+            document.getElementById('editSaleShipping').value = s.shipping || 0;
+            document.getElementById('modalEditSale').style.display = 'flex';
+        }
+
+        async function saveSaleChanges() {
+            const id = parseInt(document.getElementById('editSaleId').value);
+            const s = salesLog.find(x => x.id === id);
+            s.invoiceNr = document.getElementById('editSaleInv').value;
+            s.shipping = parseFloat(document.getElementById('editSaleShipping').value || 0);
+            s.total = parseFloat(document.getElementById('editSalePrice').value || 0) + s.shipping;
+            await dbOp('sales', 'put', s);
+            await loadData(); closeModals(); openHistory(); renderList();
+        }
+
+        // --- STANDARD FUNKTIONEN ---
         function openEditModal(id = null) {
-            if(!id) {
+            document.getElementById('modalEdit').style.display = 'flex';
+            if (!id) {
                 document.getElementById('editId').value = '';
-                document.getElementById('inpArtnr').value = "ART-" + Date.now().toString().slice(-4);
+                document.getElementById('inpArtnr').value = generateArtnr();
                 document.getElementById('inpName').value = '';
                 document.getElementById('inpMenge').value = 1;
-                document.getElementById('inpPreis').value = '';
-                document.getElementById('inpBild').value = '';
                 document.getElementById('imgPreview').style.display = 'none';
             } else {
                 const it = inventory.find(x => x.id === id);
-                document.getElementById('editId').value = it.id;
+                document.getElementById('editId').value = id;
                 document.getElementById('inpArtnr').value = it.artnr;
                 document.getElementById('inpName').value = it.name;
                 document.getElementById('inpMenge').value = it.menge;
                 document.getElementById('inpPreis').value = it.preis;
                 document.getElementById('inpBild').value = it.bild || '';
-                if(it.bild) { document.getElementById('imgPreview').src = it.bild; document.getElementById('imgPreview').style.display='block'; }
+                if(it.bild){document.getElementById('imgPreview').src=it.bild; document.getElementById('imgPreview').style.display='block';}
             }
-            document.getElementById('modalEdit').style.display = 'flex';
         }
 
         async function saveItem() {
             const id = document.getElementById('editId').value;
             const obj = {
-                name: document.getElementById('inpName').value,
                 artnr: document.getElementById('inpArtnr').value,
+                name: document.getElementById('inpName').value,
                 menge: parseInt(document.getElementById('inpMenge').value),
                 preis: parseFloat(document.getElementById('inpPreis').value),
-                bild: document.getElementById('inpBild').value
+                notiz: document.getElementById('inpNotiz').value,
+                bild: document.getElementById('inpBild').value,
+                markiert: false
             };
-            if(id) { obj.id = parseInt(id); await dbOp('inventory', 'put', obj); }
+            if (id) { obj.id = parseInt(id); await dbOp('inventory', 'put', obj); }
             else { await dbOp('inventory', 'add', obj); }
             await loadData(); closeModals(); renderList();
         }
 
-        async function deleteItem() {
-            const id = parseInt(document.getElementById('editId').value);
-            if(id && confirm("Artikel löschen?")) {
-                await dbOp('inventory', 'delete', id);
+        async function deleteCurrentItem() {
+            if (confirm("Löschen?")) {
+                await dbOp('inventory', 'delete', parseInt(document.getElementById('editId').value));
                 await loadData(); closeModals(); renderList();
             }
         }
 
-        // --- HELPER ---
-        function openSettings() { document.getElementById('modalSettings').style.display = 'flex'; }
-        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
         function handleImage(input, targetId, previewId) {
             const reader = new FileReader();
-            reader.onload = e => {
+            reader.onload = (e) => {
                 document.getElementById(targetId).value = e.target.result;
                 document.getElementById(previewId).src = e.target.result;
                 document.getElementById(previewId).style.display = 'block';
             };
             reader.readAsDataURL(input.files[0]);
         }
-        function exportBackup() {
-            const blob = new Blob([JSON.stringify({artikel:inventory, sales:salesLog})], {type:'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'lager_backup.json'; a.click();
-        }
-        function importBackup(inp) {
-            const reader = new FileReader();
-            reader.onload = async e => {
-                const data = JSON.parse(e.target.result);
-                await dbOp('inventory', 'clear'); await dbOp('sales', 'clear');
-                for(let i of data.artikel) { delete i.id; await dbOp('inventory', 'add', i); }
-                for(let s of data.sales) { delete s.id; await dbOp('sales', 'add', s); }
-                location.reload();
-            };
-            reader.readAsText(inp.files[0]);
-        }
 
-        init();
+        function generateArtnr() { return (inventory.length + 1).toString().padStart(3, '0') + "-" + new Date().getFullYear(); }
+        function formatDate(d) { return d.split('-').reverse().join('.'); }
+        function updateInvoicePreview() { document.getElementById('sellInvoiceNr').value = (salesLog.length + 1).toString().padStart(3, '0') + "-" + new Date().getFullYear(); }
+        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
+        function viewImage(src) { document.getElementById('fullImage').src = src; document.getElementById('modalImageViewer').style.display = 'flex'; }
+        function closeImageViewer() { document.getElementById('modalImageViewer').style.display = 'none'; }
+        function filterList() { renderList(document.getElementById('searchInput').value); }
+        function clearSearch() { document.getElementById('searchInput').value = ''; renderList(); }
+        async function exportBackup() { const data = { artikel: inventory, sales: salesLog }; const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'lager_backup.json'; a.click(); }
+        async function importBackup(inp) { const reader = new FileReader(); reader.onload = async (e) => { const data = JSON.parse(e.target.result); await dbOp('inventory', 'clear'); await dbOp('sales', 'clear'); for (let i of data.artikel) { delete i.id; await dbOp('inventory', 'add', i); } for (let s of data.sales) { delete s.id; await dbOp('sales', 'add', s); } location.reload(); }; reader.readAsText(inp.files[0]); }
     </script>
 </body>
 </html>
