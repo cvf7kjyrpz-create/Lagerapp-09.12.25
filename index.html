@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V20 Group-Sales</title>
+    <title>Lager V20 Fix</title>
     <style>
         :root {
             --bg: #121212; --card: #1e1e1e; --input-bg: #2d2d2d;
@@ -18,7 +18,9 @@
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; position: relative; }
         h1 { margin: 0; font-size: 0.9rem; font-weight: 700; flex-grow: 1; }
         .header-actions { display: flex; gap: 15px; position: relative; z-index: 100; }
-        .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; opacity: 0.9; }
+        
+        /* FIX: Höherer Z-Index für die Buttons im Header */
+        .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; opacity: 0.9; position: relative; z-index: 110; }
 
         .search-container { position: relative; width: 100%; margin-top: 2px; z-index: 60;}
         .search-input { width: 100%; height: 28px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 25px; color: white; font-size: 0.8rem; box-sizing: border-box; }
@@ -294,7 +296,6 @@
             list.innerHTML = '';
             document.getElementById('modalHistory').style.display = 'flex';
 
-            // Gruppieren nach Rechnungsnummer
             const groups = {};
             salesLog.forEach(s => {
                 if (!groups[s.invoiceNr]) groups[s.invoiceNr] = { items: [], total: 0, date: s.date, img: s.invoiceImg, platform: s.platform };
@@ -342,6 +343,11 @@
             });
         }
 
+        // --- FIX: openSettings Funktion hinzugefügt ---
+        function openSettings() {
+            document.getElementById('modalSettings').style.display = 'flex';
+        }
+
         // --- VERKAUF MULTI ---
         let currentBasket = [];
         function openSellModal(e, id) {
@@ -372,7 +378,6 @@
                 d.onclick = () => {
                     if (!currentBasket.find(x => x.id === hit.id)) {
                         currentBasket.push({ id: hit.id, name: hit.name, artnr: hit.artnr, stock: hit.menge, qty: 1, priceTotal: hit.preis });
-                        // AUTOMATISCH BILD ÜBERNEHMEN falls noch keins da
                         if (!document.getElementById('sellBild').value && hit.bild) {
                             document.getElementById('sellBild').value = hit.bild;
                             document.getElementById('sellImgPreview').src = hit.bild;
@@ -482,6 +487,9 @@
                 document.getElementById('inpArtnr').value = generateArtnr();
                 document.getElementById('inpName').value = '';
                 document.getElementById('inpMenge').value = 1;
+                document.getElementById('inpPreis').value = 0;
+                document.getElementById('inpNotiz').value = '';
+                document.getElementById('inpBild').value = '';
                 document.getElementById('imgPreview').style.display = 'none';
             } else {
                 const it = inventory.find(x => x.id === id);
@@ -490,6 +498,7 @@
                 document.getElementById('inpName').value = it.name;
                 document.getElementById('inpMenge').value = it.menge;
                 document.getElementById('inpPreis').value = it.preis;
+                document.getElementById('inpNotiz').value = it.notiz || '';
                 document.getElementById('inpBild').value = it.bild || '';
                 if(it.bild){document.getElementById('imgPreview').src=it.bild; document.getElementById('imgPreview').style.display='block';}
             }
@@ -525,11 +534,13 @@
                 document.getElementById(previewId).src = e.target.result;
                 document.getElementById(previewId).style.display = 'block';
             };
-            reader.readAsDataURL(input.files[0]);
+            if (input.files && input.files[0]) {
+                reader.readAsDataURL(input.files[0]);
+            }
         }
 
         function generateArtnr() { return (inventory.length + 1).toString().padStart(3, '0') + "-" + new Date().getFullYear(); }
-        function formatDate(d) { return d.split('-').reverse().join('.'); }
+        function formatDate(d) { return d ? d.split('-').reverse().join('.') : ""; }
         function updateInvoicePreview() { document.getElementById('sellInvoiceNr').value = (salesLog.length + 1).toString().padStart(3, '0') + "-" + new Date().getFullYear(); }
         function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
         function viewImage(src) { document.getElementById('fullImage').src = src; document.getElementById('modalImageViewer').style.display = 'flex'; }
@@ -538,6 +549,12 @@
         function clearSearch() { document.getElementById('searchInput').value = ''; renderList(); }
         async function exportBackup() { const data = { artikel: inventory, sales: salesLog }; const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'lager_backup.json'; a.click(); }
         async function importBackup(inp) { const reader = new FileReader(); reader.onload = async (e) => { const data = JSON.parse(e.target.result); await dbOp('inventory', 'clear'); await dbOp('sales', 'clear'); for (let i of data.artikel) { delete i.id; await dbOp('inventory', 'add', i); } for (let s of data.sales) { delete s.id; await dbOp('sales', 'add', s); } location.reload(); }; reader.readAsText(inp.files[0]); }
+
+        initDB().then(() => {
+            loadData().then(() => {
+                renderList();
+            });
+        });
     </script>
 </body>
 </html>
