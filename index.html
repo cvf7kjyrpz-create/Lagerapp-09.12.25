@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V26 Fix Image</title>
+    <title>Lager V27 Stock Search</title>
     <style>
         :root {
             --bg: #121212; --card: #1e1e1e; --input-bg: #2d2d2d;
@@ -312,8 +312,6 @@
         // --- EDIT MODAL ---
         function openEditModal(id = null) {
             document.getElementById('modalEdit').style.display = 'flex';
-            
-            // FIX: Immer Datei-Input resetten
             document.getElementById('inpFile').value = "";
 
             if (!id) {
@@ -327,10 +325,7 @@
                 document.getElementById('inpOrt').value = '';
                 document.getElementById('inpZustand').value = 'Neu';
                 document.getElementById('inpNotiz').value = '';
-                
-                // FIX: Bild-Felder leeren
                 document.getElementById('inpBild').value = '';
-                document.getElementById('imgPreview').src = '';
                 document.getElementById('imgPreview').style.display = 'none';
             } else {
                 const i = inventory.find(x => x.id === id);
@@ -346,7 +341,6 @@
                 document.getElementById('inpNotiz').value = i.notiz || "";
                 document.getElementById('inpBild').value = i.bild || "";
                 
-                // FIX: Bild korrekt anzeigen oder ausblenden
                 if(i.bild){ 
                     document.getElementById('imgPreview').src=i.bild; 
                     document.getElementById('imgPreview').style.display='block'; 
@@ -395,12 +389,10 @@
             document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('sellShipping').value = 0;
             
-            // FIX: Bild nur von DIESEM Artikel übernehmen (Vorauswahl), aber nicht global
             document.getElementById('sellBild').value = it.bild || ""; 
             document.getElementById('sellImgPreview').src = it.bild || "";
             document.getElementById('sellImgPreview').style.display = it.bild ? 'block' : 'none';
             
-            // FIX: Datei-Input leeren, damit man nicht versehentlich das alte Bild nochmal hochlädt
             const fileInp = document.getElementById('sellFileInput');
             if(fileInp) fileInp.value = "";
 
@@ -419,10 +411,17 @@
         }
 
         function searchForItem(inp) {
-            const term = inp.value.toLowerCase(); const drop = document.getElementById('searchDropdown'); drop.innerHTML = '';
+            const term = inp.value.toLowerCase();
+            const drop = document.getElementById('searchDropdown');
+            drop.innerHTML = '';
             if(term.length < 2) { drop.style.display='none'; return; }
+
             inventory.filter(i => i.name.toLowerCase().includes(term) && i.menge > 0).forEach(hit => {
-                const d = document.createElement('div'); d.className = 'search-res-item'; d.innerText = hit.name;
+                const d = document.createElement('div');
+                d.className = 'search-res-item';
+                // HIER: Bestandsanzeige (blau) hinzugefügt
+                d.innerHTML = `${hit.name} <span style="float:right; color:#60a5fa; font-weight:bold;">${hit.menge}x</span>`;
+                
                 d.onclick = () => {
                     if(!basket.find(x => x.id === hit.id)) {
                         basket.push({ id: hit.id, name: hit.name, artnr: hit.artnr, stock: hit.menge, qty: 1, priceTotal: hit.preis });
