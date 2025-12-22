@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V27 Stock Search</title>
+    <title>Lager V28 Smart Invoice</title>
     <style>
         :root {
             --bg: #121212; --card: #1e1e1e; --input-bg: #2d2d2d;
@@ -170,8 +170,16 @@
                 <div style="background:#252525; padding:10px; border-radius:5px; margin-bottom:10px;">
                     <div><label>Rechnungs-Nr.</label><input type="text" id="sellInvoiceNr"></div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
-                        <div><label>Plattform</label><select id="sellPlatform" onchange="updateInvoicePreview()"><option value="Vinted">Vinted</option><option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option></select></div>
-                        <div><label>Datum</label><input type="date" id="sellDate"></div>
+                        <div>
+                            <label>Plattform</label>
+                            <select id="sellPlatform" onchange="updateInvoicePreview()">
+                                <option value="eBay">eBay</option>
+                                <option value="Vinted">Vinted</option>
+                                <option value="Kleinanzeigen">Kleinanzeigen</option>
+                                <option value="Sonstiges">Sonstiges</option>
+                            </select>
+                        </div>
+                        <div><label>Datum</label><input type="date" id="sellDate" onchange="updateInvoicePreview()"></div>
                     </div>
                 </div>
                 <div id="sellBasketList"></div>
@@ -180,7 +188,7 @@
                 <div style="margin-top:15px; border-top:1px solid #444; padding-top:10px;">
                     <label>Versand (€)</label><input type="number" step="0.01" id="sellShipping" value="0" oninput="calcBasketTotal()">
                     <label style="margin-top:8px;">Gesamtumsatz</label><input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold;">
-                    <label style="margin-top:8px;">Rechnungsbild</label>
+                    <label style="margin-top:8px;">Rechnungsbild (optional, für alle)</label>
                     <input type="file" id="sellFileInput" onchange="handleImage(this, 'sellBild', 'sellImgPreview')">
                     <input type="hidden" id="sellBild">
                     <img id="sellImgPreview" style="width:100%; margin-top:5px; border-radius:4px; display:none;">
@@ -379,25 +387,61 @@
             }
         }
 
-        // --- VERKAUF (MULTI) ---
+        // --- VERKAUF (MULTI & SMART INVOICE) ---
         let basket = [];
         function openSellModal(e, id) {
             e.stopPropagation();
             const it = inventory.find(x => x.id === id);
-            basket = [{ id: it.id, name: it.name, artnr: it.artnr, stock: it.menge, qty: 1, priceTotal: it.preis }];
+            
+            basket = [{ id: it.id, name: it.name, artnr: it.artnr, stock: it.menge, qty: 1, priceTotal: it.preis, origImg: it.bild }];
             
             document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('sellShipping').value = 0;
             
-            document.getElementById('sellBild').value = it.bild || ""; 
-            document.getElementById('sellImgPreview').src = it.bild || "";
-            document.getElementById('sellImgPreview').style.display = it.bild ? 'block' : 'none';
-            
+            // Standard: KEIN Bild vorausgewählt im Upload, damit Logik greift
+            document.getElementById('sellBild').value = ""; 
             const fileInp = document.getElementById('sellFileInput');
             if(fileInp) fileInp.value = "";
-
-            updateInvoicePreview(); renderBasket();
+            document.getElementById('sellImgPreview').style.display = 'none';
+            
+            updateInvoicePreview(); 
+            renderBasket();
             document.getElementById('modalSell').style.display = 'flex';
+        }
+
+        // --- AUTOMATISCHE RECHNNUNGSNUMMER ---
+        function updateInvoicePreview() {
+            const dateInput = document.getElementById('sellDate').value;
+            if (!dateInput) return;
+            
+            const platform = document.getElementById('sellPlatform').value;
+            const year = new Date(dateInput).getFullYear();
+            
+            // Prefix bestimmen
+            let prefix = "";
+            if(platform === "eBay") prefix = "E";
+            else if(platform === "Vinted") prefix = "V";
+            else if(platform === "Kleinanzeigen") prefix = "K";
+            // Sonstiges hat keinen Prefix oder S? Lassen wir leer für Flexibilität oder "S"
+            
+            // Höchste Nummer für dieses Jahr finden
+            let maxSeq = 0;
+            salesLog.forEach(s => {
+                // Check ob Datum im gleichen Jahr
+                if(s.date && s.date.startsWith(year.toString())) {
+                    // Versuche Nummer zu parsen (Format: [Prefix]001-YYYY)
+                    const match = s.invoiceNr.match(/(\d+)-(\d{4})/);
+                    if(match && match[2] === year.toString()) {
+                        const seq = parseInt(match[1]);
+                        if(seq > maxSeq) maxSeq = seq;
+                    }
+                }
+            });
+            
+            const nextSeq = (maxSeq + 1).toString().padStart(3, '0');
+            const newNr = `${prefix}${nextSeq}-${year}`;
+            
+            document.getElementById('sellInvoiceNr').value = newNr;
         }
 
         function renderBasket() {
@@ -419,12 +463,12 @@
             inventory.filter(i => i.name.toLowerCase().includes(term) && i.menge > 0).forEach(hit => {
                 const d = document.createElement('div');
                 d.className = 'search-res-item';
-                // HIER: Bestandsanzeige (blau) hinzugefügt
+                // Bestand anzeigen (blau)
                 d.innerHTML = `${hit.name} <span style="float:right; color:#60a5fa; font-weight:bold;">${hit.menge}x</span>`;
                 
                 d.onclick = () => {
                     if(!basket.find(x => x.id === hit.id)) {
-                        basket.push({ id: hit.id, name: hit.name, artnr: hit.artnr, stock: hit.menge, qty: 1, priceTotal: hit.preis });
+                        basket.push({ id: hit.id, name: hit.name, artnr: hit.artnr, stock: hit.menge, qty: 1, priceTotal: hit.preis, origImg: hit.bild });
                         renderBasket();
                     }
                     inp.value = ''; drop.style.display = 'none';
@@ -444,12 +488,34 @@
             const inv = document.getElementById('sellInvoiceNr').value;
             const ship = parseFloat(document.getElementById('sellShipping').value || 0);
             const date = document.getElementById('sellDate').value;
-            const img = document.getElementById('sellBild').value;
+            const globalImg = document.getElementById('sellBild').value; // Das manuell hochgeladene Bild
             const plat = document.getElementById('sellPlatform').value;
+
             for(let i=0; i < basket.length; i++) {
-                const p = basket[i]; const it = inventory.find(x => x.id === p.id);
-                it.menge -= p.qty; await dbOp('inventory', 'put', it);
-                await dbOp('sales', 'add', { name: p.name, artnr: p.artnr, date: date, buyPrice: it.preis, qty: p.qty, shipping: (i===0 ? ship : 0), total: (p.priceTotal || 0) + (i===0 ? ship : 0), platform: plat, invoiceNr: inv, invoiceImg: img });
+                const p = basket[i]; 
+                const it = inventory.find(x => x.id === p.id);
+                it.menge -= p.qty; 
+                await dbOp('inventory', 'put', it);
+                
+                // LOGIK: Wenn KEIN neues Bild hochgeladen wurde, nimm das Original-Bild vom Artikel
+                // Wenn ein neues Bild da ist (z.B. Versandbeleg), nimm das für alle.
+                let finalImg = globalImg;
+                if(!finalImg || finalImg === "") {
+                    finalImg = p.origImg; // Fallback auf individuelles Bild
+                }
+
+                await dbOp('sales', 'add', { 
+                    name: p.name, 
+                    artnr: p.artnr, 
+                    date: date, 
+                    buyPrice: it.preis, 
+                    qty: p.qty, 
+                    shipping: (i===0 ? ship : 0), 
+                    total: (p.priceTotal || 0) + (i===0 ? ship : 0), 
+                    platform: plat, 
+                    invoiceNr: inv, 
+                    invoiceImg: finalImg 
+                });
             }
             await loadData(); closeModals(); renderList();
         }
@@ -467,8 +533,30 @@
             Object.keys(groups).sort().reverse().forEach(inv => {
                 const g = groups[inv];
                 const div = document.createElement('div'); div.className = 'sale-group';
-                let itemRows = g.items.map(it => `<div class="group-item"><span class="group-item-title">${it.name} (${it.qty}x)</span><div class="hist-actions"><button class="btn-icon-sm" onclick="openEditSale(${it.id})">✏️</button><button class="btn-icon-sm btn-storno" onclick="restoreSale(${it.id})">↩️</button></div></div>`).join('');
-                div.innerHTML = `<div class="group-header"><span class="group-inv">${inv} (${g.platform})</span><span class="group-date">${formatDate(g.date)}</span></div>${itemRows}<div class="group-footer"><span class="group-total">${g.total.toFixed(2)}€</span><div class="hist-actions">${g.img ? `<button class="btn-icon-sm" onclick="viewImage('${g.img}')">👁️</button>` : ''}<button class="btn-icon-sm btn-del" onclick="deleteFullInvoice('${inv}')">🗑️</button></div></div>`;
+                
+                // Prüfen ob Bilder unterschiedlich sind in der Gruppe
+                let itemRows = g.items.map(it => {
+                    // Zeige Icon wenn individuelles Bild existiert
+                    const hasImg = it.invoiceImg ? '🖼️' : ''; 
+                    return `<div class="group-item">
+                        <span class="group-item-title">${it.name} (${it.qty}x) ${hasImg}</span>
+                        <div class="hist-actions">
+                            ${it.invoiceImg ? `<button class="btn-icon-sm" onclick="viewImage('${it.invoiceImg}')">👁️</button>` : ''}
+                            <button class="btn-icon-sm" onclick="openEditSale(${it.id})">✏️</button>
+                            <button class="btn-icon-sm btn-storno" onclick="restoreSale(${it.id})">↩️</button>
+                        </div>
+                    </div>`
+                }).join('');
+
+                div.innerHTML = `
+                    <div class="group-header"><span class="group-inv">${inv} (${g.platform||''})</span><span class="group-date">${formatDate(g.date)}</span></div>
+                    ${itemRows}
+                    <div class="group-footer">
+                        <span class="group-total">${g.total.toFixed(2)}€</span>
+                        <div class="hist-actions">
+                             <button class="btn-icon-sm btn-del" onclick="deleteFullInvoice('${inv}')">🗑️</button>
+                        </div>
+                    </div>`;
                 list.appendChild(div);
             });
         }
@@ -540,8 +628,7 @@
         function formatDate(d) { return d ? d.split('-').reverse().join('.') : ""; }
         function filterList() { renderList(document.getElementById('searchInput').value); }
         function clearSearch() { document.getElementById('searchInput').value = ''; renderList(); }
-        function updateInvoicePreview() { document.getElementById('sellInvoiceNr').value = (salesLog.length + 1).toString().padStart(3, '0') + "-" + new Date().getFullYear(); }
-
+        
         initDB().then(() => loadData().then(() => renderList()));
     </script>
 </body>
