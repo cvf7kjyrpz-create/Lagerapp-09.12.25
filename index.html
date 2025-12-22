@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V14 Pro</title>
+    <title>Lager V15 Final</title>
     <style>
         :root {
             --bg: #121212; --card: #1e1e1e; --input-bg: #2d2d2d;
@@ -41,9 +41,11 @@
         .qty-badge.low { color: #ef4444; }
 
         .item-main { display: flex; flex-direction: column; gap: 0px; overflow: hidden; }
-        /* NOCH KLEINERE SCHRIFT */
-        .item-title { font-weight: 600; font-size: 0.7rem; color: white; line-height: 1.1; white-space: normal; word-break: break-word; }
-        .item-meta { font-size: 0.6rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 1px;}
+        
+        /* SCHRIFTART NOCH KLEINER */
+        .item-title { font-weight: 600; font-size: 0.68rem; color: white; line-height: 1.1; white-space: normal; word-break: break-word; }
+        
+        .item-meta { font-size: 0.6rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 3px; align-items: center; margin-top: 1px;}
         .meta-tag { background: #333; padding: 0px 3px; border-radius: 2px; font-size: 0.55rem; }
         .tag-shop { color: #93c5fd; } .tag-size { color: #f9a8d4; } .icon-symbol { font-size: 0.65rem; margin-left: 2px; }
 
@@ -54,20 +56,25 @@
         .star-btn.active { color: var(--profit); } 
         .btn-mini { background: #2d2d2d; border: 1px solid #444; color: #ddd; padding: 1px 5px; font-size: 0.6rem; border-radius: 3px; cursor: pointer; margin-top: 1px; }
 
-        /* HISTORY LISTE (Compact Style) */
+        /* HISTORY LISTE (Optimiert) */
         .history-row { 
-            background: var(--card); border-bottom: 1px solid #252525; padding: 6px 8px; 
-            display: grid; grid-template-columns: 1fr auto; gap: 5px; align-items: center; 
+            background: var(--card); border-bottom: 1px solid #252525; padding: 8px 6px; 
+            display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; 
         }
-        .hist-info { display: flex; flex-direction: column; gap: 1px;}
+        .hist-info { display: flex; flex-direction: column; gap: 2px;}
         .hist-title { font-size: 0.75rem; font-weight: bold; color: white; }
         .hist-meta { font-size: 0.65rem; color: #888; }
-        .hist-inv { color: var(--profit); font-family: monospace; }
+        .hist-inv { color: var(--profit); font-family: monospace; font-size:0.7rem; }
         
-        .hist-actions { display: flex; gap: 5px; }
-        .btn-act { padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; border: 1px solid #444; color: #ddd; background: #2d2d2d; }
-        .btn-undo { background: #331111; color: #ff7777; border-color: #552222; }
-        .btn-del { background: #000; color: #777; border-color: #333; }
+        /* Buttons nebeneinander ohne Scrollen */
+        .hist-actions { display: flex; gap: 8px; align-items: center; }
+        .btn-icon { 
+            width: 30px; height: 30px; border-radius: 4px; border: 1px solid #444; 
+            background: #252525; color: #ddd; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1rem; 
+        }
+        .btn-storno { border-color: #552222; background: #331111; color: #ff9999; }
+        .btn-del { border-color: #333; background: #000; color: #666; }
 
         /* MODALS */
         .fab { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; width: 48px; height: 48px; border-radius: 50%; border: none; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; z-index: 90; display: flex; align-items: center; justify-content: center; }
@@ -78,8 +85,8 @@
         .modal-footer { padding: 10px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #252525; }
 
         /* FULL IMAGE VIEWER MODAL */
-        #modalImageViewer { z-index: 300; background: rgba(0,0,0,0.98); }
-        #fullImage { max-width: 100%; max-height: 80vh; object-fit: contain; }
+        #modalImageViewer { z-index: 300; background: rgba(0,0,0,0.95); }
+        #fullImage { max-width: 100%; max-height: 75vh; object-fit: contain; margin-bottom: 15px; border-radius: 4px;}
 
         .settings-row { margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 12px; }
         .btn-full { width: 100%; padding: 8px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem;}
@@ -196,9 +203,9 @@
     </div>
 
     <div id="modalImageViewer" class="modal-overlay">
-        <div class="modal-box" style="background:transparent; border:none; box-shadow:none;">
-            <img id="fullImage" src="" style="max-width:100%; max-height:75vh; border-radius:8px; margin-bottom:10px;">
-            <button class="btn-full btn-gray" onclick="closeModals()">Zurück / Schließen</button>
+        <div class="modal-box" style="background:transparent; border:none; box-shadow:none; align-items:center;">
+            <img id="fullImage" src="">
+            <button class="btn-full btn-gray" onclick="closeModals()" style="max-width:300px;">Schließen</button>
         </div>
     </div>
 
@@ -351,7 +358,7 @@
                 }
             });
 
-            // Update Stats IMMEDIATELY
+            // Update Stats
             updateStats(totalQty, totalVal);
         }
 
@@ -467,17 +474,15 @@
 
             await dbAdd('sales', sale);
             
-            // Critical Step: Wait for DB, then update local state
-            await loadData(); 
-
-            // Logic for Item deletion if 0
+            // Critical Step: Sync DB with Memory
             if(item.menge === 0) {
                  if(confirm("Bestand ist 0. Artikel löschen?")) {
                      await dbDelete('inventory', id);
                  } else { await dbPut('inventory', item); }
             } else { await dbPut('inventory', item); }
 
-            await loadData(); // Reload again to be sure
+            // FORCE RELOAD TO UPDATE STATS
+            await loadData();
             closeModals();
             renderList(document.getElementById('searchInput').value);
         }
@@ -579,10 +584,10 @@
                         <span class="hist-inv">${sale.invoiceNr} | ${sale.platform}</span>
                     </div>
                     <div class="hist-actions">
-                        ${sale.invoiceImg ? `<button class="btn-act" onclick="viewImage('${sale.invoiceImg}')">Beleg</button>` : ''}
-                        <button class="btn-act" onclick="editSale(${sale.id})">Edit</button>
-                        <button class="btn-act btn-del" onclick="deleteSale(${sale.id})">Del</button>
-                        <button class="btn-act btn-undo" onclick="restoreSale(${sale.id})">Storno</button>
+                        ${sale.invoiceImg ? `<button class="btn-icon" title="Beleg" onclick="viewImage('${sale.invoiceImg}')">👁️</button>` : ''}
+                        <button class="btn-icon" title="Bearbeiten" onclick="editSale(${sale.id})">✏️</button>
+                        <button class="btn-icon btn-del" title="Löschen" onclick="deleteSale(${sale.id})">🗑️</button>
+                        <button class="btn-icon btn-storno" title="Storno" onclick="restoreSale(${sale.id})">↩️</button>
                     </div>
                 `;
                 list.appendChild(div);
@@ -594,33 +599,33 @@
             document.getElementById('modalImageViewer').style.display = 'flex';
         }
 
-        // 1. EDIT (Nur Metadaten)
         async function editSale(id) {
             const sale = salesLog.find(s => s.id === id);
             const newInv = prompt("Rechnungs-Nr ändern:", sale.invoiceNr);
             if(newInv === null) return;
             const newPrice = prompt("Gesamtpreis ändern (€):", sale.total);
             if(newPrice === null) return;
+            const newDate = prompt("Datum ändern (YYYY-MM-DD):", sale.date);
+            if(newDate === null) return;
 
             sale.invoiceNr = newInv;
             sale.total = parseFloat(newPrice);
+            sale.date = newDate;
             
             await dbPut('sales', sale);
             await loadData();
             openHistory();
-            renderList(); // Stats Update
+            renderList(); // Update Stats
         }
 
-        // 2. DELETE (Nur Eintrag weg, Bestand bleibt)
         async function deleteSale(id) {
-            if(!confirm("Eintrag nur aus Liste löschen (Bestand bleibt gleich)?")) return;
+            if(!confirm("Eintrag NUR aus Liste löschen (Bestand bleibt gleich)?")) return;
             await dbDelete('sales', id);
             await loadData();
             openHistory();
             renderList();
         }
 
-        // 3. STORNO (Eintrag weg, Bestand zurück)
         async function restoreSale(saleId) {
             if(!confirm("STORNO: Bestand wieder erhöhen und Verkauf löschen?")) return;
             const sale = salesLog.find(s => s.id === saleId);
@@ -646,10 +651,9 @@
 
             await dbDelete('sales', saleId);
             
-            // WICHTIG: Erst warten, dann neu laden
             await loadData(); 
             openHistory(); 
-            renderList(); // Hier aktualisiert sich der Gewinn sofort
+            renderList();
         }
 
         async function exportBackup() { const exportData = { artikel: inventory, sales: salesLog }; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", "lager_db_backup_" + new Date().toISOString().slice(0,10) + ".json"); dlAnchorElem.click(); }
