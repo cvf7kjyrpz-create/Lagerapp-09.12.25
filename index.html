@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V13.1 Fix</title>
+    <title>Lager V14 Pro</title>
     <style>
         :root {
             --bg: #121212; --card: #1e1e1e; --input-bg: #2d2d2d;
@@ -13,21 +13,12 @@
         }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; -webkit-tap-highlight-color: transparent; }
 
-        /* HEADER & SEARCH */
+        /* HEADER */
         .app-header { background: rgba(30,30,30,0.98); backdrop-filter: blur(10px); padding: 5px 8px; position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; position: relative; }
         h1 { margin: 0; font-size: 0.9rem; font-weight: 700; flex-grow: 1; }
-        
-        /* FIX: Header Actions Layering */
-        .header-actions { 
-            display: flex; gap: 15px; 
-            position: relative; z-index: 100; /* WICHTIG: Höher als alles andere */
-        }
-        .icon-btn { 
-            background: none; border: none; font-size: 1.2rem; cursor: pointer; 
-            padding: 5px; /* Größere Klickfläche */
-            opacity: 0.9; 
-        }
+        .header-actions { display: flex; gap: 15px; position: relative; z-index: 100; }
+        .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; opacity: 0.9; }
 
         .search-container { position: relative; width: 100%; margin-top: 2px; z-index: 60;}
         .search-input { width: 100%; height: 28px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 25px; color: white; font-size: 0.8rem; box-sizing: border-box; }
@@ -41,41 +32,54 @@
         .stat-val { font-size: 0.7rem; font-weight: bold; display: block; }
         .c-blue { color: #60a5fa; } .c-green { color: var(--success); } .c-gold { color: var(--profit); }
 
-        /* LISTE */
+        /* LISTE COMPACT */
         #itemList { padding: 0; }
-        .item-row { background: var(--card); border-bottom: 1px solid #252525; padding: 4px 6px; display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; border-left: 3px solid transparent; min-height: 36px; }
+        .item-row { background: var(--card); border-bottom: 1px solid #252525; padding: 3px 6px; display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; border-left: 3px solid transparent; min-height: 32px; }
         .item-row.marked { background: rgba(234, 179, 8, 0.08); border-left: 3px solid var(--profit); }
         
-        .qty-badge { font-size: 0.85rem; font-weight: bold; color: #60a5fa; min-width: 25px; text-align: center; }
+        .qty-badge { font-size: 0.8rem; font-weight: bold; color: #60a5fa; min-width: 20px; text-align: center; }
         .qty-badge.low { color: #ef4444; }
 
         .item-main { display: flex; flex-direction: column; gap: 0px; overflow: hidden; }
-        .item-title { font-weight: 600; font-size: 0.75rem; color: white; line-height: 1.1; white-space: normal; word-break: break-word; }
-        .item-meta { font-size: 0.65rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 1px;}
-        .meta-tag { background: #333; padding: 0px 3px; border-radius: 2px; font-size: 0.6rem; }
-        .tag-shop { color: #93c5fd; } .tag-size { color: #f9a8d4; } .icon-symbol { font-size: 0.7rem; margin-left: 2px; }
+        /* NOCH KLEINERE SCHRIFT */
+        .item-title { font-weight: 600; font-size: 0.7rem; color: white; line-height: 1.1; white-space: normal; word-break: break-word; }
+        .item-meta { font-size: 0.6rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 1px;}
+        .meta-tag { background: #333; padding: 0px 3px; border-radius: 2px; font-size: 0.55rem; }
+        .tag-shop { color: #93c5fd; } .tag-size { color: #f9a8d4; } .icon-symbol { font-size: 0.65rem; margin-left: 2px; }
 
         .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 65px; }
         .item-price { font-weight: 500; font-size: 0.75rem; color: #bbb; }
         .item-total { font-size: 0.6rem; color: #666; }
-        .star-btn { background: none; border: none; padding: 0; font-size: 0.9rem; cursor: pointer; color: #444; line-height: 1; }
+        .star-btn { background: none; border: none; padding: 0; font-size: 0.85rem; cursor: pointer; color: #444; line-height: 1; }
         .star-btn.active { color: var(--profit); } 
-        .btn-mini { background: #2d2d2d; border: 1px solid #444; color: #ddd; padding: 1px 5px; font-size: 0.65rem; border-radius: 3px; cursor: pointer; margin-top: 2px; }
+        .btn-mini { background: #2d2d2d; border: 1px solid #444; color: #ddd; padding: 1px 5px; font-size: 0.6rem; border-radius: 3px; cursor: pointer; margin-top: 1px; }
 
-        /* HISTORY */
-        .history-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px; border-bottom: 1px solid #333; font-size: 0.8rem; }
-        .hist-info { display: flex; flex-direction: column; gap: 2px;}
-        .hist-date { font-size: 0.65rem; color: #777; }
-        .hist-inv { color: var(--profit); font-family: monospace; font-size: 0.75rem; }
-        .btn-undo { background: #331111; color: #ff7777; border: 1px solid #552222; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.7rem;}
+        /* HISTORY LISTE (Compact Style) */
+        .history-row { 
+            background: var(--card); border-bottom: 1px solid #252525; padding: 6px 8px; 
+            display: grid; grid-template-columns: 1fr auto; gap: 5px; align-items: center; 
+        }
+        .hist-info { display: flex; flex-direction: column; gap: 1px;}
+        .hist-title { font-size: 0.75rem; font-weight: bold; color: white; }
+        .hist-meta { font-size: 0.65rem; color: #888; }
+        .hist-inv { color: var(--profit); font-family: monospace; }
+        
+        .hist-actions { display: flex; gap: 5px; }
+        .btn-act { padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; border: 1px solid #444; color: #ddd; background: #2d2d2d; }
+        .btn-undo { background: #331111; color: #ff7777; border-color: #552222; }
+        .btn-del { background: #000; color: #777; border-color: #333; }
 
-        /* FAB & MODALS */
+        /* MODALS */
         .fab { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; width: 48px; height: 48px; border-radius: 50%; border: none; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; z-index: 90; display: flex; align-items: center; justify-content: center; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 10px; }
         .modal-box { background: var(--card); width: 100%; max-width: 500px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 95vh; overflow: hidden; }
         .modal-header { padding: 8px; border-bottom: 1px solid var(--border); font-weight: bold; text-align: center; background: #252525; font-size: 0.9rem;}
         .modal-body { padding: 10px; overflow-y: auto; }
         .modal-footer { padding: 10px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #252525; }
+
+        /* FULL IMAGE VIEWER MODAL */
+        #modalImageViewer { z-index: 300; background: rgba(0,0,0,0.98); }
+        #fullImage { max-width: 100%; max-height: 80vh; object-fit: contain; }
 
         .settings-row { margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 12px; }
         .btn-full { width: 100%; padding: 8px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem;}
@@ -164,7 +168,7 @@
                 <input type="hidden" id="sellId">
                 <div class="form-grid">
                     <div>
-                        <label style="color:var(--profit); font-weight:bold;">Rechnungs-Nr. (Editierbar)</label>
+                        <label style="color:var(--profit); font-weight:bold;">Rechnungs-Nr.</label>
                         <input type="text" id="sellInvoiceNr">
                     </div>
                     <div class="form-row">
@@ -177,7 +181,7 @@
                     </div>
                     <div><label>Gesamtsumme</label><input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold;"></div>
                     <div>
-                         <label>Beleg / Bild (Übernommen vom Artikel)</label>
+                         <label>Beleg (Bild)</label>
                          <input type="file" id="sellFile" accept="image/*" onchange="handleImage(this, 'sellBild', 'sellImgPreview')" style="padding-top:6px; height:auto;">
                          <input type="hidden" id="sellBild">
                          <img id="sellImgPreview" src="" style="width:100%; margin-top:5px; border-radius:4px; display:none;">
@@ -191,30 +195,38 @@
         </div>
     </div>
 
+    <div id="modalImageViewer" class="modal-overlay">
+        <div class="modal-box" style="background:transparent; border:none; box-shadow:none;">
+            <img id="fullImage" src="" style="max-width:100%; max-height:75vh; border-radius:8px; margin-bottom:10px;">
+            <button class="btn-full btn-gray" onclick="closeModals()">Zurück / Schließen</button>
+        </div>
+    </div>
+
     <div id="modalSettings" class="modal-overlay">
         <div class="modal-box" style="height:auto">
             <div class="modal-header">Daten (IndexedDB)</div>
             <div class="modal-body">
-                <div class="settings-row"><label>Backup Importieren (JSON)</label><input type="file" id="fileImport" accept=".json" onchange="importBackup(this)" style="padding-top:6px; height:auto;"></div>
+                <div class="settings-row"><label>Backup Importieren</label><input type="file" id="fileImport" accept=".json" onchange="importBackup(this)" style="padding-top:6px; height:auto;"></div>
                 <div class="settings-row" style="border:none"><label>Backup Exportieren</label><button class="btn-full btn-blue" onclick="exportBackup()">Backup herunterladen</button></div>
             </div>
             <div class="modal-footer"><button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1 / -1">Schließen</button></div>
         </div>
     </div>
+
     <div id="modalHistory" class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-header">Verkäufe</div>
+            <div class="modal-header">Verkaufsprotokoll</div>
             <div class="modal-body" id="historyList"></div>
             <div class="modal-footer"><button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1 / -1">Schließen</button></div>
         </div>
     </div>
 
     <script>
-        // --- UI FUNKTIONEN GLOBAL VERFÜGBAR MACHEN ---
+        // UI Helpers
         function openSettings() { document.getElementById('modalSettings').style.display = 'flex'; }
         function closeModals() { document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none'); document.body.style.overflow = 'auto'; }
 
-        // --- INDEXED DB ---
+        // --- INDEXED DB SETUP ---
         const DB_NAME = 'LagerDB_V1';
         const DB_VERSION = 1;
         let db;
@@ -298,6 +310,7 @@
             let totalQty = 0; let totalVal = 0;
             const term = filterText.toLowerCase();
 
+            // Render List
             [...inventory].reverse().forEach((item) => {
                 const searchString = `${item.name} ${item.ort} ${item.groesse} ${item.artnr}`.toLowerCase();
                 if (filterText === "" || searchString.includes(term)) {
@@ -338,19 +351,24 @@
                 }
             });
 
+            // Update Stats IMMEDIATELY
+            updateStats(totalQty, totalVal);
+        }
+
+        function updateStats(invQty, invVal) {
             let totalRevenue = 0; let totalProfit = 0;
             salesLog.forEach(sale => {
                 totalRevenue += sale.total;
                 totalProfit += (sale.total - (sale.buyPrice * sale.qty));
             });
 
-            document.getElementById('statCount').innerText = totalQty;
-            document.getElementById('statValue').innerText = formatCurrency(totalVal);
+            document.getElementById('statCount').innerText = invQty;
+            document.getElementById('statValue').innerText = formatCurrency(invVal);
             document.getElementById('statRevenue').innerText = formatCurrency(totalRevenue);
             document.getElementById('statProfit').innerText = formatCurrency(totalProfit);
-
-            if(inventory.length === 0) list.innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:0.8rem">Keine Artikel.<br>Bitte Backup importieren!</div>';
         }
+
+        // --- ACTIONS ---
 
         async function toggleStar(e, id) {
             e.stopPropagation();
@@ -410,8 +428,7 @@
                     }
                 }
             });
-            const nextNum = maxNum + 1;
-            return `${prefix} ${String(nextNum).padStart(3, '0')} - ${currentYear}`;
+            return `${prefix} ${String(maxNum + 1).padStart(3, '0')} - ${currentYear}`;
         }
 
         function calcSellTotal() {
@@ -449,18 +466,23 @@
             };
 
             await dbAdd('sales', sale);
-            salesLog.push(sale);
+            
+            // Critical Step: Wait for DB, then update local state
+            await loadData(); 
 
+            // Logic for Item deletion if 0
             if(item.menge === 0) {
                  if(confirm("Bestand ist 0. Artikel löschen?")) {
                      await dbDelete('inventory', id);
-                     inventory = inventory.filter(i => i.id !== id);
                  } else { await dbPut('inventory', item); }
             } else { await dbPut('inventory', item); }
 
+            await loadData(); // Reload again to be sure
             closeModals();
             renderList(document.getElementById('searchInput').value);
         }
+
+        // --- ITEM EDIT ---
 
         async function saveItem() {
             const id = document.getElementById('editId').value;
@@ -490,12 +512,10 @@
                 newItem.id = parseInt(id);
                 newItem.markiert = original.markiert;
                 await dbPut('inventory', newItem);
-                const idx = inventory.findIndex(i => i.id == id);
-                inventory[idx] = newItem;
             } else {
                 await dbAdd('inventory', newItem);
-                inventory = await dbGetAll('inventory');
             }
+            await loadData();
             closeModals();
             renderList(document.getElementById('searchInput').value);
         }
@@ -504,7 +524,7 @@
             const id = document.getElementById('editId').value;
             if(id !== "" && confirm("Löschen?")) {
                 await dbDelete('inventory', parseInt(id));
-                inventory = inventory.filter(i => i.id != id);
+                await loadData();
                 closeModals();
                 renderList(document.getElementById('searchInput').value);
             }
@@ -541,38 +561,100 @@
             return `${String(maxNum + 1).padStart(3, '0')} - ${currentYear}`;
         }
 
+        // --- HISTORY FUNKTIONEN ---
+
         function openHistory() {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
             document.getElementById('modalHistory').style.display = 'flex';
             if(salesLog.length === 0) { list.innerHTML = '<p style="text-align:center; color:#777">Keine Verkäufe.</p>'; return; }
+            
             [...salesLog].reverse().forEach((sale) => {
                 const div = document.createElement('div');
                 div.className = 'history-row';
                 div.innerHTML = `
                     <div class="hist-info">
-                        <span style="font-weight:bold">${sale.name} (${sale.qty}x)</span>
+                        <span class="hist-title">${sale.name} (${sale.qty}x)</span>
+                        <span class="hist-meta">${formatDate(sale.date)} | Sum: ${sale.total.toFixed(2)}€</span>
                         <span class="hist-inv">${sale.invoiceNr} | ${sale.platform}</span>
-                        <span class="hist-date">${formatDate(sale.date)} | Sum: ${sale.total.toFixed(2)}€</span>
-                        ${sale.invoiceImg ? `<a href="#" onclick="showImg('${sale.invoiceImg}'); return false;" style="font-size:0.7rem; color:var(--primary)">Beleg</a>` : ''}
                     </div>
-                    <button class="btn-undo" onclick="restoreSale(${sale.id})">Storno</button>
+                    <div class="hist-actions">
+                        ${sale.invoiceImg ? `<button class="btn-act" onclick="viewImage('${sale.invoiceImg}')">Beleg</button>` : ''}
+                        <button class="btn-act" onclick="editSale(${sale.id})">Edit</button>
+                        <button class="btn-act btn-del" onclick="deleteSale(${sale.id})">Del</button>
+                        <button class="btn-act btn-undo" onclick="restoreSale(${sale.id})">Storno</button>
+                    </div>
                 `;
                 list.appendChild(div);
             });
         }
-        function showImg(src) { const win = window.open(""); win.document.write('<img src="' + src + '" style="max-width:100%">'); }
+
+        function viewImage(src) {
+            document.getElementById('fullImage').src = src;
+            document.getElementById('modalImageViewer').style.display = 'flex';
+        }
+
+        // 1. EDIT (Nur Metadaten)
+        async function editSale(id) {
+            const sale = salesLog.find(s => s.id === id);
+            const newInv = prompt("Rechnungs-Nr ändern:", sale.invoiceNr);
+            if(newInv === null) return;
+            const newPrice = prompt("Gesamtpreis ändern (€):", sale.total);
+            if(newPrice === null) return;
+
+            sale.invoiceNr = newInv;
+            sale.total = parseFloat(newPrice);
+            
+            await dbPut('sales', sale);
+            await loadData();
+            openHistory();
+            renderList(); // Stats Update
+        }
+
+        // 2. DELETE (Nur Eintrag weg, Bestand bleibt)
+        async function deleteSale(id) {
+            if(!confirm("Eintrag nur aus Liste löschen (Bestand bleibt gleich)?")) return;
+            await dbDelete('sales', id);
+            await loadData();
+            openHistory();
+            renderList();
+        }
+
+        // 3. STORNO (Eintrag weg, Bestand zurück)
         async function restoreSale(saleId) {
-            if(!confirm("Verkauf stornieren?")) return;
+            if(!confirm("STORNO: Bestand wieder erhöhen und Verkauf löschen?")) return;
             const sale = salesLog.find(s => s.id === saleId);
+            
             let item = inventory.find(i => i.artnr === sale.artnr); 
             if(!item && sale.name) item = inventory.find(i => i.name === sale.name);
-            if(item) { item.menge += sale.qty; await dbPut('inventory', item); alert("Bestand erhöht."); }
-            else { const newItem = { artnr: sale.artnr || 'RESTORED', name: sale.name, menge: sale.qty, preis: sale.buyPrice, groesse: '', zustand: 'Neu', datum: '', ort: '', notiz: 'Storno', bild: '', markiert: false }; await dbAdd('inventory', newItem); alert("Artikel neu angelegt."); }
-            await dbDelete('sales', saleId); await loadData(); openHistory(); renderList();
+
+            if(item) { 
+                item.menge += sale.qty; 
+                await dbPut('inventory', item); 
+                alert("Bestand wurde erfolgreich erhöht."); 
+            } else { 
+                const newItem = { 
+                    artnr: sale.artnr || 'RESTORED', 
+                    name: sale.name, 
+                    menge: sale.qty, 
+                    preis: sale.buyPrice, 
+                    groesse: '', zustand: 'Neu', datum: '', ort: '', notiz: 'Storno Rückläufer', bild: '', markiert: false 
+                }; 
+                await dbAdd('inventory', newItem); 
+                alert("Artikel neu angelegt (war gelöscht)."); 
+            }
+
+            await dbDelete('sales', saleId);
+            
+            // WICHTIG: Erst warten, dann neu laden
+            await loadData(); 
+            openHistory(); 
+            renderList(); // Hier aktualisiert sich der Gewinn sofort
         }
+
         async function exportBackup() { const exportData = { artikel: inventory, sales: salesLog }; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", "lager_db_backup_" + new Date().toISOString().slice(0,10) + ".json"); dlAnchorElem.click(); }
         async function importBackup(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = async function(e) { try { const loadedData = JSON.parse(e.target.result); let newItems = []; let newSales = []; if(Array.isArray(loadedData)) { newItems = loadedData; } else if (loadedData.artikel) { newItems = loadedData.artikel; if(loadedData.sales) newSales = loadedData.sales; } if(confirm("Datenbank leeren und mit Backup überschreiben?")) { await dbClear('inventory'); await dbClear('sales'); for(let item of newItems) { delete item.id; await dbAdd('inventory', item); } for(let sale of newSales) { delete sale.id; await dbAdd('sales', sale); } await loadData(); renderList(); closeModals(); alert("Datenbank erfolgreich wiederhergestellt!"); } } catch(err) { console.error(err); alert("Fehler beim Import! " + err); } }; reader.readAsText(input.files[0]); } }
+        
         function clearForm() { document.querySelectorAll('#modalEdit input:not([type=hidden]), #modalEdit textarea').forEach(e => e.value = ''); document.getElementById('imgPreview').style.display = 'none'; document.getElementById('inpZustand').value = "Neu"; }
         function fillForm(item) { document.getElementById('inpArtnr').value = item.artnr || ""; document.getElementById('inpName').value = item.name || ""; document.getElementById('inpMenge').value = item.menge || 0; document.getElementById('inpPreis').value = item.preis || 0; document.getElementById('inpGroesse').value = item.groesse || ""; document.getElementById('inpZustand').value = item.zustand || "Neu"; document.getElementById('inpDatum').value = item.datum || ""; document.getElementById('inpOrt').value = item.ort || ""; document.getElementById('inpNotiz').value = item.notiz || ""; const imgVal = item.bild || ""; document.getElementById('inpBild').value = imgVal; if(imgVal) { document.getElementById('imgPreview').src = imgVal; document.getElementById('imgPreview').style.display = 'block'; } else document.getElementById('imgPreview').style.display = 'none'; }
         function handleImage(input, targetId, previewId) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { const img = new Image(); img.src = e.target.result; img.onload = function() { const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); const maxWidth = 800; const scale = maxWidth / img.width; const w = scale < 1 ? maxWidth : img.width; const h = scale < 1 ? img.height * scale : img.height; canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h); const dataUrl = canvas.toDataURL('image/jpeg', 0.7); document.getElementById(targetId).value = dataUrl; document.getElementById(previewId).src = dataUrl; document.getElementById(previewId).style.display = 'block'; } }; reader.readAsDataURL(input.files[0]); } }
