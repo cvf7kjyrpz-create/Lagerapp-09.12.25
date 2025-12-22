@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V24 Full</title>
+    <title>Lager V25 Final Layout</title>
     <style>
         :root {
             --bg: #121212; --card: #1e1e1e; --input-bg: #2d2d2d;
@@ -18,15 +18,11 @@
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; position: relative; }
         h1 { margin: 0; font-size: 0.9rem; font-weight: 700; flex-grow: 1; }
         .header-actions { display: flex; gap: 15px; position: relative; z-index: 100; }
-        
-        /* FIX: Hoher Z-Index für Buttons */
         .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; opacity: 0.9; position: relative; z-index: 120; }
 
         .search-container { position: relative; width: 100%; margin-top: 2px; z-index: 60;}
         .search-input { width: 100%; height: 28px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 25px; color: white; font-size: 0.8rem; box-sizing: border-box; }
         .search-icon { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); opacity: 0.5; font-size: 0.7rem; pointer-events: none; }
-        
-        /* FIX: Search Clear Button Styles */
         .search-clear { position: absolute; right: 0; top: 0; bottom: 0; width: 30px; background: none; border: none; color: #999; font-size: 1rem; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 70; }
 
         /* STATS */
@@ -44,14 +40,14 @@
         .item-main { display: flex; flex-direction: column; gap: 0px; overflow: hidden; }
         .item-title { font-weight: 600; font-size: 0.65rem; color: white; line-height: 1.1; white-space: normal; word-break: break-word; }
         .item-meta { font-size: 0.6rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 3px; align-items: center; margin-top: 1px;}
-        .meta-tag { background: #333; padding: 0px 3px; border-radius: 2px; font-size: 0.55rem; }
-        .icon-indicator { font-size: 0.6rem; margin-left: 2px; opacity: 0.7; }
+        .meta-tag { background: #333; padding: 0px 3px; border-radius: 2px; font-size: 0.55rem; display: inline-flex; align-items: center; gap: 2px; }
+        .icon-indicator { font-size: 0.6rem; margin-left: 2px; opacity: 0.9; }
 
         .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 65px; }
         .item-price { font-weight: 500; font-size: 0.75rem; color: #bbb; }
         .btn-mini { background: #2d2d2d; border: 1px solid #444; color: #ddd; padding: 1px 5px; font-size: 0.6rem; border-radius: 3px; cursor: pointer; margin-top: 1px; }
 
-        /* GRUPPIERTER VERLAUF (Design V20) */
+        /* GRUPPIERTER VERLAUF */
         .sale-group { background: #1a1a1a; margin-bottom: 10px; border: 1px solid #333; border-radius: 6px; overflow: hidden; }
         .group-header { background: #2a2a2a; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; font-size: 0.75rem; font-family: monospace; color: var(--profit); }
         .group-date { font-size: 0.65rem; color: #aaa; font-family: sans-serif; }
@@ -264,7 +260,6 @@
             let tQty = 0, tVal = 0, tRev = 0, tProf = 0;
             const term = filter.toLowerCase();
             
-            // X-Button anzeigen wenn Suche voll
             document.getElementById('clearSearchBtn').style.display = term.length > 0 ? 'flex' : 'none';
 
             [...inventory].reverse().forEach(i => {
@@ -275,20 +270,28 @@
                     div.className = i.marked ? 'item-row marked' : 'item-row';
                     div.onclick = (e) => { if(e.target.tagName !== 'BUTTON') openEditModal(i.id); };
                     
-                    // --- META TAGS (ORT, GRÖSSE) ---
+                    // --- META TAGS ---
                     let metaTags = `<span class="meta-tag">#${i.artnr || ''}</span>`;
                     if(i.groesse) metaTags += `<span class="meta-tag">${i.groesse}</span>`;
-                    if(i.ort) metaTags += `<span class="meta-tag">${i.ort}</span>`;
-
-                    // --- SYMBOLE FÜR NOTIZ / BILD ---
+                    
+                    // Indikatoren erstellen (Notiz / Bild)
                     let indicators = "";
-                    if(i.notiz && i.notiz.trim() !== "") indicators += '<span class="icon-indicator">📝</span>';
-                    if(i.bild && i.bild.trim() !== "") indicators += '<span class="icon-indicator">🖼️</span>';
+                    if(i.notiz && i.notiz.trim() !== "") indicators += ' 📝';
+                    if(i.bild && i.bild.trim() !== "") indicators += ' 🖼️';
+
+                    // Ort mit Indikatoren verknüpfen
+                    if(i.ort) {
+                        // Wenn Ort da ist, Indikatoren direkt dahinter in den Tag
+                        metaTags += `<span class="meta-tag">${i.ort} ${indicators}</span>`;
+                    } else {
+                        // Wenn kein Ort da ist, aber Indikatoren, dann extra Tag (nur Icons)
+                        if(indicators !== "") metaTags += `<span class="meta-tag" style="background:none; padding-left:0;">${indicators}</span>`;
+                    }
 
                     div.innerHTML = `
                         <div class="qty-badge">${i.menge}x</div>
                         <div class="item-main">
-                            <span class="item-title">${i.name} ${indicators}</span>
+                            <span class="item-title">${i.name}</span>
                             <div class="item-meta">${metaTags}</div>
                         </div>
                         <div class="item-right">
@@ -311,7 +314,7 @@
             document.getElementById('statProfit').innerText = tProf.toFixed(2) + "€";
         }
 
-        // --- EDIT MODAL (MIT ALLEN FELDERN) ---
+        // --- EDIT MODAL ---
         function openEditModal(id = null) {
             document.getElementById('modalEdit').style.display = 'flex';
             if (!id) {
@@ -334,15 +337,12 @@
                 document.getElementById('inpName').value = i.name || "";
                 document.getElementById('inpMenge').value = i.menge || 1;
                 document.getElementById('inpPreis').value = i.preis || 0;
-                
-                // HIER: Alle Felder laden
                 document.getElementById('inpGroesse').value = i.groesse || "";
                 document.getElementById('inpDatum').value = i.datum || "";
                 document.getElementById('inpOrt').value = i.ort || "";
                 document.getElementById('inpZustand').value = i.zustand || "Neu";
                 document.getElementById('inpNotiz').value = i.notiz || "";
                 document.getElementById('inpBild').value = i.bild || "";
-                
                 if(i.bild){ document.getElementById('imgPreview').src=i.bild; document.getElementById('imgPreview').style.display='block'; }
             }
         }
@@ -354,7 +354,6 @@
                 name: document.getElementById('inpName').value,
                 menge: parseInt(document.getElementById('inpMenge').value) || 0,
                 preis: parseFloat(document.getElementById('inpPreis').value) || 0,
-                // HIER: Alle Felder speichern
                 groesse: document.getElementById('inpGroesse').value,
                 datum: document.getElementById('inpDatum').value,
                 ort: document.getElementById('inpOrt').value,
@@ -381,16 +380,15 @@
         function openSellModal(e, id) {
             e.stopPropagation();
             const it = inventory.find(x => x.id === id);
-            // Basket initialisieren
             basket = [{ id: it.id, name: it.name, artnr: it.artnr, stock: it.menge, qty: 1, priceTotal: it.preis }];
             
-            // Standardwerte
             document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('sellShipping').value = 0;
             
-            // FIX: Rechnungsbild vom Artikel übernehmen (nicht global speichern, sondern nur ins Input setzen)
-            document.getElementById('sellBild').value = ""; // Standard leer für neue Rechnung
-            document.getElementById('sellImgPreview').style.display = 'none';
+            // FIX: Rechnungsbild leer lassen oder vom Item laden (aber nicht global speichern)
+            document.getElementById('sellBild').value = it.bild || ""; 
+            document.getElementById('sellImgPreview').src = it.bild || "";
+            document.getElementById('sellImgPreview').style.display = it.bild ? 'block' : 'none';
             
             updateInvoicePreview(); renderBasket();
             document.getElementById('modalSell').style.display = 'flex';
@@ -514,7 +512,6 @@
             reader.onload = async (e) => {
                 const data = JSON.parse(e.target.result);
                 await dbOp('inventory', 'clear'); await dbOp('sales', 'clear');
-                // HIER: Alle Felder explizit übernehmen
                 for (let i of (data.artikel || [])) { delete i.id; await dbOp('inventory', 'add', i); }
                 for (let s of (data.sales || [])) { delete s.id; await dbOp('sales', 'add', s); }
                 location.reload();
