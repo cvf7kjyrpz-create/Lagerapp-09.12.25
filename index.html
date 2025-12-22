@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V25 Final Layout</title>
+    <title>Lager V26 Fix Image</title>
     <style>
         :root {
             --bg: #121212; --card: #1e1e1e; --input-bg: #2d2d2d;
@@ -181,7 +181,7 @@
                     <label>Versand (€)</label><input type="number" step="0.01" id="sellShipping" value="0" oninput="calcBasketTotal()">
                     <label style="margin-top:8px;">Gesamtumsatz</label><input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold;">
                     <label style="margin-top:8px;">Rechnungsbild</label>
-                    <input type="file" onchange="handleImage(this, 'sellBild', 'sellImgPreview')">
+                    <input type="file" id="sellFileInput" onchange="handleImage(this, 'sellBild', 'sellImgPreview')">
                     <input type="hidden" id="sellBild">
                     <img id="sellImgPreview" style="width:100%; margin-top:5px; border-radius:4px; display:none;">
                 </div>
@@ -270,21 +270,16 @@
                     div.className = i.marked ? 'item-row marked' : 'item-row';
                     div.onclick = (e) => { if(e.target.tagName !== 'BUTTON') openEditModal(i.id); };
                     
-                    // --- META TAGS ---
                     let metaTags = `<span class="meta-tag">#${i.artnr || ''}</span>`;
                     if(i.groesse) metaTags += `<span class="meta-tag">${i.groesse}</span>`;
                     
-                    // Indikatoren erstellen (Notiz / Bild)
                     let indicators = "";
                     if(i.notiz && i.notiz.trim() !== "") indicators += ' 📝';
                     if(i.bild && i.bild.trim() !== "") indicators += ' 🖼️';
 
-                    // Ort mit Indikatoren verknüpfen
                     if(i.ort) {
-                        // Wenn Ort da ist, Indikatoren direkt dahinter in den Tag
                         metaTags += `<span class="meta-tag">${i.ort} ${indicators}</span>`;
                     } else {
-                        // Wenn kein Ort da ist, aber Indikatoren, dann extra Tag (nur Icons)
                         if(indicators !== "") metaTags += `<span class="meta-tag" style="background:none; padding-left:0;">${indicators}</span>`;
                     }
 
@@ -317,6 +312,10 @@
         // --- EDIT MODAL ---
         function openEditModal(id = null) {
             document.getElementById('modalEdit').style.display = 'flex';
+            
+            // FIX: Immer Datei-Input resetten
+            document.getElementById('inpFile').value = "";
+
             if (!id) {
                 document.getElementById('editId').value = '';
                 document.getElementById('inpArtnr').value = (inventory.length + 1) + "-2025";
@@ -328,7 +327,10 @@
                 document.getElementById('inpOrt').value = '';
                 document.getElementById('inpZustand').value = 'Neu';
                 document.getElementById('inpNotiz').value = '';
+                
+                // FIX: Bild-Felder leeren
                 document.getElementById('inpBild').value = '';
+                document.getElementById('imgPreview').src = '';
                 document.getElementById('imgPreview').style.display = 'none';
             } else {
                 const i = inventory.find(x => x.id === id);
@@ -343,7 +345,15 @@
                 document.getElementById('inpZustand').value = i.zustand || "Neu";
                 document.getElementById('inpNotiz').value = i.notiz || "";
                 document.getElementById('inpBild').value = i.bild || "";
-                if(i.bild){ document.getElementById('imgPreview').src=i.bild; document.getElementById('imgPreview').style.display='block'; }
+                
+                // FIX: Bild korrekt anzeigen oder ausblenden
+                if(i.bild){ 
+                    document.getElementById('imgPreview').src=i.bild; 
+                    document.getElementById('imgPreview').style.display='block'; 
+                } else {
+                    document.getElementById('imgPreview').style.display='none';
+                    document.getElementById('imgPreview').src='';
+                }
             }
         }
 
@@ -385,11 +395,15 @@
             document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('sellShipping').value = 0;
             
-            // FIX: Rechnungsbild leer lassen oder vom Item laden (aber nicht global speichern)
+            // FIX: Bild nur von DIESEM Artikel übernehmen (Vorauswahl), aber nicht global
             document.getElementById('sellBild').value = it.bild || ""; 
             document.getElementById('sellImgPreview').src = it.bild || "";
             document.getElementById('sellImgPreview').style.display = it.bild ? 'block' : 'none';
             
+            // FIX: Datei-Input leeren, damit man nicht versehentlich das alte Bild nochmal hochlädt
+            const fileInp = document.getElementById('sellFileInput');
+            if(fileInp) fileInp.value = "";
+
             updateInvoicePreview(); renderBasket();
             document.getElementById('modalSell').style.display = 'flex';
         }
