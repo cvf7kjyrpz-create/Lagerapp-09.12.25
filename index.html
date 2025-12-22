@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V10 Compact</title>
+    <title>Lager V11 History</title>
     <style>
         :root {
             --bg: #121212;
@@ -33,55 +33,58 @@
         .app-header {
             background-color: rgba(30, 30, 30, 0.98);
             backdrop-filter: blur(10px);
-            padding: 6px 10px; /* Header flacher */
+            padding: 5px 8px; 
             position: sticky; top: 0; z-index: 50;
             border-bottom: 1px solid var(--border);
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
 
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        h1 { margin: 0; font-size: 0.95rem; font-weight: 700; letter-spacing: 0.5px; }
+        h1 { margin: 0; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.5px; }
+
+        .header-actions { display: flex; gap: 15px; }
+        .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; opacity: 0.9; }
 
         /* --- SUCHE --- */
-        .search-container { position: relative; width: 100%; }
+        .search-container { position: relative; width: 100%; margin-top: 2px;}
         .search-input {
-            width: 100%; height: 30px;
+            width: 100%; height: 28px;
             background: var(--input-bg); border: 1px solid var(--border);
-            border-radius: 5px; padding: 0 25px; 
-            color: white; font-size: 0.85rem; box-sizing: border-box;
+            border-radius: 4px; padding: 0 25px; 
+            color: white; font-size: 0.8rem; box-sizing: border-box;
         }
-        .search-icon { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); opacity: 0.5; font-size: 0.75rem; pointer-events: none; }
+        .search-icon { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); opacity: 0.5; font-size: 0.7rem; pointer-events: none; }
         .search-clear {
             position: absolute; right: 0; top: 0; bottom: 0; width: 30px;
             background: none; border: none; color: #999; font-size: 1rem;
             cursor: pointer; display: none; align-items: center; justify-content: center;
         }
 
-        /* --- STATS (Kleiner) --- */
+        /* --- STATS --- */
         .stats-bar {
             display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 2px; margin-top: 6px; padding-top: 4px; border-top: 1px solid #333;
+            gap: 2px; margin-top: 4px; padding-top: 4px; border-top: 1px solid #333;
         }
         .stat-box { text-align: center; }
-        .stat-label { font-size: 0.6rem; color: #777; display: block; }
-        .stat-val { font-size: 0.75rem; font-weight: bold; display: block; }
+        .stat-label { font-size: 0.55rem; color: #777; display: block; }
+        .stat-val { font-size: 0.7rem; font-weight: bold; display: block; }
         .c-blue { color: #60a5fa; }
         .c-green { color: var(--success); }
         .c-gold { color: var(--profit); }
 
-        /* --- LISTE (ULTRA KOMPAKT) --- */
+        /* --- LISTE --- */
         #itemList { padding: 0; }
 
         .item-row {
             background: var(--card);
             border-bottom: 1px solid #252525;
-            padding: 5px 8px; /* SEHR WICHTIG: Weniger Padding */
+            padding: 4px 6px; /* Maximal komprimiert */
             display: grid;
-            grid-template-columns: 1fr auto;
+            grid-template-columns: auto 1fr auto; /* Menge - Info - Aktionen */
             gap: 6px;
             align-items: center;
             border-left: 3px solid transparent;
-            min-height: 40px; /* Fixe Mindesthöhe für Touch */
+            min-height: 36px;
         }
         
         .item-row.marked {
@@ -89,39 +92,54 @@
             border-left: 3px solid var(--profit);
         }
 
-        .item-main { display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
+        /* MENGE ANZEIGE (Neu) */
+        .qty-badge {
+            font-size: 0.85rem; font-weight: bold; color: #60a5fa; 
+            min-width: 25px; text-align: center;
+        }
+        .qty-badge.low { color: #ef4444; }
+
+        .item-main { display: flex; flex-direction: column; gap: 0px; overflow: hidden; }
         
-        /* Titel kleiner */
+        /* Titel: Kleiner, aber erlaubt Umbruch (white-space normal) */
         .item-title { 
             font-weight: 600; 
-            font-size: 0.85rem; /* Kleiner! */
+            font-size: 0.75rem; /* Sehr klein */
             color: white; 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            line-height: 1.2;
+            line-height: 1.1;
+            white-space: normal; /* Mehrzeilig erlaubt */
+            word-break: break-word;
         }
         
-        /* Meta Infos kleiner */
-        .item-meta { font-size: 0.7rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-        .meta-tag { background: #333; padding: 0px 4px; border-radius: 3px; font-size: 0.65rem; } /* Tags flacher */
+        .item-meta { font-size: 0.65rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 1px;}
+        .meta-tag { background: #333; padding: 0px 3px; border-radius: 2px; font-size: 0.6rem; }
         .tag-shop { color: #93c5fd; }
         .tag-size { color: #f9a8d4; }
-        .icon-symbol { font-size: 0.75rem; margin-left: 2px; }
+        .icon-symbol { font-size: 0.7rem; margin-left: 2px; }
 
-        .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 70px; }
+        .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 65px; }
         
-        /* Preis kleiner */
-        .item-price { font-weight: 500; font-size: 0.8rem; color: #bbb; }
-        .item-total { font-size: 0.65rem; color: #666; }
+        .item-price { font-weight: 500; font-size: 0.75rem; color: #bbb; }
+        .item-total { font-size: 0.6rem; color: #666; }
 
-        .star-btn { background: none; border: none; padding: 0; font-size: 1rem; cursor: pointer; color: #444; line-height: 1; margin-bottom: 1px; }
+        .star-btn { background: none; border: none; padding: 0; font-size: 0.9rem; cursor: pointer; color: #444; line-height: 1; }
         .star-btn.active { color: var(--profit); } 
         
-        /* Button kleiner */
         .btn-mini { 
             background: #2d2d2d; border: 1px solid #444; color: #ddd; 
-            padding: 2px 6px; font-size: 0.65rem; border-radius: 3px; cursor: pointer; 
+            padding: 1px 5px; font-size: 0.65rem; border-radius: 3px; cursor: pointer; 
             margin-top: 2px;
         }
+
+        /* --- HISTORY LISTE STYLE --- */
+        .history-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px; border-bottom: 1px solid #333; font-size: 0.8rem;
+        }
+        .hist-info { display: flex; flex-direction: column; }
+        .hist-date { font-size: 0.65rem; color: #777; }
+        .btn-undo { background: #331111; color: #ff7777; border: 1px solid #552222; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.7rem;}
+
 
         /* --- FAB & MODALS --- */
         .fab {
@@ -132,12 +150,10 @@
             cursor: pointer; z-index: 90; display: flex; align-items: center; justify-content: center;
         }
 
-        .settings-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 0; opacity: 0.7; }
-
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 10px; }
         .modal-box { background: var(--card); width: 100%; max-width: 500px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 95vh; overflow: hidden; }
-        .modal-header { padding: 10px; border-bottom: 1px solid var(--border); font-weight: bold; text-align: center; background: #252525; font-size: 0.9rem;}
-        .modal-body { padding: 12px; overflow-y: auto; }
+        .modal-header { padding: 8px; border-bottom: 1px solid var(--border); font-weight: bold; text-align: center; background: #252525; font-size: 0.9rem;}
+        .modal-body { padding: 10px; overflow-y: auto; }
         .modal-footer { padding: 10px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #252525; }
 
         .settings-row { margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 12px; }
@@ -145,19 +161,19 @@
         .btn-blue { background: var(--primary); color: white; }
         .btn-gray { background: #444; color: white; }
 
-        .form-grid { display: grid; gap: 10px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-grid { display: grid; gap: 8px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 2px; }
         
         input, select, textarea {
-            width: 100%; height: 36px; padding: 0 8px;
+            width: 100%; height: 34px; padding: 0 8px;
             background: var(--input-bg); border: 1px solid var(--border);
-            color: white; border-radius: 5px; font-size: 0.9rem;
+            color: white; border-radius: 4px; font-size: 0.9rem;
             box-sizing: border-box; outline: none;
             -webkit-appearance: none; appearance: none; font-family: inherit;
         }
-        input[type="date"] { display: block; line-height: 36px; }
-        textarea { height: 60px; resize: vertical; padding: 6px; line-height: 1.3; }
+        input[type="date"] { display: block; line-height: 34px; }
+        textarea { height: 50px; resize: vertical; padding: 6px; line-height: 1.3; }
         .hidden { display: none; }
     </style>
 </head>
@@ -166,7 +182,10 @@
     <div class="app-header">
         <div class="header-top">
             <h1>📦 MEIN LAGER</h1>
-            <button class="settings-btn" onclick="openSettings()">⚙️</button>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="openHistory()" title="Verlauf">🕒</button>
+                <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
+            </div>
         </div>
         
         <div class="search-container">
@@ -261,6 +280,17 @@
         </div>
     </div>
 
+    <div id="modalHistory" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">Verkaufsprotokoll</div>
+            <div class="modal-body" id="historyList">
+                </div>
+            <div class="modal-footer">
+                <button class="btn-full btn-gray" onclick="closeModals()" style="grid-column: 1 / -1">Schließen</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let inventory = JSON.parse(localStorage.getItem('lagerAppDB')) || [];
         let salesLog = JSON.parse(localStorage.getItem('lagerAppSales')) || [];
@@ -291,7 +321,7 @@
                     const starClass = item.markiert ? 'star-btn active' : 'star-btn';
                     const starIcon = item.markiert ? '★' : '☆';
 
-                    // Gesamtsumme Logik
+                    // Summe nur wenn >1 Stück
                     let priceDisplay = `<span class="item-price">${price.toFixed(2)} €</span>`;
                     if (qty > 1) {
                         priceDisplay += `<div class="item-total">Sum: ${(price * qty).toFixed(2)} €</div>`;
@@ -304,6 +334,7 @@
                     };
 
                     div.innerHTML = `
+                        <div class="qty-badge ${qty < 2 ? 'low' : ''}">${qty}x</div>
                         <div class="item-main">
                             <span class="item-title">${item.name}</span>
                             <div class="item-meta">
@@ -342,16 +373,67 @@
             }
         }
 
-        function formatCurrency(val) {
-            if(val >= 10000) return (val/1000).toFixed(1) + 'k €';
-            return val.toFixed(2) + ' €';
+        // --- HISTORY & RESTORE ---
+        function openHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            document.getElementById('modalHistory').style.display = 'flex';
+
+            if(salesLog.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#777">Keine Verkäufe.</p>';
+                return;
+            }
+
+            // Rückwärts durchlaufen (Neueste zuerst)
+            [...salesLog].reverse().forEach((sale, revIndex) => {
+                // Echten Index im Original-Array finden
+                const realIndex = salesLog.length - 1 - revIndex;
+                
+                const div = document.createElement('div');
+                div.className = 'history-row';
+                div.innerHTML = `
+                    <div class="hist-info">
+                        <span style="font-weight:bold">${sale.name}</span>
+                        <span class="hist-date">${formatDate(sale.date)} | VK: ${sale.sellPrice.toFixed(2)}€</span>
+                    </div>
+                    <button class="btn-undo" onclick="restoreSale(${realIndex})">Storno</button>
+                `;
+                list.appendChild(div);
+            });
         }
 
-        function filterList() { renderList(document.getElementById('searchInput').value); }
-        function clearSearch() { document.getElementById('searchInput').value = ''; renderList(""); }
+        function restoreSale(index) {
+            if(!confirm("Verkauf wirklich stornieren und Artikelbestand erhöhen?")) return;
+            
+            const sale = salesLog[index];
+            
+            // Artikel im Inventar suchen (via Name)
+            let item = inventory.find(i => i.name === sale.name);
+            
+            if(item) {
+                item.menge++; // Bestand erhöhen
+                alert(`Bestand von "${item.name}" wurde auf ${item.menge} erhöht.`);
+            } else {
+                // Falls Artikel gelöscht war: Neu anlegen (Basic)
+                const newItem = {
+                    artnr: 'RESTORED', // Placeholder
+                    name: sale.name,
+                    menge: 1,
+                    preis: sale.buyPrice,
+                    groesse: '', zustand: 'Neu', datum: '', ort: '', notiz: 'Wiederhergestellt', bild: '', markiert: false
+                };
+                inventory.unshift(newItem);
+                alert(`Artikel "${sale.name}" war gelöscht und wurde neu angelegt.`);
+            }
+
+            // Aus Log entfernen
+            salesLog.splice(index, 1);
+            saveAll();
+            openHistory(); // Refresh Modal
+            renderList(); // Refresh List
+        }
 
         // --- CORE ACTIONS ---
-
         function toggleStar(e, index) {
             e.stopPropagation();
             inventory[index].markiert = !inventory[index].markiert;
@@ -387,12 +469,8 @@
             const id = document.getElementById('editIndex').value;
             const newArtnr = document.getElementById('inpArtnr').value;
             
-            // Duplicate Check
             const duplicate = inventory.some((item, idx) => item.artnr === newArtnr && idx != id);
-            if (duplicate) {
-                alert("Fehler: Artikelnummer existiert bereits!");
-                return;
-            }
+            if (duplicate) { alert("Nummer existiert schon!"); return; }
 
             let markiertStatus = false;
             if(id !== "") markiertStatus = inventory[id].markiert;
@@ -423,7 +501,7 @@
 
         function deleteCurrentItem() {
             const index = document.getElementById('editIndex').value;
-            if(index !== "" && confirm("Wirklich löschen?")) {
+            if(index !== "" && confirm("Löschen?")) {
                 inventory.splice(index, 1);
                 saveAll();
                 closeModals();
@@ -431,7 +509,6 @@
             }
         }
 
-        // --- AUTO ID GENERATOR (001 - YYYY) ---
         function generateNextArtnr() {
             const currentYear = new Date().getFullYear();
             let maxNum = 0;
@@ -448,6 +525,16 @@
         }
 
         // --- TECH / UI ---
+        function formatCurrency(val) {
+            if(val >= 10000) return (val/1000).toFixed(1) + 'k €';
+            return val.toFixed(2) + ' €';
+        }
+        function formatDate(d) {
+            if(!d) return '';
+            const parts = d.split('-');
+            return `${parts[2]}.${parts[1]}.${parts[0].substring(2)}`;
+        }
+
         function openEditModal(index = null) {
             document.getElementById('modalEdit').style.display = 'flex';
             document.body.style.overflow = 'hidden';
@@ -564,6 +651,8 @@
                 reader.readAsText(input.files[0]);
             }
         }
+        function filterList() { renderList(document.getElementById('searchInput').value); }
+        function clearSearch() { document.getElementById('searchInput').value = ''; renderList(""); }
     </script>
 </body>
 </html>
