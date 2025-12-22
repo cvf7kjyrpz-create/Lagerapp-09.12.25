@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V17 Fix</title>
+    <title>Lager V18 Multi-Sell</title>
     <style>
         :root {
             --bg: #121212; --card: #1e1e1e; --input-bg: #2d2d2d;
@@ -51,21 +51,13 @@
         .btn-mini { background: #2d2d2d; border: 1px solid #444; color: #ddd; padding: 1px 5px; font-size: 0.6rem; border-radius: 3px; cursor: pointer; margin-top: 1px; }
 
         /* HISTORY LISTE */
-        .history-row { 
-            background: var(--card); border-bottom: 1px solid #252525; padding: 5px 6px; 
-            display: grid; grid-template-columns: 1fr auto; gap: 5px; align-items: center; 
-        }
+        .history-row { background: var(--card); border-bottom: 1px solid #252525; padding: 5px 6px; display: grid; grid-template-columns: 1fr auto; gap: 5px; align-items: center; }
         .hist-info { display: flex; flex-direction: column; gap: 1px; overflow: hidden;}
         .hist-title { font-size: 0.65rem; font-weight: bold; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .hist-meta { font-size: 0.6rem; color: #888; display:flex; gap:5px;}
         .hist-inv { color: var(--profit); font-family: monospace; font-size:0.6rem; }
         .hist-actions { display: flex; gap: 6px; align-items: center; }
-        
-        .btn-icon-sm { 
-            width: 26px; height: 26px; border-radius: 4px; border: 1px solid #444; 
-            background: #252525; color: #ccc; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 0.85rem; 
-        }
+        .btn-icon-sm { width: 26px; height: 26px; border-radius: 4px; border: 1px solid #444; background: #252525; color: #ccc; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.85rem; }
         .btn-storno { border-color: #552222; background: #331111; color: #ff8888; }
         
         /* MODALS */
@@ -76,16 +68,22 @@
         .modal-body { padding: 10px; overflow-y: auto; }
         .modal-footer { padding: 10px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #252525; }
 
+        /* WARENKORB STYLES */
+        .basket-item { background: #252525; border: 1px solid #333; padding: 8px; border-radius: 4px; margin-bottom: 8px; }
+        .basket-head { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; color: #ddd; }
+        .basket-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .basket-row-del { color: #ff6666; cursor: pointer; font-size: 1rem; }
+        
+        /* ADD ITEM SEARCH */
+        #addItemSearch { width: 100%; margin-top: 10px; margin-bottom: 5px; border: 1px dashed #444; background: #222; color: #aaa; text-align: center; cursor: pointer; padding: 8px; border-radius: 4px; font-size: 0.8rem; }
+        #searchDropdown { display: none; background: #333; max-height: 150px; overflow-y: auto; border-radius: 4px; margin-top: 2px; border: 1px solid #444; }
+        .search-res-item { padding: 6px; border-bottom: 1px solid #444; font-size: 0.75rem; cursor: pointer; }
+        .search-res-item:hover { background: #444; }
+
         /* FULL IMAGE VIEWER */
         #modalImageViewer { z-index: 300; background: rgba(0,0,0,0.98); flex-direction: column; }
         #fullImage { max-width: 100%; max-height: 80vh; object-fit: contain; margin-bottom: 15px; border-radius: 4px; border:1px solid #333;}
-        .close-img-btn { 
-            position: absolute; top: 20px; right: 20px; 
-            background: rgba(255,255,255,0.2); color: white; 
-            border: 1px solid white; border-radius: 50%; 
-            width: 40px; height: 40px; font-size: 1.5rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .close-img-btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); color: white; border: 1px solid white; border-radius: 50%; width: 40px; height: 40px; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
         .settings-row { margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 12px; }
         .btn-full { width: 100%; padding: 8px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem;}
@@ -171,8 +169,8 @@
         <div class="modal-box">
             <div class="modal-header">Verkauf erfassen</div>
             <div class="modal-body">
-                <input type="hidden" id="sellId">
-                <div class="form-grid">
+                
+                <div class="form-grid" style="margin-bottom:15px; background:#252525; padding:10px; border-radius:5px;">
                     <div>
                         <label style="color:var(--profit); font-weight:bold;">Rechnungs-Nr.</label>
                         <input type="text" id="sellInvoiceNr">
@@ -181,15 +179,19 @@
                         <div><label>Plattform</label><select id="sellPlatform" onchange="updateInvoicePreview()"><option value="Vinted">Vinted</option><option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option><option value="Sonstiges">Sonstiges</option></select></div>
                         <div><label>Datum</label><input type="date" id="sellDate"></div>
                     </div>
-                    <div class="form-row">
-                         <div><label>Verkaufspreis (€)</label><input type="number" step="0.01" id="sellPrice" oninput="calcSellTotal()"></div>
-                         <div><label>Menge</label><input type="number" id="sellQty" value="1" min="1" oninput="calcSellTotal()"></div>
-                    </div>
+                </div>
+
+                <div id="sellBasketList"></div>
+
+                <input type="text" id="addItemSearch" placeholder="+ Artikel hinzufügen (Suchen...)" onkeyup="searchForItem(this)">
+                <div id="searchDropdown"></div>
+
+                <div class="form-grid" style="margin-top:15px; border-top:1px solid #444; padding-top:10px;">
                     <div>
                         <label>Versandkosten (€) <span style="font-size:0.6rem; color:#888">(Zahlt Käufer)</span></label>
-                        <input type="number" step="0.01" id="sellShipping" value="0" oninput="calcSellTotal()">
+                        <input type="number" step="0.01" id="sellShipping" value="0" oninput="calcBasketTotal()">
                     </div>
-                    <div><label>Gesamtsumme (Umsatz)</label><input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold;"></div>
+                    <div><label>GESAMT Einnahme (Artikel + Versand)</label><input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold;"></div>
                     <div>
                          <label>Beleg (Bild)</label>
                          <input type="file" id="sellFile" accept="image/*" onchange="handleImage(this, 'sellBild', 'sellImgPreview')" style="padding-top:6px; height:auto;">
@@ -217,10 +219,10 @@
                     </div>
                     <div><label>Plattform</label><input type="text" id="editSalePlatform"></div>
                     <div class="form-row">
-                        <div><label>Preis (€)</label><input type="number" step="0.01" id="editSalePrice"></div>
+                        <div><label>Artikel-Erlös (€)</label><input type="number" step="0.01" id="editSalePrice"></div>
                         <div><label>Versand (€)</label><input type="number" step="0.01" id="editSaleShipping"></div>
                     </div>
-                    <p style="font-size:0.7rem; color:#888; text-align:center;">Menge kann nicht bearbeitet werden.<br>Bitte Storno und neu verkaufen.</p>
+                    <p style="font-size:0.7rem; color:#888; text-align:center;">Hinweis: Hier bearbeitest du den Erlös dieser Position. Um die Menge zu ändern, bitte stornieren.</p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -261,9 +263,7 @@
             document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none'); 
             document.body.style.overflow = 'auto'; 
         }
-        function closeImageViewer() {
-            document.getElementById('modalImageViewer').style.display = 'none';
-        }
+        function closeImageViewer() { document.getElementById('modalImageViewer').style.display = 'none'; }
 
         // --- INDEXED DB ---
         const DB_NAME = 'LagerDB_V1';
@@ -395,14 +395,14 @@
         function updateStats(invQty, invVal) {
             let totalRevenue = 0; let totalProfit = 0;
             salesLog.forEach(sale => {
-                // NAN Protection
-                const revenue = isNaN(sale.total) ? 0 : sale.total;
+                const revenue = isNaN(sale.total) ? 0 : sale.total; // Gesamtsumme (Erlös + Versand)
                 const shipping = isNaN(sale.shipping) ? 0 : sale.shipping;
                 const buyPrice = isNaN(sale.buyPrice) ? 0 : sale.buyPrice;
                 const qty = isNaN(sale.qty) ? 0 : sale.qty;
 
-                // Profit = Revenue - Shipping - (EK * Qty)
-                const profit = revenue - shipping - (buyPrice * qty);
+                // Profit = (Gesamtsumme - Versand) - (EK * Menge)
+                const itemRevenue = revenue - shipping; 
+                const profit = itemRevenue - (buyPrice * qty);
                 
                 totalRevenue += revenue;
                 totalProfit += profit;
@@ -424,20 +424,26 @@
             }
         }
 
-        // --- VERKAUF LOGIK ---
+        // --- WARENKORB LOGIK (V18) ---
+        let currentBasket = []; // { id, name, artnr, stock, qty, priceTotal }
 
         async function openSellModal(e, id) {
             e.stopPropagation();
             const item = inventory.find(i => i.id === id);
             if(!item || item.menge <= 0) return alert("Bestand ist 0!");
+            
+            // Init Basket
+            currentBasket = [];
+            addToBasket(item);
 
-            document.getElementById('sellId').value = id;
-            document.getElementById('sellPrice').value = item.preis;
-            document.getElementById('sellQty').value = 1;
-            document.getElementById('sellShipping').value = 0;
+            // Init General Fields
             document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('sellPlatform').value = "Vinted";
-            
+            document.getElementById('sellShipping').value = 0;
+            document.getElementById('addItemSearch').value = "";
+            document.getElementById('searchDropdown').style.display = 'none';
+
+             // Bild Logik (Nimmt das vom ersten Artikel)
             if (item.bild) {
                 document.getElementById('sellBild').value = item.bild;
                 document.getElementById('sellImgPreview').src = item.bild;
@@ -447,9 +453,112 @@
                 document.getElementById('sellImgPreview').style.display = "none";
             }
             document.getElementById('sellFile').value = "";
+
             updateInvoicePreview();
-            calcSellTotal();
+            renderBasket();
             document.getElementById('modalSell').style.display = 'flex';
+        }
+
+        function addToBasket(item) {
+            // Check duplicate
+            if(currentBasket.find(x => x.id === item.id)) return alert("Artikel schon in der Liste");
+            
+            currentBasket.push({
+                id: item.id,
+                name: item.name,
+                artnr: item.artnr,
+                stock: item.menge,
+                qty: 1,
+                // Default Total: EK-Preis als Vorschlag
+                priceTotal: item.preis 
+            });
+            renderBasket();
+        }
+
+        function renderBasket() {
+            const list = document.getElementById('sellBasketList');
+            list.innerHTML = "";
+            
+            currentBasket.forEach((pos, idx) => {
+                const div = document.createElement('div');
+                div.className = 'basket-item';
+                div.innerHTML = `
+                    <div class="basket-head">
+                        <span>${pos.name} (${pos.artnr})</span>
+                        <span class="basket-row-del" onclick="removeFromBasket(${idx})">✕</span>
+                    </div>
+                    <div class="basket-inputs">
+                        <div>
+                            <label>Menge (Max: ${pos.stock})</label>
+                            <input type="number" min="1" max="${pos.stock}" value="${pos.qty}" onchange="updateBasketRow(${idx}, 'qty', this.value)">
+                        </div>
+                        <div>
+                            <label>Verkaufspreis (Komplett)</label>
+                            <input type="number" step="0.01" value="${pos.priceTotal}" onchange="updateBasketRow(${idx}, 'price', this.value)">
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            calcBasketTotal();
+        }
+
+        function updateBasketRow(idx, field, val) {
+            if(field === 'qty') {
+                let v = parseInt(val);
+                if(v < 1) v = 1;
+                if(v > currentBasket[idx].stock) { alert("Nicht genug Lagerbestand!"); v = currentBasket[idx].stock; }
+                currentBasket[idx].qty = v;
+            }
+            if(field === 'price') {
+                currentBasket[idx].priceTotal = parseFloat(val) || 0;
+            }
+            renderBasket(); // Re-render to sanitize inputs but keeps focus tricky. Ideally just update calc.
+            // Simplified:
+            // calcBasketTotal(); 
+        }
+
+        function removeFromBasket(idx) {
+            currentBasket.splice(idx, 1);
+            renderBasket();
+        }
+
+        function calcBasketTotal() {
+            let itemSum = 0;
+            currentBasket.forEach(p => itemSum += p.priceTotal);
+            const shipping = parseFloat(document.getElementById('sellShipping').value) || 0;
+            document.getElementById('sellTotal').value = (itemSum + shipping).toFixed(2) + " €";
+        }
+
+        // Search in Modal
+        function searchForItem(input) {
+            const term = input.value.toLowerCase();
+            const drop = document.getElementById('searchDropdown');
+            drop.innerHTML = "";
+            
+            if(term.length < 2) { drop.style.display = 'none'; return; }
+            
+            const hits = inventory.filter(i => 
+                (i.name.toLowerCase().includes(term) || i.artnr.toLowerCase().includes(term)) 
+                && i.menge > 0
+            );
+
+            if(hits.length > 0) {
+                drop.style.display = 'block';
+                hits.forEach(hit => {
+                    const div = document.createElement('div');
+                    div.className = 'search-res-item';
+                    div.innerText = `${hit.name} (#${hit.artnr}) - Bestand: ${hit.menge}`;
+                    div.onclick = () => {
+                        addToBasket(hit);
+                        input.value = "";
+                        drop.style.display = 'none';
+                    };
+                    drop.appendChild(div);
+                });
+            } else {
+                drop.style.display = 'none';
+            }
         }
 
         function updateInvoicePreview() {
@@ -478,52 +587,65 @@
             return `${prefix} ${String(maxNum + 1).padStart(3, '0')} - ${currentYear}`;
         }
 
-        function calcSellTotal() {
-            const p = parseFloat(document.getElementById('sellPrice').value) || 0;
-            const q = parseInt(document.getElementById('sellQty').value) || 0;
-            const s = parseFloat(document.getElementById('sellShipping').value) || 0;
-            document.getElementById('sellTotal').value = ((p * q) + s).toFixed(2) + " €";
-        }
-
         async function performSell() {
-            const id = parseInt(document.getElementById('sellId').value);
-            const item = inventory.find(i => i.id === id);
-            const qtySold = parseInt(document.getElementById('sellQty').value);
-            const pricePerItem = parseFloat(document.getElementById('sellPrice').value);
-            const shipping = parseFloat(document.getElementById('sellShipping').value) || 0;
+            if(currentBasket.length === 0) return alert("Warenkorb leer!");
+            
             const platform = document.getElementById('sellPlatform').value;
             const date = document.getElementById('sellDate').value;
             const img = document.getElementById('sellBild').value;
             const invNr = document.getElementById('sellInvoiceNr').value;
+            const shippingTotal = parseFloat(document.getElementById('sellShipping').value) || 0;
 
-            if(qtySold > item.menge) return alert("Bestand zu niedrig!");
             if(!invNr) return alert("Rechnungsnummer fehlt!");
 
-            item.menge -= qtySold;
-
-            const sale = {
-                name: item.name,
-                artnr: item.artnr,
-                date: date,
-                buyPrice: item.preis,
-                sellPrice: pricePerItem,
-                shipping: shipping,
-                qty: qtySold,
-                total: (pricePerItem * qtySold) + shipping,
-                platform: platform,
-                invoiceNr: invNr,
-                invoiceImg: img
-            };
-
-            await dbAdd('sales', sale);
+            // Wir teilen die Versandkosten durch die Anzahl der Positionen, 
+            // damit es in der Datenbank pro Zeile "fair" aussieht (oder wir speichern es nur beim ersten).
+            // Einfacher: Wir speichern Versand beim ersten Item, bei den anderen 0. 
+            // So stimmt die Summe.
             
-            if(item.menge === 0) {
-                 if(confirm("Bestand ist 0. Artikel löschen?")) {
-                     await dbDelete('inventory', id);
-                 } else { await dbPut('inventory', item); }
-            } else { await dbPut('inventory', item); }
+            for (let i = 0; i < currentBasket.length; i++) {
+                const pos = currentBasket[i];
+                const item = inventory.find(x => x.id === pos.id);
+                
+                // Stock Update
+                item.menge -= pos.qty;
+                
+                // Logic: PAUSCHALPREIS -> Einzelpreis berechnen für Stats
+                const unitSellPrice = pos.priceTotal / pos.qty;
 
-            // FORCE REFRESH
+                // Shipping nur beim ersten Item speichern
+                const lineShipping = (i === 0) ? shippingTotal : 0;
+                
+                const sale = {
+                    name: item.name,
+                    artnr: item.artnr,
+                    date: date,
+                    buyPrice: item.preis,
+                    sellPrice: unitSellPrice, // Rechnerisch pro Stück
+                    qty: pos.qty,
+                    shipping: lineShipping,
+                    // Total for this line logic: (Unit * Qty) + ShippingShare
+                    total: pos.priceTotal + lineShipping, 
+                    platform: platform,
+                    invoiceNr: invNr,
+                    invoiceImg: img
+                };
+
+                await dbAdd('sales', sale);
+
+                // Inventory Handling
+                if(item.menge === 0) {
+                     // Check if user wants to delete? 
+                     // In Multi-Mode asking for every item is annoying. 
+                     // We just keep it with 0 or auto-delete? 
+                     // Let's keep it to be safe or delete silently if agreed.
+                     // User said "Ask". Okay.
+                     if(confirm(`Artikel "${item.name}" ist leer. Löschen?`)) {
+                         await dbDelete('inventory', item.id);
+                     } else { await dbPut('inventory', item); }
+                } else { await dbPut('inventory', item); }
+            }
+
             await loadData();
             closeModals();
             renderList(document.getElementById('searchInput').value);
@@ -566,7 +688,7 @@
             document.getElementById('modalImageViewer').style.display = 'flex';
         }
 
-        // FULL EDIT SALE LOGIC
+        // EDIT SALE
         function openEditSale(id) {
             const sale = salesLog.find(s => s.id === id);
             if(!sale) return;
@@ -574,8 +696,13 @@
             document.getElementById('editSaleInv').value = sale.invoiceNr;
             document.getElementById('editSaleDate').value = sale.date;
             document.getElementById('editSalePlatform').value = sale.platform;
-            document.getElementById('editSalePrice').value = sale.sellPrice;
-            document.getElementById('editSaleShipping').value = sale.shipping || 0;
+            
+            // Total - Shipping = ItemRevenue
+            const ship = sale.shipping || 0;
+            const itemRev = sale.total - ship;
+            
+            document.getElementById('editSalePrice').value = itemRev.toFixed(2);
+            document.getElementById('editSaleShipping').value = ship.toFixed(2);
             
             document.getElementById('modalEditSale').style.display = 'flex';
         }
@@ -588,18 +715,20 @@
             sale.invoiceNr = document.getElementById('editSaleInv').value;
             sale.date = document.getElementById('editSaleDate').value;
             sale.platform = document.getElementById('editSalePlatform').value;
-            const newPrice = parseFloat(document.getElementById('editSalePrice').value) || 0;
+            
+            const newItemRev = parseFloat(document.getElementById('editSalePrice').value) || 0;
             const newShip = parseFloat(document.getElementById('editSaleShipping').value) || 0;
             
-            sale.sellPrice = newPrice;
+            // Recalculate Unit Price (Backwards)
+            sale.sellPrice = newItemRev / sale.qty;
             sale.shipping = newShip;
-            sale.total = (newPrice * sale.qty) + newShip;
+            sale.total = newItemRev + newShip;
 
             await dbPut('sales', sale);
             await loadData();
             document.getElementById('modalEditSale').style.display = 'none';
-            openHistory(); // Refresh list
-            renderList(); // Refresh Stats
+            openHistory();
+            renderList();
         }
 
         async function deleteSale(id) {
@@ -631,8 +760,6 @@
             }
 
             await dbDelete('sales', saleId);
-            
-            // SUPER WICHTIG: Force Refresh
             await loadData(); 
             openHistory(); 
             renderList();
