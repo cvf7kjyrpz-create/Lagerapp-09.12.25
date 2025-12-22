@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V18 Multi-Sell</title>
+    <title>Lager V19 Smart-Storno</title>
     <style>
         :root {
             --bg: #121212; --card: #1e1e1e; --input-bg: #2d2d2d;
@@ -29,7 +29,7 @@
         .stats-bar { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 2px; margin-top: 4px; padding-top: 4px; border-top: 1px solid #333; }
         .stat-box { text-align: center; }
         .stat-label { font-size: 0.55rem; color: #777; display: block; }
-        .stat-val { font-size: 0.65rem; font-weight: bold; display: block; }
+        .stat-val { font-size: 0.65rem; font-weight: bold; display: block; } 
         .c-blue { color: #60a5fa; } .c-green { color: var(--success); } .c-gold { color: var(--profit); }
 
         /* LISTE ITEMS */
@@ -395,7 +395,8 @@
         function updateStats(invQty, invVal) {
             let totalRevenue = 0; let totalProfit = 0;
             salesLog.forEach(sale => {
-                const revenue = isNaN(sale.total) ? 0 : sale.total; // Gesamtsumme (Erlös + Versand)
+                // NAN Protection
+                const revenue = isNaN(sale.total) ? 0 : sale.total; 
                 const shipping = isNaN(sale.shipping) ? 0 : sale.shipping;
                 const buyPrice = isNaN(sale.buyPrice) ? 0 : sale.buyPrice;
                 const qty = isNaN(sale.qty) ? 0 : sale.qty;
@@ -424,26 +425,23 @@
             }
         }
 
-        // --- WARENKORB LOGIK (V18) ---
-        let currentBasket = []; // { id, name, artnr, stock, qty, priceTotal }
+        // --- WARENKORB LOGIK ---
+        let currentBasket = []; 
 
         async function openSellModal(e, id) {
             e.stopPropagation();
             const item = inventory.find(i => i.id === id);
             if(!item || item.menge <= 0) return alert("Bestand ist 0!");
             
-            // Init Basket
             currentBasket = [];
             addToBasket(item);
 
-            // Init General Fields
             document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('sellPlatform').value = "Vinted";
             document.getElementById('sellShipping').value = 0;
             document.getElementById('addItemSearch').value = "";
             document.getElementById('searchDropdown').style.display = 'none';
 
-             // Bild Logik (Nimmt das vom ersten Artikel)
             if (item.bild) {
                 document.getElementById('sellBild').value = item.bild;
                 document.getElementById('sellImgPreview').src = item.bild;
@@ -460,17 +458,9 @@
         }
 
         function addToBasket(item) {
-            // Check duplicate
             if(currentBasket.find(x => x.id === item.id)) return alert("Artikel schon in der Liste");
-            
             currentBasket.push({
-                id: item.id,
-                name: item.name,
-                artnr: item.artnr,
-                stock: item.menge,
-                qty: 1,
-                // Default Total: EK-Preis als Vorschlag
-                priceTotal: item.preis 
+                id: item.id, name: item.name, artnr: item.artnr, stock: item.menge, qty: 1, priceTotal: item.preis 
             });
             renderBasket();
         }
@@ -478,7 +468,6 @@
         function renderBasket() {
             const list = document.getElementById('sellBasketList');
             list.innerHTML = "";
-            
             currentBasket.forEach((pos, idx) => {
                 const div = document.createElement('div');
                 div.className = 'basket-item';
@@ -513,9 +502,7 @@
             if(field === 'price') {
                 currentBasket[idx].priceTotal = parseFloat(val) || 0;
             }
-            renderBasket(); // Re-render to sanitize inputs but keeps focus tricky. Ideally just update calc.
-            // Simplified:
-            // calcBasketTotal(); 
+            calcBasketTotal(); 
         }
 
         function removeFromBasket(idx) {
@@ -530,7 +517,6 @@
             document.getElementById('sellTotal').value = (itemSum + shipping).toFixed(2) + " €";
         }
 
-        // Search in Modal
         function searchForItem(input) {
             const term = input.value.toLowerCase();
             const drop = document.getElementById('searchDropdown');
@@ -556,9 +542,7 @@
                     };
                     drop.appendChild(div);
                 });
-            } else {
-                drop.style.display = 'none';
-            }
+            } else { drop.style.display = 'none'; }
         }
 
         function updateInvoicePreview() {
@@ -598,22 +582,12 @@
 
             if(!invNr) return alert("Rechnungsnummer fehlt!");
 
-            // Wir teilen die Versandkosten durch die Anzahl der Positionen, 
-            // damit es in der Datenbank pro Zeile "fair" aussieht (oder wir speichern es nur beim ersten).
-            // Einfacher: Wir speichern Versand beim ersten Item, bei den anderen 0. 
-            // So stimmt die Summe.
-            
             for (let i = 0; i < currentBasket.length; i++) {
                 const pos = currentBasket[i];
                 const item = inventory.find(x => x.id === pos.id);
                 
-                // Stock Update
                 item.menge -= pos.qty;
-                
-                // Logic: PAUSCHALPREIS -> Einzelpreis berechnen für Stats
                 const unitSellPrice = pos.priceTotal / pos.qty;
-
-                // Shipping nur beim ersten Item speichern
                 const lineShipping = (i === 0) ? shippingTotal : 0;
                 
                 const sale = {
@@ -621,10 +595,9 @@
                     artnr: item.artnr,
                     date: date,
                     buyPrice: item.preis,
-                    sellPrice: unitSellPrice, // Rechnerisch pro Stück
+                    sellPrice: unitSellPrice,
                     qty: pos.qty,
                     shipping: lineShipping,
-                    // Total for this line logic: (Unit * Qty) + ShippingShare
                     total: pos.priceTotal + lineShipping, 
                     platform: platform,
                     invoiceNr: invNr,
@@ -633,13 +606,7 @@
 
                 await dbAdd('sales', sale);
 
-                // Inventory Handling
                 if(item.menge === 0) {
-                     // Check if user wants to delete? 
-                     // In Multi-Mode asking for every item is annoying. 
-                     // We just keep it with 0 or auto-delete? 
-                     // Let's keep it to be safe or delete silently if agreed.
-                     // User said "Ask". Okay.
                      if(confirm(`Artikel "${item.name}" ist leer. Löschen?`)) {
                          await dbDelete('inventory', item.id);
                      } else { await dbPut('inventory', item); }
@@ -697,7 +664,6 @@
             document.getElementById('editSaleDate').value = sale.date;
             document.getElementById('editSalePlatform').value = sale.platform;
             
-            // Total - Shipping = ItemRevenue
             const ship = sale.shipping || 0;
             const itemRev = sale.total - ship;
             
@@ -719,7 +685,6 @@
             const newItemRev = parseFloat(document.getElementById('editSalePrice').value) || 0;
             const newShip = parseFloat(document.getElementById('editSaleShipping').value) || 0;
             
-            // Recalculate Unit Price (Backwards)
             sale.sellPrice = newItemRev / sale.qty;
             sale.shipping = newShip;
             sale.total = newItemRev + newShip;
@@ -739,30 +704,48 @@
             renderList();
         }
 
+        // SMART STORNO LOGIC
         async function restoreSale(saleId) {
-            if(!confirm("STORNO: Bestand wieder erhöhen und Verkauf löschen?")) return;
             const sale = salesLog.find(s => s.id === saleId);
             
+            // Check for siblings (same invoice)
+            const siblings = salesLog.filter(s => s.invoiceNr === sale.invoiceNr);
+            
+            if (siblings.length > 1) {
+                if (confirm(`Zu dieser Rechnung (${sale.invoiceNr}) gehören ${siblings.length} Artikel.\n\n"OK" = GANZE Rechnung stornieren (alle zurück)\n"Abbrechen" = NUR DIESEN Artikel stornieren`)) {
+                    for (const s of siblings) {
+                        await doRestoreSingleItem(s);
+                    }
+                } else {
+                    await doRestoreSingleItem(sale);
+                }
+            } else {
+                await doRestoreSingleItem(sale);
+            }
+            
+            // Final Refresh
+            await loadData(); 
+            openHistory(); 
+            renderList();
+        }
+
+        async function doRestoreSingleItem(sale) {
+            // Find item in inventory
             let item = inventory.find(i => i.artnr === sale.artnr); 
+            // Fallback: Name
             if(!item && sale.name) item = inventory.find(i => i.name === sale.name);
 
             if(item) { 
                 item.menge += sale.qty; 
                 await dbPut('inventory', item); 
-                alert("Bestand erhöht."); 
             } else { 
                 const newItem = { 
                     artnr: sale.artnr || 'RESTORED', name: sale.name, menge: sale.qty, preis: sale.buyPrice, 
                     groesse: '', zustand: 'Neu', datum: '', ort: '', notiz: 'Storno Rückläufer', bild: '', markiert: false 
                 }; 
                 await dbAdd('inventory', newItem); 
-                alert("Artikel neu angelegt."); 
             }
-
-            await dbDelete('sales', saleId);
-            await loadData(); 
-            openHistory(); 
-            renderList();
+            await dbDelete('sales', sale.id);
         }
 
         // --- ITEM EDIT ---
