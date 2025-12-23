@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V31 Compact</title>
+    <title>Lager V32 Fix</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -53,7 +53,7 @@
         #viewInventory, #viewSales { display: none; }
         #viewInventory.active, #viewSales.active { display: block; }
 
-        /* LISTE ITEMS (COMPACT) */
+        /* LISTE ITEMS */
         .list-row { 
             display: grid; 
             grid-template-columns: 35px 1fr auto; 
@@ -67,35 +67,13 @@
         .list-row:hover { background: #222; }
         .list-row.marked { border-left: 2px solid var(--profit); background: #221e10; }
 
-        .qty-box { 
-            color: var(--primary); 
-            font-weight: bold; 
-            text-align: center; 
-            font-size: 0.8rem;
-        }
+        .qty-box { color: var(--primary); font-weight: bold; text-align: center; font-size: 0.8rem; }
 
         .item-info { display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
-        
-        /* HIER IST DIE ÄNDERUNG: KLEINER & OHNE GRAU */
-        .item-name { 
-            font-weight: 700; 
-            color: #ddd; 
-            font-size: 0.75rem; /* Viel kleiner */
-            line-height: 1.2;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .meta-line { 
-            font-size: 0.65rem; /* Sehr klein */
-            color: #666; 
-            display: flex; 
-            align-items: center; 
-            white-space: nowrap;
-            overflow: hidden;
-        }
+        .item-name { font-weight: 700; color: #ddd; font-size: 0.75rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .meta-line { font-size: 0.65rem; color: #666; display: flex; align-items: center; white-space: nowrap; overflow: hidden; }
         .meta-part { margin-right: 4px; }
-        .meta-sep { margin: 0 4px; color: #333; } /* Trennstrich */
+        .meta-sep { margin: 0 4px; color: #333; }
         .icon-small { font-size: 0.7rem; margin-left: 4px; opacity: 0.8; }
 
         .item-actions { text-align: right; }
@@ -129,7 +107,6 @@
         .btn-secondary { background: #333; color: #ccc; }
         .btn-danger { background: var(--danger); color: #fff; }
 
-        /* BASKET & SEARCH */
         .basket-item { background: #1a1a1a; border: 1px solid #333; padding: 8px; margin-bottom: 5px; }
         .basket-header { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold; margin-bottom: 4px; color: #ddd;}
         #searchDropdown { display: none; background: #222; border: 1px solid #444; margin-top: 2px; max-height: 180px; overflow-y: auto; position: absolute; width: 100%; z-index: 50; }
@@ -322,6 +299,8 @@
             document.getElementById('viewInventory').classList.toggle('active', tab === 'inventory');
             document.getElementById('viewSales').classList.toggle('active', tab === 'sales');
             document.getElementById('fabAdd').style.display = tab === 'inventory' ? 'flex' : 'none';
+            // FIX: Sofort rendern, damit Liste nicht leer bleibt
+            renderCurrentView();
         }
 
         function renderCurrentView() {
@@ -344,7 +323,6 @@
             document.getElementById('statProfit').innerText = tProf.toFixed(2) + " €";
         }
 
-        // --- RENDER INVENTORY (CLEAN & COMPACT) ---
         function renderInventory(term) {
             const list = document.getElementById('itemList');
             list.innerHTML = '';
@@ -358,16 +336,12 @@
                 div.className = i.marked ? 'list-row marked' : 'list-row';
                 div.onclick = (e) => { if(e.target.tagName !== 'BUTTON') openEditModal(i.id); };
                 
-                // Aufbau der Meta-Daten Zeile
                 let metaParts = [];
                 if(i.artnr) metaParts.push(i.artnr);
                 if(i.groesse) metaParts.push(i.groesse);
                 if(i.ort) metaParts.push(i.ort);
-                
-                // Zusammenfügen mit Trennstrich
                 let metaHTML = metaParts.map(p => `<span class="meta-part">${p}</span>`).join('<span class="meta-sep">|</span>');
                 
-                // Icons anhängen
                 let icons = "";
                 if(i.notiz && i.notiz.trim()) icons += '<span class="icon-small">📝</span>';
                 if(i.bild && i.bild.trim()) icons += '<span class="icon-small">🖼️</span>';
@@ -638,7 +612,9 @@
                     invoiceImg: useImg
                 });
             }
-            await loadData(); closeModals(); switchTab('sales');
+            await loadData(); closeModals(); 
+            // FIX: Auch hier sofort rendern, damit der User das Ergebnis sieht
+            switchTab('sales');
         }
 
         // --- RESTORE & DELETE ---
