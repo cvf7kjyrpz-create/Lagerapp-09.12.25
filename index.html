@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V37 Inventur</title>
+    <title>Lager V38 Flex & Compress</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -90,8 +90,6 @@
             margin-right: 5px;
         }
         .meta-icons { flex-shrink: 0; display: flex; gap: 4px; }
-        .meta-part { margin-right: 3px; }
-        .meta-sep { margin: 0 3px; color: #333; }
         .icon-small { font-size: 0.65rem; opacity: 0.9; }
 
         .item-actions { text-align: right; }
@@ -198,7 +196,7 @@
                 <input type="hidden" id="editId">
                 <div class="form-grid">
                     <div class="row-2">
-                        <div><label>Art.-Nr.</label><input type="text" id="inpArtnr"></div>
+                        <div><label>Art.-Nr. (Editierbar)</label><input type="text" id="inpArtnr" placeholder="z.B. 123-2025"></div>
                         <div><label>Menge</label><input type="number" id="inpMenge"></div>
                     </div>
                     <div><label>Bezeichnung</label><input type="text" id="inpName"></div>
@@ -213,8 +211,8 @@
                     <div><label>Zustand</label><select id="inpZustand"><option>Neu</option><option>Wie neu</option><option>Gebraucht</option></select></div>
                     <div><label>Notiz</label><textarea id="inpNotiz"></textarea></div>
                     <div>
-                         <label>Bild</label>
-                         <input type="file" id="inpFile" accept="image/*" onchange="handleImage(this, 'inpBild', 'imgPreview')">
+                         <label>Bild (wird automatisch komprimiert)</label>
+                         <input type="file" id="inpFile" accept="image/*" onchange="handleImageCompressed(this, 'inpBild', 'imgPreview')">
                          <input type="hidden" id="inpBild">
                          <img id="imgPreview" style="width:100%; margin-top:8px; border:1px solid #444; display:none;">
                     </div>
@@ -235,7 +233,17 @@
                 <div style="background:#222; padding:8px; border:1px solid #333; margin-bottom:10px;">
                     <div><label>Rg-Nr.</label><input type="text" id="sellInvoiceNr"></div>
                     <div class="row-2" style="margin-top:8px;">
-                        <div><label>Plattform</label><select id="sellPlatform" onchange="updateInvoicePreview()"><option value="eBay">eBay</option><option value="Vinted">Vinted</option><option value="Kleinanzeigen">Kleinanzeigen</option><option value="Shopify">Shopify</option><option value="Sonstiges">Sonstiges</option></select></div>
+                        <div>
+                            <label>Plattform (Erster Buchstabe = Prefix)</label>
+                            <input list="platformOptions" id="sellPlatform" oninput="updateInvoicePreview()" placeholder="z.B. eBay">
+                            <datalist id="platformOptions">
+                                <option value="eBay">
+                                <option value="Vinted">
+                                <option value="Kleinanzeigen">
+                                <option value="Shopify">
+                                <option value="Flohmarkt">
+                            </datalist>
+                        </div>
                         <div><label>Datum</label><input type="date" id="sellDate" onchange="updateInvoicePreview()"></div>
                     </div>
                 </div>
@@ -251,7 +259,7 @@
                     <label>Versand (€)</label><input type="number" step="0.01" id="sellShipping" value="0" oninput="calcBasketTotal()">
                     <label style="margin-top:8px;">Gesamt</label><input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold; background:#111; border-color:var(--success);">
                     <label style="margin-top:8px;">Beleg</label>
-                    <input type="file" id="sellFileInput" onchange="handleImage(this, 'sellBild', 'sellImgPreview')">
+                    <input type="file" id="sellFileInput" onchange="handleImageCompressed(this, 'sellBild', 'sellImgPreview')">
                     <input type="hidden" id="sellBild">
                     <img id="sellImgPreview" style="width:100%; margin-top:5px; border:1px solid #444; display:none;">
                 </div>
@@ -288,7 +296,10 @@
                     <div><label>Rechnungs-Nr.</label><input type="text" id="editSaleInv"></div>
                     <div><label>Artikelname (Text)</label><input type="text" id="editSaleName"></div>
                     <div class="row-2">
-                         <div><label>Plattform</label><select id="editSalePlatform"><option value="eBay">eBay</option><option value="Vinted">Vinted</option><option value="Kleinanzeigen">Kleinanzeigen</option><option value="Shopify">Shopify</option><option value="Sonstiges">Sonstiges</option></select></div>
+                         <div>
+                             <label>Plattform</label>
+                             <input list="platformOptions" id="editSalePlatform">
+                         </div>
                          <div><label>Datum</label><input type="date" id="editSaleDate"></div>
                     </div>
                     <div class="row-2">
@@ -504,15 +515,11 @@
             th{background:#eee;} .check-col{width:100px;}
             </style></head><body><h2>Inventurliste - ${new Date().toLocaleDateString()}</h2>
             <table><thead><tr><th>Ort</th><th>Art-Nr</th><th>Name</th><th>Soll</th><th>Ist (Zählung)</th></tr></thead><tbody>`;
-            
             sorted.forEach(i => {
                 h += `<tr><td>${i.ort||'-'}</td><td>${i.artnr||''}</td><td>${i.name}</td><td>${i.menge}</td><td class="check-col"></td></tr>`;
             });
             h += `</tbody></table><script>window.print();<\/script></body></html>`;
-            
-            const w = window.open('','_blank');
-            w.document.write(h);
-            w.document.close();
+            const w = window.open('','_blank'); w.document.write(h); w.document.close();
         }
 
         // --- DELETION LOGIC ---
@@ -524,26 +531,15 @@
         async function executeDelete(restore) {
             const inv = document.getElementById('delInvoiceTarget').value;
             const toDel = salesLog.filter(s => s.invoiceNr === inv);
-            
             if(restore) {
                 for(let s of toDel) {
                     let it = inventory.find(x => x.artnr === s.artnr);
-                    if(it) {
-                        it.menge += s.qty;
-                        await dbOp('inventory', 'put', it);
-                    } else {
-                        await dbOp('inventory', 'add', {
-                            artnr: s.artnr, name: s.name, menge: s.qty, preis: s.buyPrice || 0,
-                            ort: 'Storno Rückbuchung', datum: new Date().toISOString().split('T')[0]
-                        });
-                    }
+                    if(it) { it.menge += s.qty; await dbOp('inventory', 'put', it); }
+                    else { await dbOp('inventory', 'add', { artnr: s.artnr, name: s.name, menge: s.qty, preis: s.buyPrice || 0, ort: 'Storno Rückbuchung', datum: new Date().toISOString().split('T')[0] }); }
                 }
             }
-
             for(let s of toDel) await dbOp('sales', 'delete', s.id);
-            await loadData();
-            closeModals();
-            switchTab('sales');
+            await loadData(); closeModals(); switchTab('sales');
         }
 
         // --- EDIT MODAL ---
@@ -553,7 +549,8 @@
             
             if (!id) {
                 document.getElementById('editId').value = '';
-                document.getElementById('inpArtnr').value = ''; 
+                // AUTO-VORSCHLAG, ABER ÄNDERBAR
+                document.getElementById('inpArtnr').value = (inventory.length + 1) + "-" + new Date().getFullYear(); 
                 document.getElementById('inpName').value = '';
                 document.getElementById('inpMenge').value = 1;
                 document.getElementById('inpPreis').value = '';
@@ -576,13 +573,8 @@
                 document.getElementById('inpZustand').value = i.zustand || "Neu";
                 document.getElementById('inpNotiz').value = i.notiz || "";
                 document.getElementById('inpBild').value = i.bild || "";
-                
-                if(i.bild) {
-                    document.getElementById('imgPreview').src = i.bild;
-                    document.getElementById('imgPreview').style.display = 'block';
-                } else {
-                    document.getElementById('imgPreview').style.display = 'none';
-                }
+                if(i.bild) { document.getElementById('imgPreview').src = i.bild; document.getElementById('imgPreview').style.display = 'block'; }
+                else { document.getElementById('imgPreview').style.display = 'none'; }
             }
         }
 
@@ -601,7 +593,6 @@
                 bild: document.getElementById('inpBild').value,
                 marked: false
             };
-
             if(id) { obj.id = parseInt(id); await dbOp('inventory', 'put', obj); }
             else { await dbOp('inventory', 'add', obj); }
             await loadData(); closeModals();
@@ -609,54 +600,46 @@
 
         async function deleteCurrentItem() {
             const id = document.getElementById('editId').value;
-            if(id && confirm("Löschen?")) {
-                await dbOp('inventory', 'delete', parseInt(id));
-                await loadData(); closeModals();
-            }
+            if(id && confirm("Löschen?")) { await dbOp('inventory', 'delete', parseInt(id)); await loadData(); closeModals(); }
         }
 
         // --- SALES LOGIC ---
         let basket = [];
-        
         function openSellModal(e, id) {
             e.stopPropagation();
             const it = inventory.find(x => x.id === id);
-            basket = [{ 
-                id: it.id, name: it.name, artnr: it.artnr, 
-                stock: it.menge, qty: 1, priceTotal: it.preis, 
-                origImg: it.bild 
-            }];
-
+            basket = [{ id: it.id, name: it.name, artnr: it.artnr, stock: it.menge, qty: 1, priceTotal: it.preis, origImg: it.bild }];
             document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('sellShipping').value = 0;
             document.getElementById('sellBild').value = "";
             document.getElementById('sellFileInput').value = "";
             document.getElementById('sellImgPreview').style.display = 'none';
-
-            updateInvoicePreview();
-            renderBasket();
+            document.getElementById('sellPlatform').value = ""; // Reset
+            updateInvoicePreview(); renderBasket();
             document.getElementById('modalSell').style.display = 'flex';
         }
 
         function updateInvoicePreview() {
             const dateInput = document.getElementById('sellDate').value;
             if(!dateInput) return;
-            const plat = document.getElementById('sellPlatform').value;
             const year = new Date(dateInput).getFullYear();
             
-            let prefix = "R";
-            if(plat === "eBay") prefix = "E";
-            if(plat === "Vinted") prefix = "V";
-            if(plat === "Kleinanzeigen") prefix = "K";
-            if(plat === "Shopify") prefix = "S";
-
+            // NEUE LOGIK: Prefix aus Input
+            const platVal = document.getElementById('sellPlatform').value;
+            let prefix = platVal ? platVal.charAt(0).toUpperCase() : 'R';
+            
             let max = 0;
             salesLog.forEach(s => {
                 if(s.date && s.date.startsWith(year.toString())) {
-                    const m = s.invoiceNr.match(/(\d+)-(\d{4})/);
-                    if(m && m[2] == year) {
-                        const num = parseInt(m[1]);
-                        if(num > max) max = num;
+                    const m = s.invoiceNr.match(/-(\d+)-/); // Sucht jetzt nur nach Nummer zwischen Bindestrichen falls wir Format ändern, aber simpler:
+                    // Wir nehmen das alte Format: X001-2025
+                    const parts = s.invoiceNr.split('-');
+                    if(parts.length >= 2 && parts[1] == year) {
+                         const numStr = s.invoiceNr.match(/(\d+)-/);
+                         if(numStr) {
+                             const num = parseInt(numStr[1]);
+                             if(num > max) max = num;
+                         }
                     }
                 }
             });
@@ -669,10 +652,8 @@
             drop.innerHTML = '';
             if(term.length < 2) { drop.style.display = 'none'; return; }
             const hits = inventory.filter(i => i.menge > 0 && i.name.toLowerCase().includes(term));
-            
             hits.forEach(i => {
-                const d = document.createElement('div');
-                d.className = 'search-res';
+                const d = document.createElement('div'); d.className = 'search-res';
                 d.innerHTML = `<span>${i.name}</span> <span style="float:right; color:var(--primary)">${i.menge}x</span>`;
                 d.onclick = () => {
                     if(!basket.find(b => b.id === i.id)) {
@@ -687,21 +668,10 @@
         }
 
         function renderBasket() {
-            const list = document.getElementById('sellBasketList');
-            list.innerHTML = '';
+            const list = document.getElementById('sellBasketList'); list.innerHTML = '';
             basket.forEach((item, idx) => {
-                const d = document.createElement('div');
-                d.className = 'basket-item';
-                d.innerHTML = `
-                    <div class="basket-header">
-                        <span>${item.name}</span>
-                        <span style="color:var(--danger); cursor:pointer; font-size:0.75rem;" onclick="removeFromBasket(${idx})">ENTFERNEN</span>
-                    </div>
-                    <div class="row-2">
-                        <div><label>Menge</label><input type="number" value="${item.qty}" min="1" max="${item.stock}" onchange="updateBasket(${idx}, 'qty', this.value)"></div>
-                        <div><label>Preis Total</label><input type="number" value="${item.priceTotal}" step="0.01" onchange="updateBasket(${idx}, 'price', this.value)"></div>
-                    </div>
-                `;
+                const d = document.createElement('div'); d.className = 'basket-item';
+                d.innerHTML = `<div class="basket-header"><span>${item.name}</span><span style="color:var(--danger); cursor:pointer; font-size:0.75rem;" onclick="removeFromBasket(${idx})">ENTFERNEN</span></div><div class="row-2"><div><label>Menge</label><input type="number" value="${item.qty}" min="1" max="${item.stock}" onchange="updateBasket(${idx}, 'qty', this.value)"></div><div><label>Preis Total</label><input type="number" value="${item.priceTotal}" step="0.01" onchange="updateBasket(${idx}, 'price', this.value)"></div></div>`;
                 list.appendChild(d);
             });
             calcBasketTotal();
@@ -724,30 +694,18 @@
             const inv = document.getElementById('sellInvoiceNr').value;
             const ship = parseFloat(document.getElementById('sellShipping').value || 0);
             const date = document.getElementById('sellDate').value;
-            const platform = document.getElementById('sellPlatform').value;
+            const platform = document.getElementById('sellPlatform').value || "Sonstiges"; // Fallback
             const globalImg = document.getElementById('sellBild').value;
 
             for(let i = 0; i < basket.length; i++) {
                 const item = basket[i];
                 const dbItem = inventory.find(x => x.id === item.id);
-                if(dbItem) {
-                    dbItem.menge -= item.qty;
-                    await dbOp('inventory', 'put', dbItem);
-                }
-                
+                if(dbItem) { dbItem.menge -= item.qty; await dbOp('inventory', 'put', dbItem); }
                 let useImg = globalImg || item.origImg;
-
                 await dbOp('sales', 'add', {
-                    invoiceNr: inv,
-                    platform: platform,
-                    date: date,
-                    name: item.name,
-                    artnr: item.artnr,
-                    qty: item.qty,
-                    buyPrice: dbItem ? dbItem.preis : 0,
-                    shipping: (i === 0 ? ship : 0),
-                    total: (item.priceTotal || 0) + (i === 0 ? ship : 0),
-                    invoiceImg: useImg
+                    invoiceNr: inv, platform: platform, date: date, name: item.name, artnr: item.artnr,
+                    qty: item.qty, buyPrice: dbItem ? dbItem.preis : 0, shipping: (i === 0 ? ship : 0),
+                    total: (item.priceTotal || 0) + (i === 0 ? ship : 0), invoiceImg: useImg
                 });
             }
             await loadData(); closeModals(); switchTab('sales');
@@ -757,17 +715,9 @@
         async function restoreSale(id) {
             const s = salesLog.find(x => x.id === id);
             if(!confirm("Storno: Artikel zurück ins Lager?")) return;
-            
             let it = inventory.find(x => x.artnr === s.artnr);
-            if(it) {
-                it.menge += s.qty;
-                await dbOp('inventory', 'put', it);
-            } else {
-                await dbOp('inventory', 'add', {
-                    artnr: s.artnr, name: s.name, menge: s.qty, preis: s.buyPrice || 0,
-                    ort: 'Storno', datum: new Date().toISOString().split('T')[0]
-                });
-            }
+            if(it) { it.menge += s.qty; await dbOp('inventory', 'put', it); }
+            else { await dbOp('inventory', 'add', { artnr: s.artnr, name: s.name, menge: s.qty, preis: s.buyPrice || 0, ort: 'Storno', datum: new Date().toISOString().split('T')[0] }); }
             await dbOp('sales', 'delete', id);
             await loadData();
         }
@@ -778,7 +728,7 @@
             document.getElementById('editSaleId').value = id;
             document.getElementById('editSaleInv').value = s.invoiceNr;
             document.getElementById('editSaleName').value = s.name;
-            document.getElementById('editSalePlatform').value = s.platform || 'Sonstiges';
+            document.getElementById('editSalePlatform').value = s.platform || '';
             document.getElementById('editSaleDate').value = s.date;
             document.getElementById('editSaleQty').value = s.qty;
             document.getElementById('editSalePrice').value = s.total.toFixed(2);
@@ -789,17 +739,13 @@
         async function saveSaleChanges() {
             const id = parseInt(document.getElementById('editSaleId').value);
             const s = salesLog.find(x => x.id === id);
-
             const newQty = parseInt(document.getElementById('editSaleQty').value) || 1;
             const newTotal = parseFloat(document.getElementById('editSalePrice').value) || 0;
             
             if(newQty !== s.qty) {
                 const diff = newQty - s.qty;
                 const it = inventory.find(x => x.artnr === s.artnr);
-                if(it) {
-                    it.menge -= diff;
-                    await dbOp('inventory', 'put', it);
-                }
+                if(it) { it.menge -= diff; await dbOp('inventory', 'put', it); }
             }
 
             s.invoiceNr = document.getElementById('editSaleInv').value;
@@ -809,26 +755,49 @@
             s.qty = newQty;
             s.shipping = parseFloat(document.getElementById('editSaleShipping').value) || 0;
             s.total = newTotal;
-
             await dbOp('sales', 'put', s);
             await loadData(); closeModals();
         }
 
-        // --- UTILS ---
+        // --- UTILS & COMPRESSION ---
         function openSettings() { document.getElementById('modalSettings').style.display = 'flex'; }
         function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
         function clearSearch() { document.getElementById('searchInput').value = ''; renderCurrentView(); }
         function formatDate(d) { return d ? d.split('-').reverse().join('.') : ''; }
         
-        function handleImage(input, targetId, previewId) {
+        function handleImageCompressed(input, targetId, previewId) {
             const file = input.files[0];
             if(!file) return;
+            
+            // Komprimierung
             const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById(targetId).value = e.target.result;
-                const img = document.getElementById(previewId);
-                img.src = e.target.result;
-                img.style.display = 'block';
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1000; // Genug für Handy-Displays
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Speichern als JPEG mit 70% Qualität (spart massig Platz)
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    document.getElementById(targetId).value = dataUrl;
+                    const preview = document.getElementById(previewId);
+                    preview.src = dataUrl;
+                    preview.style.display = 'block';
+                };
+                img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
