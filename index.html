@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V32 Fix</title>
+    <title>Lager V33 Clean & Safe</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -22,7 +22,7 @@
             background: var(--bg); 
             color: var(--text); 
             margin: 0; 
-            padding-bottom: 60px; 
+            padding-bottom: 70px; /* Platz für FAB */
             font-size: 14px;
         }
 
@@ -53,7 +53,7 @@
         #viewInventory, #viewSales { display: none; }
         #viewInventory.active, #viewSales.active { display: block; }
 
-        /* LISTE ITEMS */
+        /* LISTE ITEMS (LAGER) */
         .list-row { 
             display: grid; 
             grid-template-columns: 35px 1fr auto; 
@@ -69,22 +69,54 @@
 
         .qty-box { color: var(--primary); font-weight: bold; text-align: center; font-size: 0.8rem; }
 
-        .item-info { display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
-        .item-name { font-weight: 700; color: #ddd; font-size: 0.75rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .meta-line { font-size: 0.65rem; color: #666; display: flex; align-items: center; white-space: nowrap; overflow: hidden; }
-        .meta-part { margin-right: 4px; }
-        .meta-sep { margin: 0 4px; color: #333; }
-        .icon-small { font-size: 0.7rem; margin-left: 4px; opacity: 0.8; }
+        /* Layout Fix für lange Texte */
+        .item-info { display: flex; flex-direction: column; gap: 1px; overflow: hidden; min-width: 0; }
+        .item-name { 
+            font-weight: 700; color: #ddd; font-size: 0.75rem; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        }
+        
+        /* Container für Meta-Daten (links) und Icons (rechts) */
+        .meta-container { display: flex; align-items: center; width: 100%; }
+        
+        /* Der Text darf schrumpfen und Punkte (...) zeigen */
+        .meta-scroller { 
+            flex: 1; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            font-size: 0.65rem; color: #666; 
+            margin-right: 5px;
+        }
+        
+        /* Die Icons bleiben starr und immer sichtbar */
+        .meta-icons { 
+            flex-shrink: 0; 
+            display: flex; gap: 4px; 
+        }
+
+        .meta-part { margin-right: 3px; }
+        .meta-sep { margin: 0 3px; color: #333; }
+        .icon-small { font-size: 0.7rem; opacity: 0.9; }
 
         .item-actions { text-align: right; }
         .price-tag { font-weight: 500; display: block; margin-bottom: 2px; color: #999; font-size: 0.75rem; }
         .btn-action { background: #222; border: 1px solid #333; color: #aaa; padding: 2px 6px; font-size: 0.65rem; cursor: pointer; border-radius: 2px; }
 
-        /* SALES LIST */
-        .sale-group { margin-bottom: 10px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg); }
-        .sale-header { padding: 5px 10px; background: #222; display: flex; justify-content: space-between; font-size: 0.75rem; color: #ccc; font-weight: bold; }
-        .sale-row { padding: 6px 10px; border-top: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
-        .sale-footer { padding: 5px 10px; background: #1a1a1a; display: flex; justify-content: space-between; color: var(--success); font-size: 0.75rem; font-weight: bold; }
+        /* SALES LIST (KOMPAKT) */
+        .sale-group { margin-bottom: 8px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg); }
+        .sale-header { padding: 4px 8px; background: #222; display: flex; justify-content: space-between; font-size: 0.7rem; color: #ccc; font-weight: bold; }
+        .sale-row { padding: 4px 8px; border-top: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; } /* Schrift kleiner */
+        .sale-footer { padding: 4px 8px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; color: var(--success); font-size: 0.7rem; font-weight: bold; }
+
+        /* Mini Buttons im Verkauf */
+        .btn-mini-icon { 
+            background: none; border: 1px solid #333; 
+            width: 24px; height: 24px; 
+            display: flex; align-items: center; justify-content: center; 
+            border-radius: 3px; cursor: pointer; margin-left: 4px;
+            font-size: 0.8rem; color: #888;
+        }
+        .btn-mini-icon:hover { background: #333; color: #fff; }
+        .btn-del-icon { color: #d66; border-color: #522; }
 
         /* FAB */
         .fab { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; width: 45px; height: 45px; border-radius: 50%; border: none; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 90;}
@@ -299,7 +331,6 @@
             document.getElementById('viewInventory').classList.toggle('active', tab === 'inventory');
             document.getElementById('viewSales').classList.toggle('active', tab === 'sales');
             document.getElementById('fabAdd').style.display = tab === 'inventory' ? 'flex' : 'none';
-            // FIX: Sofort rendern, damit Liste nicht leer bleibt
             renderCurrentView();
         }
 
@@ -350,7 +381,10 @@
                     <div class="qty-box">${i.menge}</div>
                     <div class="item-info">
                         <span class="item-name">${i.name}</span>
-                        <div class="meta-line">${metaHTML} ${icons}</div>
+                        <div class="meta-container">
+                            <span class="meta-scroller">${metaHTML}</span>
+                            <span class="meta-icons">${icons}</span>
+                        </div>
                     </div>
                     <div class="item-actions">
                         <span class="price-tag">${(i.preis||0).toFixed(2)} €</span>
@@ -382,13 +416,14 @@
                 const div = document.createElement('div');
                 div.className = 'sale-group';
                 
+                // Neue Icon-Buttons Logik
                 let itemsHTML = g.items.map(it => `
                     <div class="sale-row">
-                        <span style="flex-grow:1">${it.name} (${it.qty}x)</span>
-                        <div>
-                            ${it.invoiceImg ? `<button class="btn-action" onclick="viewImage('${it.invoiceImg}')">BELEG</button>` : ''}
-                            <button class="btn-action" onclick="openEditSale(${it.id})">EDIT</button>
-                            <button class="btn-action" style="color:#d66; border-color:#522" onclick="restoreSale(${it.id})">STORNO</button>
+                        <span style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:5px;">${it.name} (${it.qty}x)</span>
+                        <div style="display:flex;">
+                            ${it.invoiceImg ? `<button class="btn-mini-icon" title="Beleg" onclick="viewImage('${it.invoiceImg}')">👁️</button>` : ''}
+                            <button class="btn-mini-icon" title="Bearbeiten" onclick="openEditSale(${it.id})">✏️</button>
+                            <button class="btn-mini-icon btn-del-icon" title="Storno" onclick="restoreSale(${it.id})">↩️</button>
                         </div>
                     </div>
                 `).join('');
@@ -401,7 +436,7 @@
                     ${itemsHTML}
                     <div class="sale-footer">
                         <span>SUMME: ${g.total.toFixed(2)} €</span>
-                        <button class="btn-action" style="color:#d66; border-color:#522" onclick="deleteFullInvoice('${inv}')">LÖSCHEN</button>
+                        <button class="btn-mini-icon btn-del-icon" title="Löschen" onclick="deleteFullInvoice('${inv}')">🗑️</button>
                     </div>
                 `;
                 list.appendChild(div);
@@ -613,7 +648,7 @@
                 });
             }
             await loadData(); closeModals(); 
-            // FIX: Auch hier sofort rendern, damit der User das Ergebnis sieht
+            // FIX: Sofort zum Tab wechseln
             switchTab('sales');
         }
 
