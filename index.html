@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V35 Smart Profit</title>
+    <title>Lager V36 Full View</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -23,63 +23,103 @@
             color: var(--text); 
             margin: 0; 
             padding-bottom: 70px; 
-            font-size: 14px;
+            font-size: 13px; /* Generell etwas kleiner */
         }
 
         /* --- HEADER --- */
         .app-header { background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
         .header-top { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #1a1a1a; }
-        h1 { margin: 0; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #fff; }
-        .header-btn { background: transparent; border: 1px solid var(--border); color: #888; padding: 4px 10px; font-size: 0.75rem; cursor: pointer; border-radius: 2px; text-transform: uppercase; }
+        h1 { margin: 0; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #fff; }
+        .header-btn { background: transparent; border: 1px solid var(--border); color: #888; padding: 3px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 2px; text-transform: uppercase; }
 
         /* TABS */
         .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--panel); }
-        .nav-tab { flex: 1; background: transparent; border: none; padding: 10px; color: #666; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; text-transform: uppercase; font-size: 0.75rem; transition: 0.2s; }
+        .nav-tab { flex: 1; background: transparent; border: none; padding: 8px; color: #666; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; text-transform: uppercase; font-size: 0.7rem; transition: 0.2s; }
         .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(59, 130, 246, 0.05); color: #fff; }
 
         /* SEARCH & STATS */
-        .toolbar { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+        .toolbar { padding: 6px 10px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
         .search-wrapper { position: relative; width: 100%; }
-        .search-input { width: 100%; height: 30px; background: #111; border: 1px solid var(--border); border-radius: 2px; padding: 0 30px 0 10px; color: #ccc; box-sizing: border-box; font-size: 0.8rem; }
+        .search-input { width: 100%; height: 28px; background: #111; border: 1px solid var(--border); border-radius: 2px; padding: 0 30px 0 10px; color: #ccc; box-sizing: border-box; font-size: 0.75rem; }
         .search-clear { position: absolute; right: 0; top: 0; bottom: 0; width: 30px; background: none; border: none; color: #777; cursor: pointer; display: none; }
 
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
-        .stat-item { background: var(--panel); padding: 4px; text-align: center; }
-        .stat-lbl { font-size: 0.6rem; color: #666; text-transform: uppercase; }
-        .stat-val { font-size: 0.7rem; font-weight: bold; display: block; }
-        .text-blue { color: #60a5fa; } .text-green { color: #34d399; } .text-gold { color: #fbbf24; }
-        .text-red { color: #ef4444; }
+        .stat-item { background: var(--panel); padding: 3px; text-align: center; }
+        .stat-lbl { font-size: 0.55rem; color: #666; text-transform: uppercase; }
+        .stat-val { font-size: 0.65rem; font-weight: bold; display: block; }
+        .text-blue { color: #60a5fa; } .text-green { color: #34d399; } .text-gold { color: #fbbf24; } .text-red { color: #ef4444; }
 
         /* VIEWS */
         #viewInventory, #viewSales { display: none; }
         #viewInventory.active, #viewSales.active { display: block; }
 
         /* LISTE ITEMS (LAGER) */
-        .list-row { display: grid; grid-template-columns: 35px 1fr auto; padding: 6px 10px; border-bottom: 1px solid var(--border); align-items: center; background: var(--bg); cursor: pointer; gap: 8px; }
+        .list-row { 
+            display: grid; 
+            grid-template-columns: 30px 1fr auto; /* Qty etwas schmaler */
+            padding: 6px 8px; 
+            border-bottom: 1px solid var(--border); 
+            align-items: flex-start; /* Oben bündig, falls Text mehrzeilig */
+            background: var(--bg);
+            cursor: pointer;
+            gap: 8px;
+        }
         .list-row:hover { background: #222; }
         .list-row.marked { border-left: 2px solid var(--profit); background: #221e10; }
 
-        .qty-box { color: var(--primary); font-weight: bold; text-align: center; font-size: 0.8rem; }
-        .item-info { display: flex; flex-direction: column; gap: 1px; overflow: hidden; min-width: 0; }
-        .item-name { font-weight: 700; color: #ddd; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .meta-container { display: flex; align-items: center; width: 100%; }
-        .meta-scroller { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.65rem; color: #666; margin-right: 5px; }
+        .qty-box { 
+            color: var(--primary); font-weight: bold; text-align: center; font-size: 0.75rem; 
+            padding-top: 2px; /* Ausgleich für flex-start */
+        }
+
+        .item-info { display: flex; flex-direction: column; gap: 2px; overflow: hidden; min-width: 0; }
+        
+        /* HIER DIE ÄNDERUNG: MEHRZEILIG ERLAUBT */
+        .item-name { 
+            font-weight: 700; color: #ddd; 
+            font-size: 0.7rem; /* Kleiner wie gewünscht */
+            line-height: 1.2;
+            white-space: normal; /* Umbruch erlauben */
+            word-break: break-word; /* Lange Wörter brechen */
+        }
+        
+        .meta-container { display: flex; align-items: center; width: 100%; margin-top: 1px; }
+        .meta-scroller { 
+            flex: 1; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            font-size: 0.6rem; color: #666; 
+            margin-right: 5px;
+        }
         .meta-icons { flex-shrink: 0; display: flex; gap: 4px; }
         .meta-part { margin-right: 3px; }
         .meta-sep { margin: 0 3px; color: #333; }
-        .icon-small { font-size: 0.7rem; opacity: 0.9; }
+        .icon-small { font-size: 0.65rem; opacity: 0.9; }
 
         .item-actions { text-align: right; }
-        .price-tag { font-weight: 500; display: block; margin-bottom: 2px; color: #999; font-size: 0.75rem; }
-        .btn-action { background: #222; border: 1px solid #333; color: #aaa; padding: 2px 6px; font-size: 0.65rem; cursor: pointer; border-radius: 2px; }
+        .price-tag { font-weight: 500; display: block; margin-bottom: 2px; color: #999; font-size: 0.7rem; }
+        .btn-action { background: #222; border: 1px solid #333; color: #aaa; padding: 2px 5px; font-size: 0.6rem; cursor: pointer; border-radius: 2px; }
 
         /* SALES LIST */
         .sale-group { margin-bottom: 8px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg); }
         .sale-header { padding: 4px 8px; background: #222; display: flex; justify-content: space-between; font-size: 0.7rem; color: #ccc; font-weight: bold; }
-        .sale-row { padding: 4px 8px; border-top: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; }
+        
+        .sale-row { 
+            padding: 5px 8px; border-top: 1px solid #2a2a2a; 
+            display: flex; justify-content: space-between; align-items: flex-start; /* Auch hier oben bündig */
+            font-size: 0.7rem; 
+        }
+        
+        .sale-name-col {
+            flex-grow: 1; margin-right: 8px;
+            white-space: normal; /* Umbruch erlauben */
+            word-break: break-word;
+            line-height: 1.2;
+            color: #ddd;
+        }
+
         .sale-footer { padding: 4px 8px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; color: #ccc; font-size: 0.7rem; font-weight: bold; }
 
-        .btn-mini-icon { background: none; border: 1px solid #333; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 3px; cursor: pointer; margin-left: 4px; font-size: 0.8rem; color: #888; }
+        .btn-mini-icon { background: none; border: 1px solid #333; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 3px; cursor: pointer; margin-left: 3px; font-size: 0.75rem; color: #888; }
         .btn-mini-icon:hover { background: #333; color: #fff; }
         .btn-del-icon { color: #d66; border-color: #522; }
 
@@ -89,35 +129,34 @@
         /* MODALS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
         .modal-box { background: var(--panel); width: 100%; max-width: 450px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 95vh; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .modal-header { padding: 10px 15px; background: #222; border-bottom: 1px solid var(--border); font-weight: bold; font-size: 0.85rem; color: #eee; }
-        .modal-body { padding: 15px; overflow-y: auto; }
-        .modal-footer { padding: 10px 15px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #222; }
+        .modal-header { padding: 8px 12px; background: #222; border-bottom: 1px solid var(--border); font-weight: bold; font-size: 0.8rem; color: #eee; }
+        .modal-body { padding: 12px; overflow-y: auto; }
+        .modal-footer { padding: 10px 12px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #222; }
 
         /* INPUTS */
-        .form-grid { display: grid; gap: 8px; }
-        .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        label { display: block; font-size: 0.7rem; color: #777; margin-bottom: 2px; text-transform: uppercase; }
-        input, select, textarea { width: 100%; height: 32px; background: #111; border: 1px solid #444; color: #ddd; padding: 0 8px; border-radius: 2px; font-size: 0.85rem; box-sizing: border-box;}
-        textarea { height: 60px; padding: 5px; }
-        .btn { border: none; padding: 8px; font-weight: 600; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; border-radius: 2px; }
+        .form-grid { display: grid; gap: 6px; }
+        .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        label { display: block; font-size: 0.65rem; color: #777; margin-bottom: 1px; text-transform: uppercase; }
+        input, select, textarea { width: 100%; height: 30px; background: #111; border: 1px solid #444; color: #ddd; padding: 0 6px; border-radius: 2px; font-size: 0.8rem; box-sizing: border-box;}
+        textarea { height: 50px; padding: 4px; }
+        .btn { border: none; padding: 8px; font-weight: 600; cursor: pointer; text-transform: uppercase; font-size: 0.7rem; border-radius: 2px; }
         .btn-primary { background: var(--primary); color: #fff; }
         .btn-secondary { background: #333; color: #ccc; }
         .btn-danger { background: var(--danger); color: #fff; }
 
-        .basket-item { background: #1a1a1a; border: 1px solid #333; padding: 8px; margin-bottom: 5px; }
-        .basket-header { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold; margin-bottom: 4px; color: #ddd;}
+        .basket-item { background: #1a1a1a; border: 1px solid #333; padding: 6px; margin-bottom: 4px; }
+        .basket-header { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: bold; margin-bottom: 2px; color: #ddd;}
         #searchDropdown { display: none; background: #222; border: 1px solid #444; margin-top: 2px; max-height: 180px; overflow-y: auto; position: absolute; width: 100%; z-index: 50; }
-        .search-res { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; font-size: 0.8rem; }
+        .search-res { padding: 6px; border-bottom: 1px solid #333; cursor: pointer; font-size: 0.75rem; }
         
         #modalImageViewer { z-index: 300; background: #000; }
         #fullImage { max-width: 100%; max-height: 90vh; object-fit: contain; }
         .close-img { position: absolute; top: 15px; right: 15px; color: #fff; background: #333; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; }
 
-        /* DELETE CHOICE MODAL SPECIFIC */
-        .delete-choice-btn { text-align: center; padding: 15px; background: #333; border: 1px solid #444; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .delete-choice-btn { text-align: center; padding: 12px; background: #333; border: 1px solid #444; cursor: pointer; border-radius: 4px; transition: 0.2s; }
         .delete-choice-btn:hover { background: #444; border-color: #666; }
-        .del-title { display: block; font-weight: bold; font-size: 0.9rem; color: #eee; margin-bottom: 4px; }
-        .del-desc { display: block; font-size: 0.7rem; color: #888; }
+        .del-title { display: block; font-weight: bold; font-size: 0.85rem; color: #eee; margin-bottom: 2px; }
+        .del-desc { display: block; font-size: 0.65rem; color: #888; }
     </style>
 </head>
 <body>
@@ -415,19 +454,16 @@
             Object.keys(groups).sort().reverse().forEach(inv => {
                 const g = groups[inv];
                 
-                // GEWINN BERECHNUNG
-                // Gewinn = Total - Versand - (Einkaufspreis * Menge)
-                // Wir summieren den Einkaufspreis aller Items in der Gruppe
                 let totalBuyPrice = 0;
                 let totalShipping = 0;
                 
                 let itemsHTML = g.items.map(it => {
                     totalBuyPrice += (it.buyPrice || 0) * (it.qty || 1);
-                    totalShipping += (it.shipping || 0); // Normalerweise nur im ersten Item, aber sicher ist sicher
+                    totalShipping += (it.shipping || 0); 
                     
                     return `<div class="sale-row">
-                        <span style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:5px;">${it.name} (${it.qty}x)</span>
-                        <div style="display:flex;">
+                        <span class="sale-name-col">${it.name} (${it.qty}x)</span>
+                        <div style="display:flex; flex-shrink:0;">
                             ${it.invoiceImg ? `<button class="btn-mini-icon" title="Beleg" onclick="viewImage('${it.invoiceImg}')">👁️</button>` : ''}
                             <button class="btn-mini-icon" title="Bearbeiten" onclick="openEditSale(${it.id})">✏️</button>
                             <button class="btn-mini-icon btn-del-icon" title="Storno" onclick="restoreSale(${it.id})">↩️</button>
@@ -447,9 +483,9 @@
                     </div>
                     ${itemsHTML}
                     <div class="sale-footer">
-                        <div style="display:flex; gap:10px;">
-                            <span style="color:#eee;">SUMME: ${g.total.toFixed(2)} €</span>
-                            <span class="${profitClass}">${profit >= 0 ? '+' : ''}${profit.toFixed(2)} €</span>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <span style="color:#eee;">SUM: ${g.total.toFixed(2)} €</span>
+                            <span class="${profitClass}" style="font-size:0.65rem;">${profit >= 0 ? '+' : ''}${profit.toFixed(2)} €</span>
                         </div>
                         <button class="btn-mini-icon btn-del-icon" title="Rechnung löschen" onclick="openDeleteChoice('${inv}')">🗑️</button>
                     </div>
@@ -458,7 +494,7 @@
             });
         }
 
-        // --- DELETION LOGIC (NEW) ---
+        // --- DELETION LOGIC ---
         function openDeleteChoice(inv) {
             document.getElementById('delInvoiceTarget').value = inv;
             document.getElementById('modalDeleteChoice').style.display = 'flex';
@@ -469,7 +505,6 @@
             const toDel = salesLog.filter(s => s.invoiceNr === inv);
             
             if(restore) {
-                // Zurückbuchen
                 for(let s of toDel) {
                     let it = inventory.find(x => x.artnr === s.artnr);
                     if(it) {
@@ -484,9 +519,7 @@
                 }
             }
 
-            // Löschen
             for(let s of toDel) await dbOp('sales', 'delete', s.id);
-            
             await loadData();
             closeModals();
             switchTab('sales');
@@ -739,7 +772,6 @@
             const newQty = parseInt(document.getElementById('editSaleQty').value) || 1;
             const newTotal = parseFloat(document.getElementById('editSalePrice').value) || 0;
             
-            // Lagerbestand korrigieren
             if(newQty !== s.qty) {
                 const diff = newQty - s.qty;
                 const it = inventory.find(x => x.artnr === s.artnr);
