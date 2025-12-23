@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V43 Auto-Safe</title>
+    <title>Lager V44 Cosmetic</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -106,9 +106,32 @@
         .btn-primary { background: var(--primary); color: #fff; }
         .btn-secondary { background: #333; color: #ccc; }
         .btn-danger { background: var(--danger); color: #fff; }
-        .toggle-container { display:flex; align-items:center; justify-content:space-between; background:#111; padding:8px; border:1px solid #444; border-radius:4px; margin-bottom:10px; }
-        .toggle-label { font-size:0.8rem; color:#eee; }
-        input[type="checkbox"] { width:20px; height:20px; }
+        
+        /* SETTINGS COSMETICS */
+        .settings-group { background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+        .settings-title { font-size: 0.65rem; color: #777; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px; }
+        
+        /* MODERN SWITCH */
+        .switch-row { display: flex; justify-content: space-between; align-items: center; }
+        .switch-label { font-size: 0.8rem; color: #ddd; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; border: 1px solid #444; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); border-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        /* SETTINGS BUTTONS */
+        .action-list { display: flex; flex-direction: column; gap: 8px; }
+        .action-btn { display: flex; align-items: center; justify-content: space-between; background: #222; border: 1px solid #333; padding: 10px; border-radius: 4px; color: #ddd; cursor: pointer; font-size: 0.8rem; text-decoration: none; transition: 0.2s; }
+        .action-btn:hover { background: #2a2a2a; border-color: #555; color: #fff; }
+        .action-icon { font-size: 1.1rem; }
+        .action-text { flex-grow: 1; text-align: left; margin-left: 10px; }
+
+        /* FILE UPLOAD STYLE */
+        .file-upload-label { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 15px; border: 1px dashed #555; border-radius: 4px; color: #888; cursor: pointer; transition: 0.2s; background: #161616; box-sizing: border-box; }
+        .file-upload-label:hover { border-color: #888; color: #ccc; background: #1a1a1a; }
+        .file-upload-icon { font-size: 1.5rem; margin-bottom: 5px; opacity: 0.5; }
 
         .basket-item { background: #1a1a1a; border: 1px solid #333; padding: 6px; margin-bottom: 4px; }
         .basket-header { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: bold; margin-bottom: 2px; color: #ddd;}
@@ -248,18 +271,41 @@
         <div class="modal-box" style="height:auto;">
             <div class="modal-header">Optionen</div>
             <div class="modal-body">
-                <div class="toggle-container">
-                    <span class="toggle-label">Automatisch Backup nach jeder Änderung?</span>
-                    <input type="checkbox" id="checkAutoBackup" onchange="toggleAutoBackup(this)">
+                
+                <div class="settings-group">
+                    <div class="settings-title">Sicherheit</div>
+                    <div class="switch-row">
+                        <span class="switch-label">Automatisch Backup nach Änderung</span>
+                        <label class="switch">
+                            <input type="checkbox" id="checkAutoBackup" onchange="toggleAutoBackup(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
 
-                <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="exportBackup()">Manuelles Backup Download</button>
-                <button class="btn btn-secondary" style="width:100%; margin-bottom:15px; border-color:#888; color:#eee;" onclick="printInventory()">🖨️ Inventur-Liste drucken</button>
-                
-                <div style="margin-top:15px; padding-top:15px; border-top:1px solid #333;">
-                    <label>Backup Importieren</label>
-                    <input type="file" accept=".json" onchange="importBackup(this)">
+                <div class="settings-group">
+                    <div class="settings-title">Aktionen</div>
+                    <div class="action-list">
+                        <div class="action-btn" onclick="exportBackup()">
+                            <span class="action-icon">💾</span>
+                            <span class="action-text">Manuelles Backup erstellen (.json)</span>
+                        </div>
+                        <div class="action-btn" onclick="printInventory()">
+                            <span class="action-icon">🖨️</span>
+                            <span class="action-text">Inventur-Liste drucken</span>
+                        </div>
+                    </div>
                 </div>
+
+                <div class="settings-group" style="border-color:#422; background:#221515;">
+                    <div class="settings-title" style="color:#d66;">Daten Wiederherstellen</div>
+                    <label class="file-upload-label">
+                        <span class="file-upload-icon">📂</span>
+                        <span>Hier klicken, um Backup (.json) zu laden</span>
+                        <input type="file" accept=".json" onchange="importBackup(this)" style="display:none;">
+                    </label>
+                </div>
+
             </div>
             <div class="modal-footer"><button class="btn btn-secondary" style="grid-column:1/-1" onclick="closeModals()">Schließen</button></div>
         </div>
