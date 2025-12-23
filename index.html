@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V38 Flex & Compress</title>
+    <title>Lager V39 SafeGuard</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -549,7 +549,6 @@
             
             if (!id) {
                 document.getElementById('editId').value = '';
-                // AUTO-VORSCHLAG, ABER ÄNDERBAR
                 document.getElementById('inpArtnr').value = (inventory.length + 1) + "-" + new Date().getFullYear(); 
                 document.getElementById('inpName').value = '';
                 document.getElementById('inpMenge').value = 1;
@@ -614,7 +613,7 @@
             document.getElementById('sellBild').value = "";
             document.getElementById('sellFileInput').value = "";
             document.getElementById('sellImgPreview').style.display = 'none';
-            document.getElementById('sellPlatform').value = ""; // Reset
+            document.getElementById('sellPlatform').value = "";
             updateInvoicePreview(); renderBasket();
             document.getElementById('modalSell').style.display = 'flex';
         }
@@ -623,16 +622,12 @@
             const dateInput = document.getElementById('sellDate').value;
             if(!dateInput) return;
             const year = new Date(dateInput).getFullYear();
-            
-            // NEUE LOGIK: Prefix aus Input
             const platVal = document.getElementById('sellPlatform').value;
             let prefix = platVal ? platVal.charAt(0).toUpperCase() : 'R';
             
             let max = 0;
             salesLog.forEach(s => {
                 if(s.date && s.date.startsWith(year.toString())) {
-                    const m = s.invoiceNr.match(/-(\d+)-/); // Sucht jetzt nur nach Nummer zwischen Bindestrichen falls wir Format ändern, aber simpler:
-                    // Wir nehmen das alte Format: X001-2025
                     const parts = s.invoiceNr.split('-');
                     if(parts.length >= 2 && parts[1] == year) {
                          const numStr = s.invoiceNr.match(/(\d+)-/);
@@ -678,8 +673,20 @@
         }
 
         function removeFromBasket(idx) { basket.splice(idx, 1); renderBasket(); }
+        
         function updateBasket(idx, field, val) {
-            if(field === 'qty') basket[idx].qty = parseInt(val);
+            if(field === 'qty') {
+                let n = parseInt(val);
+                // CHECK: Nicht mehr als Bestand
+                if(n > basket[idx].stock) {
+                    alert("Maximal " + basket[idx].stock + " verfügbar!");
+                    n = basket[idx].stock;
+                }
+                if(n < 1) n = 1;
+                basket[idx].qty = n;
+                // Force Update UI
+                renderBasket();
+            }
             if(field === 'price') basket[idx].priceTotal = parseFloat(val);
             calcBasketTotal();
         }
@@ -691,10 +698,19 @@
         }
 
         async function performSell() {
+            // SICHERHEITS-CHECK VOR DEM SPEICHERN
+            for(let bItem of basket) {
+                const dbItem = inventory.find(x => x.id === bItem.id);
+                if(!dbItem || dbItem.menge < bItem.qty) {
+                    alert(`Fehler: Artikel "${bItem.name}" hat nur noch ${dbItem ? dbItem.menge : 0} Stück! Verkauf abgebrochen.`);
+                    return;
+                }
+            }
+
             const inv = document.getElementById('sellInvoiceNr').value;
             const ship = parseFloat(document.getElementById('sellShipping').value || 0);
             const date = document.getElementById('sellDate').value;
-            const platform = document.getElementById('sellPlatform').value || "Sonstiges"; // Fallback
+            const platform = document.getElementById('sellPlatform').value || "Sonstiges"; 
             const globalImg = document.getElementById('sellBild').value;
 
             for(let i = 0; i < basket.length; i++) {
@@ -768,30 +784,20 @@
         function handleImageCompressed(input, targetId, previewId) {
             const file = input.files[0];
             if(!file) return;
-            
-            // Komprimierung
             const reader = new FileReader();
             reader.onload = (event) => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1000; // Genug für Handy-Displays
+                    const MAX_WIDTH = 1000;
                     let width = img.width;
                     let height = img.height;
-                    
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                    
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Speichern als JPEG mit 70% Qualität (spart massig Platz)
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                    
                     document.getElementById(targetId).value = dataUrl;
                     const preview = document.getElementById(previewId);
                     preview.src = dataUrl;
@@ -802,10 +808,7 @@
             reader.readAsDataURL(file);
         }
 
-        function viewImage(src) {
-            document.getElementById('fullImage').src = src;
-            document.getElementById('modalImageViewer').style.display = 'flex';
-        }
+        function viewImage(src) { document.getElementById('fullImage').src = src; document.getElementById('modalImageViewer').style.display = 'flex'; }
         function closeImageViewer() { document.getElementById('modalImageViewer').style.display = 'none'; }
 
         async function exportBackup() {
