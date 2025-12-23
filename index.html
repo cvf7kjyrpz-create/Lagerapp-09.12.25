@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V39 SafeGuard</title>
+    <title>Lager V40 Optik</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -171,8 +171,8 @@
             <div class="stats-grid">
                 <div class="stat-item"><span class="stat-lbl">Menge</span><span id="statCount" class="stat-val">0</span></div>
                 <div class="stat-item"><span class="stat-lbl">Wert</span><span id="statValue" class="stat-val text-blue">0 €</span></div>
-                <div class="stat-item"><span class="stat-lbl">Umsatz</span><span id="statRevenue" class="stat-val text-green">0 €</span></div>
-                <div class="stat-item"><span class="stat-lbl">Gewinn</span><span id="statProfit" class="stat-val text-gold">0 €</span></div>
+                <div class="stat-item"><span class="stat-lbl">Umsatz</span><span id="statRevenue" class="stat-val text-gold">0 €</span></div>
+                <div class="stat-item"><span class="stat-lbl">Gewinn</span><span id="statProfit" class="stat-val text-green">0 €</span></div>
             </div>
             <div class="search-wrapper">
                 <input type="text" id="searchInput" class="search-input" placeholder="Suchen..." onkeyup="renderCurrentView()">
@@ -684,8 +684,7 @@
                 }
                 if(n < 1) n = 1;
                 basket[idx].qty = n;
-                // Force Update UI
-                renderBasket();
+                renderBasket(); // Force Update
             }
             if(field === 'price') basket[idx].priceTotal = parseFloat(val);
             calcBasketTotal();
@@ -698,7 +697,7 @@
         }
 
         async function performSell() {
-            // SICHERHEITS-CHECK VOR DEM SPEICHERN
+            // SICHERHEITS-CHECK
             for(let bItem of basket) {
                 const dbItem = inventory.find(x => x.id === bItem.id);
                 if(!dbItem || dbItem.menge < bItem.qty) {
