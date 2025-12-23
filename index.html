@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V33 Clean & Safe</title>
+    <title>Lager V35 Smart Profit</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -22,7 +22,7 @@
             background: var(--bg); 
             color: var(--text); 
             margin: 0; 
-            padding-bottom: 70px; /* Platz für FAB */
+            padding-bottom: 70px; 
             font-size: 14px;
         }
 
@@ -48,51 +48,23 @@
         .stat-lbl { font-size: 0.6rem; color: #666; text-transform: uppercase; }
         .stat-val { font-size: 0.7rem; font-weight: bold; display: block; }
         .text-blue { color: #60a5fa; } .text-green { color: #34d399; } .text-gold { color: #fbbf24; }
+        .text-red { color: #ef4444; }
 
         /* VIEWS */
         #viewInventory, #viewSales { display: none; }
         #viewInventory.active, #viewSales.active { display: block; }
 
         /* LISTE ITEMS (LAGER) */
-        .list-row { 
-            display: grid; 
-            grid-template-columns: 35px 1fr auto; 
-            padding: 6px 10px; 
-            border-bottom: 1px solid var(--border); 
-            align-items: center; 
-            background: var(--bg);
-            cursor: pointer;
-            gap: 8px;
-        }
+        .list-row { display: grid; grid-template-columns: 35px 1fr auto; padding: 6px 10px; border-bottom: 1px solid var(--border); align-items: center; background: var(--bg); cursor: pointer; gap: 8px; }
         .list-row:hover { background: #222; }
         .list-row.marked { border-left: 2px solid var(--profit); background: #221e10; }
 
         .qty-box { color: var(--primary); font-weight: bold; text-align: center; font-size: 0.8rem; }
-
-        /* Layout Fix für lange Texte */
         .item-info { display: flex; flex-direction: column; gap: 1px; overflow: hidden; min-width: 0; }
-        .item-name { 
-            font-weight: 700; color: #ddd; font-size: 0.75rem; 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-        }
-        
-        /* Container für Meta-Daten (links) und Icons (rechts) */
+        .item-name { font-weight: 700; color: #ddd; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .meta-container { display: flex; align-items: center; width: 100%; }
-        
-        /* Der Text darf schrumpfen und Punkte (...) zeigen */
-        .meta-scroller { 
-            flex: 1; 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            font-size: 0.65rem; color: #666; 
-            margin-right: 5px;
-        }
-        
-        /* Die Icons bleiben starr und immer sichtbar */
-        .meta-icons { 
-            flex-shrink: 0; 
-            display: flex; gap: 4px; 
-        }
-
+        .meta-scroller { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.65rem; color: #666; margin-right: 5px; }
+        .meta-icons { flex-shrink: 0; display: flex; gap: 4px; }
         .meta-part { margin-right: 3px; }
         .meta-sep { margin: 0 3px; color: #333; }
         .icon-small { font-size: 0.7rem; opacity: 0.9; }
@@ -101,20 +73,13 @@
         .price-tag { font-weight: 500; display: block; margin-bottom: 2px; color: #999; font-size: 0.75rem; }
         .btn-action { background: #222; border: 1px solid #333; color: #aaa; padding: 2px 6px; font-size: 0.65rem; cursor: pointer; border-radius: 2px; }
 
-        /* SALES LIST (KOMPAKT) */
+        /* SALES LIST */
         .sale-group { margin-bottom: 8px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg); }
         .sale-header { padding: 4px 8px; background: #222; display: flex; justify-content: space-between; font-size: 0.7rem; color: #ccc; font-weight: bold; }
-        .sale-row { padding: 4px 8px; border-top: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; } /* Schrift kleiner */
-        .sale-footer { padding: 4px 8px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; color: var(--success); font-size: 0.7rem; font-weight: bold; }
+        .sale-row { padding: 4px 8px; border-top: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; }
+        .sale-footer { padding: 4px 8px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; color: #ccc; font-size: 0.7rem; font-weight: bold; }
 
-        /* Mini Buttons im Verkauf */
-        .btn-mini-icon { 
-            background: none; border: 1px solid #333; 
-            width: 24px; height: 24px; 
-            display: flex; align-items: center; justify-content: center; 
-            border-radius: 3px; cursor: pointer; margin-left: 4px;
-            font-size: 0.8rem; color: #888;
-        }
+        .btn-mini-icon { background: none; border: 1px solid #333; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 3px; cursor: pointer; margin-left: 4px; font-size: 0.8rem; color: #888; }
         .btn-mini-icon:hover { background: #333; color: #fff; }
         .btn-del-icon { color: #d66; border-color: #522; }
 
@@ -123,7 +88,7 @@
 
         /* MODALS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
-        .modal-box { background: var(--panel); width: 100%; max-width: 450px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 95vh; }
+        .modal-box { background: var(--panel); width: 100%; max-width: 450px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 95vh; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
         .modal-header { padding: 10px 15px; background: #222; border-bottom: 1px solid var(--border); font-weight: bold; font-size: 0.85rem; color: #eee; }
         .modal-body { padding: 15px; overflow-y: auto; }
         .modal-footer { padding: 10px 15px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #222; }
@@ -147,6 +112,12 @@
         #modalImageViewer { z-index: 300; background: #000; }
         #fullImage { max-width: 100%; max-height: 90vh; object-fit: contain; }
         .close-img { position: absolute; top: 15px; right: 15px; color: #fff; background: #333; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; }
+
+        /* DELETE CHOICE MODAL SPECIFIC */
+        .delete-choice-btn { text-align: center; padding: 15px; background: #333; border: 1px solid #444; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .delete-choice-btn:hover { background: #444; border-color: #666; }
+        .del-title { display: block; font-weight: bold; font-size: 0.9rem; color: #eee; margin-bottom: 4px; }
+        .del-desc { display: block; font-size: 0.7rem; color: #888; }
     </style>
 </head>
 <body>
@@ -273,13 +244,43 @@
             <div class="modal-header">Position Bearbeiten</div>
             <div class="modal-body">
                 <input type="hidden" id="editSaleId">
-                <label>Rechnungs-Nr.</label><input type="text" id="editSaleInv">
-                <label style="margin-top:8px;">Erlös (€)</label><input type="number" step="0.01" id="editSalePrice">
-                <label style="margin-top:8px;">Versand (€)</label><input type="number" step="0.01" id="editSaleShipping">
+                <div class="form-grid">
+                    <div><label>Rechnungs-Nr.</label><input type="text" id="editSaleInv"></div>
+                    <div><label>Artikelname (Text)</label><input type="text" id="editSaleName"></div>
+                    <div class="row-2">
+                         <div><label>Plattform</label><select id="editSalePlatform"><option value="eBay">eBay</option><option value="Vinted">Vinted</option><option value="Kleinanzeigen">Kleinanzeigen</option><option value="Shopify">Shopify</option><option value="Sonstiges">Sonstiges</option></select></div>
+                         <div><label>Datum</label><input type="date" id="editSaleDate"></div>
+                    </div>
+                    <div class="row-2">
+                        <div><label>Menge (ändert Lager!)</label><input type="number" id="editSaleQty" min="1"></div>
+                        <div><label>Versand (€)</label><input type="number" step="0.01" id="editSaleShipping"></div>
+                    </div>
+                    <div><label>Gesamtpreis (€)</label><input type="number" step="0.01" id="editSalePrice"></div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModals()">Abbrechen</button>
                 <button class="btn btn-primary" onclick="saveSaleChanges()">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalDeleteChoice" class="modal-overlay">
+        <div class="modal-box" style="height: auto;">
+            <div class="modal-header">Rechnung löschen</div>
+            <div class="modal-body" style="display:grid; gap:10px;">
+                <input type="hidden" id="delInvoiceTarget">
+                <div class="delete-choice-btn" onclick="executeDelete(true)">
+                    <span class="del-title">📦 Lager aufstocken & löschen</span>
+                    <span class="del-desc">Artikel werden wieder ins Lager gebucht, Rechnung wird entfernt.</span>
+                </div>
+                <div class="delete-choice-btn" onclick="executeDelete(false)" style="border-color:#522; background:#311;">
+                    <span class="del-title" style="color:#faa">🗑️ Nur Liste löschen</span>
+                    <span class="del-desc">Lagerbestand bleibt unverändert. Nur der Eintrag verschwindet.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" style="grid-column:1/-1" onclick="closeModals()">Abbrechen</button>
             </div>
         </div>
     </div>
@@ -413,21 +414,32 @@
 
             Object.keys(groups).sort().reverse().forEach(inv => {
                 const g = groups[inv];
-                const div = document.createElement('div');
-                div.className = 'sale-group';
                 
-                // Neue Icon-Buttons Logik
-                let itemsHTML = g.items.map(it => `
-                    <div class="sale-row">
+                // GEWINN BERECHNUNG
+                // Gewinn = Total - Versand - (Einkaufspreis * Menge)
+                // Wir summieren den Einkaufspreis aller Items in der Gruppe
+                let totalBuyPrice = 0;
+                let totalShipping = 0;
+                
+                let itemsHTML = g.items.map(it => {
+                    totalBuyPrice += (it.buyPrice || 0) * (it.qty || 1);
+                    totalShipping += (it.shipping || 0); // Normalerweise nur im ersten Item, aber sicher ist sicher
+                    
+                    return `<div class="sale-row">
                         <span style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:5px;">${it.name} (${it.qty}x)</span>
                         <div style="display:flex;">
                             ${it.invoiceImg ? `<button class="btn-mini-icon" title="Beleg" onclick="viewImage('${it.invoiceImg}')">👁️</button>` : ''}
                             <button class="btn-mini-icon" title="Bearbeiten" onclick="openEditSale(${it.id})">✏️</button>
                             <button class="btn-mini-icon btn-del-icon" title="Storno" onclick="restoreSale(${it.id})">↩️</button>
                         </div>
-                    </div>
-                `).join('');
+                    </div>`
+                }).join('');
 
+                const profit = g.total - totalShipping - totalBuyPrice;
+                const profitClass = profit >= 0 ? 'text-green' : 'text-red';
+
+                const div = document.createElement('div');
+                div.className = 'sale-group';
                 div.innerHTML = `
                     <div class="sale-header">
                         <span>${inv} <span style="font-weight:normal; color:#888;">| ${g.platform||'-'}</span></span>
@@ -435,12 +447,49 @@
                     </div>
                     ${itemsHTML}
                     <div class="sale-footer">
-                        <span>SUMME: ${g.total.toFixed(2)} €</span>
-                        <button class="btn-mini-icon btn-del-icon" title="Löschen" onclick="deleteFullInvoice('${inv}')">🗑️</button>
+                        <div style="display:flex; gap:10px;">
+                            <span style="color:#eee;">SUMME: ${g.total.toFixed(2)} €</span>
+                            <span class="${profitClass}">${profit >= 0 ? '+' : ''}${profit.toFixed(2)} €</span>
+                        </div>
+                        <button class="btn-mini-icon btn-del-icon" title="Rechnung löschen" onclick="openDeleteChoice('${inv}')">🗑️</button>
                     </div>
                 `;
                 list.appendChild(div);
             });
+        }
+
+        // --- DELETION LOGIC (NEW) ---
+        function openDeleteChoice(inv) {
+            document.getElementById('delInvoiceTarget').value = inv;
+            document.getElementById('modalDeleteChoice').style.display = 'flex';
+        }
+
+        async function executeDelete(restore) {
+            const inv = document.getElementById('delInvoiceTarget').value;
+            const toDel = salesLog.filter(s => s.invoiceNr === inv);
+            
+            if(restore) {
+                // Zurückbuchen
+                for(let s of toDel) {
+                    let it = inventory.find(x => x.artnr === s.artnr);
+                    if(it) {
+                        it.menge += s.qty;
+                        await dbOp('inventory', 'put', it);
+                    } else {
+                        await dbOp('inventory', 'add', {
+                            artnr: s.artnr, name: s.name, menge: s.qty, preis: s.buyPrice || 0,
+                            ort: 'Storno Rückbuchung', datum: new Date().toISOString().split('T')[0]
+                        });
+                    }
+                }
+            }
+
+            // Löschen
+            for(let s of toDel) await dbOp('sales', 'delete', s.id);
+            
+            await loadData();
+            closeModals();
+            switchTab('sales');
         }
 
         // --- EDIT MODAL ---
@@ -647,12 +696,10 @@
                     invoiceImg: useImg
                 });
             }
-            await loadData(); closeModals(); 
-            // FIX: Sofort zum Tab wechseln
-            switchTab('sales');
+            await loadData(); closeModals(); switchTab('sales');
         }
 
-        // --- RESTORE & DELETE ---
+        // --- SINGLE ITEM ACTIONS ---
         async function restoreSale(id) {
             const s = salesLog.find(x => x.id === id);
             if(!confirm("Storno: Artikel zurück ins Lager?")) return;
@@ -671,18 +718,16 @@
             await loadData();
         }
 
-        async function deleteFullInvoice(inv) {
-            if(!confirm(`Rechnung ${inv} komplett löschen?`)) return;
-            const toDel = salesLog.filter(s => s.invoiceNr === inv);
-            for(let s of toDel) await dbOp('sales', 'delete', s.id);
-            await loadData();
-        }
-
+        // --- FULL EDIT LOGIC ---
         function openEditSale(id) {
             const s = salesLog.find(x => x.id === id);
             document.getElementById('editSaleId').value = id;
             document.getElementById('editSaleInv').value = s.invoiceNr;
-            document.getElementById('editSalePrice').value = (s.total - (s.shipping||0)).toFixed(2);
+            document.getElementById('editSaleName').value = s.name;
+            document.getElementById('editSalePlatform').value = s.platform || 'Sonstiges';
+            document.getElementById('editSaleDate').value = s.date;
+            document.getElementById('editSaleQty').value = s.qty;
+            document.getElementById('editSalePrice').value = s.total.toFixed(2);
             document.getElementById('editSaleShipping').value = s.shipping || 0;
             document.getElementById('modalEditSale').style.display = 'flex';
         }
@@ -690,11 +735,28 @@
         async function saveSaleChanges() {
             const id = parseInt(document.getElementById('editSaleId').value);
             const s = salesLog.find(x => x.id === id);
-            const newPrice = parseFloat(document.getElementById('editSalePrice').value) || 0;
-            const newShip = parseFloat(document.getElementById('editSaleShipping').value) || 0;
+
+            const newQty = parseInt(document.getElementById('editSaleQty').value) || 1;
+            const newTotal = parseFloat(document.getElementById('editSalePrice').value) || 0;
+            
+            // Lagerbestand korrigieren
+            if(newQty !== s.qty) {
+                const diff = newQty - s.qty;
+                const it = inventory.find(x => x.artnr === s.artnr);
+                if(it) {
+                    it.menge -= diff;
+                    await dbOp('inventory', 'put', it);
+                }
+            }
+
             s.invoiceNr = document.getElementById('editSaleInv').value;
-            s.shipping = newShip;
-            s.total = newPrice + newShip;
+            s.name = document.getElementById('editSaleName').value;
+            s.platform = document.getElementById('editSalePlatform').value;
+            s.date = document.getElementById('editSaleDate').value;
+            s.qty = newQty;
+            s.shipping = parseFloat(document.getElementById('editSaleShipping').value) || 0;
+            s.total = newTotal;
+
             await dbOp('sales', 'put', s);
             await loadData(); closeModals();
         }
