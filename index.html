@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V40 Optik</title>
+    <title>Lager V42 Clean White</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -14,7 +14,7 @@
             --text-muted: #777;
             --danger: #b91c1c; 
             --success: #059669; 
-            --profit: #d97706;
+            --profit: #d97706; 
             color-scheme: dark; 
         }
         body { 
@@ -43,11 +43,17 @@
         .search-input { width: 100%; height: 28px; background: #111; border: 1px solid var(--border); border-radius: 2px; padding: 0 30px 0 10px; color: #ccc; box-sizing: border-box; font-size: 0.75rem; }
         .search-clear { position: absolute; right: 0; top: 0; bottom: 0; width: 30px; background: none; border: none; color: #777; cursor: pointer; display: none; }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+        /* 5 SPALTEN */
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
         .stat-item { background: var(--panel); padding: 3px; text-align: center; }
         .stat-lbl { font-size: 0.55rem; color: #666; text-transform: uppercase; }
-        .stat-val { font-size: 0.65rem; font-weight: bold; display: block; }
-        .text-blue { color: #60a5fa; } .text-green { color: #34d399; } .text-gold { color: #fbbf24; } .text-red { color: #ef4444; }
+        
+        /* HIER GEÄNDERT: Standardfarbe Weiß (#fff) */
+        .stat-val { font-size: 0.65rem; font-weight: bold; display: block; color: #fff; }
+        
+        /* Nur noch Grün und Rot für Gewinn/Verlust nötig */
+        .text-green { color: #34d399 !important; } 
+        .text-red { color: #ef4444 !important; }
 
         /* VIEWS */
         #viewInventory, #viewSales { display: none; }
@@ -170,8 +176,9 @@
         <div class="toolbar">
             <div class="stats-grid">
                 <div class="stat-item"><span class="stat-lbl">Menge</span><span id="statCount" class="stat-val">0</span></div>
-                <div class="stat-item"><span class="stat-lbl">Wert</span><span id="statValue" class="stat-val text-blue">0 €</span></div>
-                <div class="stat-item"><span class="stat-lbl">Umsatz</span><span id="statRevenue" class="stat-val text-gold">0 €</span></div>
+                <div class="stat-item"><span class="stat-lbl">Wert</span><span id="statValue" class="stat-val">0 €</span></div>
+                <div class="stat-item"><span class="stat-lbl">Verkäufe</span><span id="statSalesCount" class="stat-val">0</span></div>
+                <div class="stat-item"><span class="stat-lbl">Umsatz</span><span id="statRevenue" class="stat-val">0 €</span></div>
                 <div class="stat-item"><span class="stat-lbl">Gewinn</span><span id="statProfit" class="stat-val text-green">0 €</span></div>
             </div>
             <div class="search-wrapper">
@@ -396,12 +403,18 @@
         function updateStats() {
             let tQty = 0, tVal = 0, tRev = 0, tProf = 0;
             inventory.forEach(i => { tQty += i.menge; tVal += (i.preis * i.menge); });
+            
+            const uniqueInvoices = new Set();
+
             salesLog.forEach(s => {
                 tRev += (s.total || 0);
                 tProf += ((s.total || 0) - (s.shipping || 0) - ((s.buyPrice || 0) * (s.qty || 0)));
+                if(s.invoiceNr) uniqueInvoices.add(s.invoiceNr);
             });
+            
             document.getElementById('statCount').innerText = tQty;
             document.getElementById('statValue').innerText = tVal.toFixed(2) + " €";
+            document.getElementById('statSalesCount').innerText = uniqueInvoices.size;
             document.getElementById('statRevenue').innerText = tRev.toFixed(2) + " €";
             document.getElementById('statProfit').innerText = tProf.toFixed(2) + " €";
         }
@@ -677,14 +690,13 @@
         function updateBasket(idx, field, val) {
             if(field === 'qty') {
                 let n = parseInt(val);
-                // CHECK: Nicht mehr als Bestand
                 if(n > basket[idx].stock) {
                     alert("Maximal " + basket[idx].stock + " verfügbar!");
                     n = basket[idx].stock;
                 }
                 if(n < 1) n = 1;
                 basket[idx].qty = n;
-                renderBasket(); // Force Update
+                renderBasket();
             }
             if(field === 'price') basket[idx].priceTotal = parseFloat(val);
             calcBasketTotal();
@@ -697,7 +709,6 @@
         }
 
         async function performSell() {
-            // SICHERHEITS-CHECK
             for(let bItem of basket) {
                 const dbItem = inventory.find(x => x.id === bItem.id);
                 if(!dbItem || dbItem.menge < bItem.qty) {
