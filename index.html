@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V42 Clean White</title>
+    <title>Lager V43 Auto-Safe</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -29,6 +29,13 @@
         /* --- HEADER --- */
         .app-header { background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
         .header-top { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #1a1a1a; }
+        
+        /* STATUS INDICATOR */
+        .status-container { display:flex; align-items:center; gap:10px; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--success); display: inline-block; box-shadow: 0 0 5px var(--success); transition: 0.3s; }
+        .status-dot.unsafe { background: var(--danger); box-shadow: 0 0 5px var(--danger); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
         h1 { margin: 0; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #fff; }
         .header-btn { background: transparent; border: 1px solid var(--border); color: #888; padding: 3px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 2px; text-transform: uppercase; }
 
@@ -47,57 +54,24 @@
         .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
         .stat-item { background: var(--panel); padding: 3px; text-align: center; }
         .stat-lbl { font-size: 0.55rem; color: #666; text-transform: uppercase; }
-        
-        /* HIER GEÄNDERT: Standardfarbe Weiß (#fff) */
         .stat-val { font-size: 0.65rem; font-weight: bold; display: block; color: #fff; }
-        
-        /* Nur noch Grün und Rot für Gewinn/Verlust nötig */
         .text-green { color: #34d399 !important; } 
-        .text-red { color: #ef4444 !important; }
 
         /* VIEWS */
         #viewInventory, #viewSales { display: none; }
         #viewInventory.active, #viewSales.active { display: block; }
 
-        /* LISTE ITEMS (LAGER) */
-        .list-row { 
-            display: grid; 
-            grid-template-columns: 30px 1fr auto; 
-            padding: 6px 8px; 
-            border-bottom: 1px solid var(--border); 
-            align-items: flex-start; 
-            background: var(--bg);
-            cursor: pointer;
-            gap: 8px;
-        }
+        /* LISTE ITEMS */
+        .list-row { display: grid; grid-template-columns: 30px 1fr auto; padding: 6px 8px; border-bottom: 1px solid var(--border); align-items: flex-start; background: var(--bg); cursor: pointer; gap: 8px; }
         .list-row:hover { background: #222; }
         .list-row.marked { border-left: 2px solid var(--profit); background: #221e10; }
-
-        .qty-box { 
-            color: var(--primary); font-weight: bold; text-align: center; font-size: 0.75rem; 
-            padding-top: 2px; 
-        }
-
+        .qty-box { color: var(--primary); font-weight: bold; text-align: center; font-size: 0.75rem; padding-top: 2px; }
         .item-info { display: flex; flex-direction: column; gap: 2px; overflow: hidden; min-width: 0; }
-        
-        .item-name { 
-            font-weight: 700; color: #ddd; 
-            font-size: 0.7rem; 
-            line-height: 1.2;
-            white-space: normal; 
-            word-break: break-word; 
-        }
-        
+        .item-name { font-weight: 700; color: #ddd; font-size: 0.7rem; line-height: 1.2; white-space: normal; word-break: break-word; }
         .meta-container { display: flex; align-items: center; width: 100%; margin-top: 1px; }
-        .meta-scroller { 
-            flex: 1; 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            font-size: 0.6rem; color: #666; 
-            margin-right: 5px;
-        }
+        .meta-scroller { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.6rem; color: #666; margin-right: 5px; }
         .meta-icons { flex-shrink: 0; display: flex; gap: 4px; }
         .icon-small { font-size: 0.65rem; opacity: 0.9; }
-
         .item-actions { text-align: right; }
         .price-tag { font-weight: 500; display: block; margin-bottom: 2px; color: #999; font-size: 0.7rem; }
         .btn-action { background: #222; border: 1px solid #333; color: #aaa; padding: 2px 5px; font-size: 0.6rem; cursor: pointer; border-radius: 2px; }
@@ -105,23 +79,9 @@
         /* SALES LIST */
         .sale-group { margin-bottom: 8px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg); }
         .sale-header { padding: 4px 8px; background: #222; display: flex; justify-content: space-between; font-size: 0.7rem; color: #ccc; font-weight: bold; }
-        
-        .sale-row { 
-            padding: 5px 8px; border-top: 1px solid #2a2a2a; 
-            display: flex; justify-content: space-between; align-items: flex-start; 
-            font-size: 0.7rem; 
-        }
-        
-        .sale-name-col {
-            flex-grow: 1; margin-right: 8px;
-            white-space: normal; 
-            word-break: break-word;
-            line-height: 1.2;
-            color: #ddd;
-        }
-
+        .sale-row { padding: 5px 8px; border-top: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: flex-start; font-size: 0.7rem; }
+        .sale-name-col { flex-grow: 1; margin-right: 8px; white-space: normal; word-break: break-word; line-height: 1.2; color: #ddd; }
         .sale-footer { padding: 4px 8px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; color: #ccc; font-size: 0.7rem; font-weight: bold; }
-
         .btn-mini-icon { background: none; border: 1px solid #333; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 3px; cursor: pointer; margin-left: 3px; font-size: 0.75rem; color: #888; }
         .btn-mini-icon:hover { background: #333; color: #fff; }
         .btn-del-icon { color: #d66; border-color: #522; }
@@ -146,6 +106,9 @@
         .btn-primary { background: var(--primary); color: #fff; }
         .btn-secondary { background: #333; color: #ccc; }
         .btn-danger { background: var(--danger); color: #fff; }
+        .toggle-container { display:flex; align-items:center; justify-content:space-between; background:#111; padding:8px; border:1px solid #444; border-radius:4px; margin-bottom:10px; }
+        .toggle-label { font-size:0.8rem; color:#eee; }
+        input[type="checkbox"] { width:20px; height:20px; }
 
         .basket-item { background: #1a1a1a; border: 1px solid #333; padding: 6px; margin-bottom: 4px; }
         .basket-header { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: bold; margin-bottom: 2px; color: #ddd;}
@@ -167,7 +130,10 @@
     <div class="app-header">
         <div class="header-top">
             <h1>Lagerverwaltung</h1>
-            <button class="header-btn" onclick="openSettings()">Optionen</button>
+            <div class="status-container">
+                <div id="statusIndicator" class="status-dot" title="Datenschutz Status"></div>
+                <button class="header-btn" onclick="openSettings()">Optionen</button>
+            </div>
         </div>
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="switchTab('inventory')" id="tabInv">Lager</button>
@@ -282,7 +248,12 @@
         <div class="modal-box" style="height:auto;">
             <div class="modal-header">Optionen</div>
             <div class="modal-body">
-                <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="exportBackup()">Backup Download (.json)</button>
+                <div class="toggle-container">
+                    <span class="toggle-label">Automatisch Backup nach jeder Änderung?</span>
+                    <input type="checkbox" id="checkAutoBackup" onchange="toggleAutoBackup(this)">
+                </div>
+
+                <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="exportBackup()">Manuelles Backup Download</button>
                 <button class="btn btn-secondary" style="width:100%; margin-bottom:15px; border-color:#888; color:#eee;" onclick="printInventory()">🖨️ Inventur-Liste drucken</button>
                 
                 <div style="margin-top:15px; padding-top:15px; border-top:1px solid #333;">
@@ -354,6 +325,9 @@
         let inventory = [];
         let salesLog = [];
         let currentView = 'inventory';
+        // SAFETY FEATURES
+        let autoBackupMode = false;
+        let unsavedChanges = false;
 
         function initDB() {
             return new Promise((resolve) => {
@@ -381,6 +355,34 @@
             salesLog = await dbOp('sales', 'getAll');
             renderCurrentView();
             updateStats();
+            
+            // Lade Auto-Backup Einstellung
+            const savedAuto = localStorage.getItem('lagerAutoBackup');
+            if(savedAuto === 'true') {
+                autoBackupMode = true;
+                document.getElementById('checkAutoBackup').checked = true;
+            }
+        }
+
+        // --- SAFETY & BACKUP LOGIC ---
+        function setUnsaved(status) {
+            unsavedChanges = status;
+            const ind = document.getElementById('statusIndicator');
+            if(status) ind.classList.add('unsafe');
+            else ind.classList.remove('unsafe');
+        }
+
+        function toggleAutoBackup(cb) {
+            autoBackupMode = cb.checked;
+            localStorage.setItem('lagerAutoBackup', autoBackupMode);
+            if(autoBackupMode && unsavedChanges) exportBackup(); // Sofort sichern
+        }
+
+        function triggerBackupIfAuto() {
+            setUnsaved(true);
+            if(autoBackupMode) {
+                exportBackup(); // Das setzt Unsaved wieder auf false
+            }
         }
 
         function switchTab(tab) {
@@ -405,7 +407,6 @@
             inventory.forEach(i => { tQty += i.menge; tVal += (i.preis * i.menge); });
             
             const uniqueInvoices = new Set();
-
             salesLog.forEach(s => {
                 tRev += (s.total || 0);
                 tProf += ((s.total || 0) - (s.shipping || 0) - ((s.buyPrice || 0) * (s.qty || 0)));
@@ -422,7 +423,6 @@
         function renderInventory(term) {
             const list = document.getElementById('itemList');
             list.innerHTML = '';
-            
             const filtered = [...inventory].reverse().filter(i => 
                 i.name.toLowerCase().includes(term) || (i.artnr && i.artnr.toLowerCase().includes(term))
             );
@@ -437,7 +437,6 @@
                 if(i.groesse) metaParts.push(i.groesse);
                 if(i.ort) metaParts.push(i.ort);
                 let metaHTML = metaParts.map(p => `<span class="meta-part">${p}</span>`).join('<span class="meta-sep">|</span>');
-                
                 let icons = "";
                 if(i.notiz && i.notiz.trim()) icons += '<span class="icon-small">📝</span>';
                 if(i.bild && i.bild.trim()) icons += '<span class="icon-small">🖼️</span>';
@@ -471,21 +470,16 @@
                 groups[s.invoiceNr].total += (s.total || 0);
             });
 
-            if(Object.keys(groups).length === 0) {
-                list.innerHTML = '<div style="text-align:center; padding:30px; color:#555;">Keine Daten</div>';
-                return;
-            }
+            if(Object.keys(groups).length === 0) { list.innerHTML = '<div style="text-align:center; padding:30px; color:#555;">Keine Daten</div>'; return; }
 
             Object.keys(groups).sort().reverse().forEach(inv => {
                 const g = groups[inv];
-                
                 let totalBuyPrice = 0;
                 let totalShipping = 0;
                 
                 let itemsHTML = g.items.map(it => {
                     totalBuyPrice += (it.buyPrice || 0) * (it.qty || 1);
                     totalShipping += (it.shipping || 0); 
-                    
                     return `<div class="sale-row">
                         <span class="sale-name-col">${it.name} (${it.qty}x)</span>
                         <div style="display:flex; flex-shrink:0;">
@@ -498,14 +492,10 @@
 
                 const profit = g.total - totalShipping - totalBuyPrice;
                 const profitClass = profit >= 0 ? 'text-green' : 'text-red';
-
                 const div = document.createElement('div');
                 div.className = 'sale-group';
                 div.innerHTML = `
-                    <div class="sale-header">
-                        <span>${inv} <span style="font-weight:normal; color:#888;">| ${g.platform||'-'}</span></span>
-                        <span>${formatDate(g.date)}</span>
-                    </div>
+                    <div class="sale-header"><span>${inv} <span style="font-weight:normal; color:#888;">| ${g.platform||'-'}</span></span><span>${formatDate(g.date)}</span></div>
                     ${itemsHTML}
                     <div class="sale-footer">
                         <div style="display:flex; gap:10px; align-items:center;">
@@ -513,8 +503,7 @@
                             <span class="${profitClass}" style="font-size:0.65rem;">${profit >= 0 ? '+' : ''}${profit.toFixed(2)} €</span>
                         </div>
                         <button class="btn-mini-icon btn-del-icon" title="Rechnung löschen" onclick="openDeleteChoice('${inv}')">🗑️</button>
-                    </div>
-                `;
+                    </div>`;
                 list.appendChild(div);
             });
         }
@@ -528,9 +517,7 @@
             th{background:#eee;} .check-col{width:100px;}
             </style></head><body><h2>Inventurliste - ${new Date().toLocaleDateString()}</h2>
             <table><thead><tr><th>Ort</th><th>Art-Nr</th><th>Name</th><th>Soll</th><th>Ist (Zählung)</th></tr></thead><tbody>`;
-            sorted.forEach(i => {
-                h += `<tr><td>${i.ort||'-'}</td><td>${i.artnr||''}</td><td>${i.name}</td><td>${i.menge}</td><td class="check-col"></td></tr>`;
-            });
+            sorted.forEach(i => { h += `<tr><td>${i.ort||'-'}</td><td>${i.artnr||''}</td><td>${i.name}</td><td>${i.menge}</td><td class="check-col"></td></tr>`; });
             h += `</tbody></table><script>window.print();<\/script></body></html>`;
             const w = window.open('','_blank'); w.document.write(h); w.document.close();
         }
@@ -553,13 +540,13 @@
             }
             for(let s of toDel) await dbOp('sales', 'delete', s.id);
             await loadData(); closeModals(); switchTab('sales');
+            triggerBackupIfAuto(); // SAVE
         }
 
         // --- EDIT MODAL ---
         function openEditModal(id = null) {
             document.getElementById('modalEdit').style.display = 'flex';
             document.getElementById('inpFile').value = "";
-            
             if (!id) {
                 document.getElementById('editId').value = '';
                 document.getElementById('inpArtnr').value = (inventory.length + 1) + "-" + new Date().getFullYear(); 
@@ -608,11 +595,16 @@
             if(id) { obj.id = parseInt(id); await dbOp('inventory', 'put', obj); }
             else { await dbOp('inventory', 'add', obj); }
             await loadData(); closeModals();
+            triggerBackupIfAuto(); // SAVE
         }
 
         async function deleteCurrentItem() {
             const id = document.getElementById('editId').value;
-            if(id && confirm("Löschen?")) { await dbOp('inventory', 'delete', parseInt(id)); await loadData(); closeModals(); }
+            if(id && confirm("Löschen?")) { 
+                await dbOp('inventory', 'delete', parseInt(id)); 
+                await loadData(); closeModals(); 
+                triggerBackupIfAuto(); // SAVE
+            }
         }
 
         // --- SALES LOGIC ---
@@ -644,10 +636,7 @@
                     const parts = s.invoiceNr.split('-');
                     if(parts.length >= 2 && parts[1] == year) {
                          const numStr = s.invoiceNr.match(/(\d+)-/);
-                         if(numStr) {
-                             const num = parseInt(numStr[1]);
-                             if(num > max) max = num;
-                         }
+                         if(numStr) { const num = parseInt(numStr[1]); if(num > max) max = num; }
                     }
                 }
             });
@@ -690,10 +679,7 @@
         function updateBasket(idx, field, val) {
             if(field === 'qty') {
                 let n = parseInt(val);
-                if(n > basket[idx].stock) {
-                    alert("Maximal " + basket[idx].stock + " verfügbar!");
-                    n = basket[idx].stock;
-                }
+                if(n > basket[idx].stock) { alert("Maximal " + basket[idx].stock + " verfügbar!"); n = basket[idx].stock; }
                 if(n < 1) n = 1;
                 basket[idx].qty = n;
                 renderBasket();
@@ -735,6 +721,7 @@
                 });
             }
             await loadData(); closeModals(); switchTab('sales');
+            triggerBackupIfAuto(); // SAVE
         }
 
         // --- SINGLE ITEM ACTIONS ---
@@ -746,6 +733,7 @@
             else { await dbOp('inventory', 'add', { artnr: s.artnr, name: s.name, menge: s.qty, preis: s.buyPrice || 0, ort: 'Storno', datum: new Date().toISOString().split('T')[0] }); }
             await dbOp('sales', 'delete', id);
             await loadData();
+            triggerBackupIfAuto(); // SAVE
         }
 
         // --- FULL EDIT LOGIC ---
@@ -783,6 +771,7 @@
             s.total = newTotal;
             await dbOp('sales', 'put', s);
             await loadData(); closeModals();
+            triggerBackupIfAuto(); // SAVE
         }
 
         // --- UTILS & COMPRESSION ---
@@ -827,6 +816,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `Backup_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
+            setUnsaved(false); // Alles gesichert!
         }
 
         async function importBackup(inp) {
