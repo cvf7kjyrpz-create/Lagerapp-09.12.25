@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V36 Full View</title>
+    <title>Lager V37 Inventur</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -23,7 +23,7 @@
             color: var(--text); 
             margin: 0; 
             padding-bottom: 70px; 
-            font-size: 13px; /* Generell etwas kleiner */
+            font-size: 13px; 
         }
 
         /* --- HEADER --- */
@@ -56,10 +56,10 @@
         /* LISTE ITEMS (LAGER) */
         .list-row { 
             display: grid; 
-            grid-template-columns: 30px 1fr auto; /* Qty etwas schmaler */
+            grid-template-columns: 30px 1fr auto; 
             padding: 6px 8px; 
             border-bottom: 1px solid var(--border); 
-            align-items: flex-start; /* Oben bündig, falls Text mehrzeilig */
+            align-items: flex-start; 
             background: var(--bg);
             cursor: pointer;
             gap: 8px;
@@ -69,18 +69,17 @@
 
         .qty-box { 
             color: var(--primary); font-weight: bold; text-align: center; font-size: 0.75rem; 
-            padding-top: 2px; /* Ausgleich für flex-start */
+            padding-top: 2px; 
         }
 
         .item-info { display: flex; flex-direction: column; gap: 2px; overflow: hidden; min-width: 0; }
         
-        /* HIER DIE ÄNDERUNG: MEHRZEILIG ERLAUBT */
         .item-name { 
             font-weight: 700; color: #ddd; 
-            font-size: 0.7rem; /* Kleiner wie gewünscht */
+            font-size: 0.7rem; 
             line-height: 1.2;
-            white-space: normal; /* Umbruch erlauben */
-            word-break: break-word; /* Lange Wörter brechen */
+            white-space: normal; 
+            word-break: break-word; 
         }
         
         .meta-container { display: flex; align-items: center; width: 100%; margin-top: 1px; }
@@ -105,13 +104,13 @@
         
         .sale-row { 
             padding: 5px 8px; border-top: 1px solid #2a2a2a; 
-            display: flex; justify-content: space-between; align-items: flex-start; /* Auch hier oben bündig */
+            display: flex; justify-content: space-between; align-items: flex-start; 
             font-size: 0.7rem; 
         }
         
         .sale-name-col {
             flex-grow: 1; margin-right: 8px;
-            white-space: normal; /* Umbruch erlauben */
+            white-space: normal; 
             word-break: break-word;
             line-height: 1.2;
             color: #ddd;
@@ -268,9 +267,11 @@
         <div class="modal-box" style="height:auto;">
             <div class="modal-header">Optionen</div>
             <div class="modal-body">
-                <button class="btn btn-primary" style="width:100%" onclick="exportBackup()">Backup Download</button>
-                <div style="margin-top:15px;">
-                    <label>Backup Import</label>
+                <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="exportBackup()">Backup Download (.json)</button>
+                <button class="btn btn-secondary" style="width:100%; margin-bottom:15px; border-color:#888; color:#eee;" onclick="printInventory()">🖨️ Inventur-Liste drucken</button>
+                
+                <div style="margin-top:15px; padding-top:15px; border-top:1px solid #333;">
+                    <label>Backup Importieren</label>
                     <input type="file" accept=".json" onchange="importBackup(this)">
                 </div>
             </div>
@@ -492,6 +493,26 @@
                 `;
                 list.appendChild(div);
             });
+        }
+
+        // --- PRINT INVENTORY ---
+        function printInventory() {
+            const sorted = [...inventory].sort((a,b) => (a.ort||'').localeCompare(b.ort||''));
+            let h = `<html><head><title>Inventur Liste</title><style>
+            body{font-family:sans-serif; padding:20px;} table{width:100%; border-collapse:collapse;} 
+            th,td{border:1px solid #ccc; padding:8px; text-align:left; font-size:12px;} 
+            th{background:#eee;} .check-col{width:100px;}
+            </style></head><body><h2>Inventurliste - ${new Date().toLocaleDateString()}</h2>
+            <table><thead><tr><th>Ort</th><th>Art-Nr</th><th>Name</th><th>Soll</th><th>Ist (Zählung)</th></tr></thead><tbody>`;
+            
+            sorted.forEach(i => {
+                h += `<tr><td>${i.ort||'-'}</td><td>${i.artnr||''}</td><td>${i.name}</td><td>${i.menge}</td><td class="check-col"></td></tr>`;
+            });
+            h += `</tbody></table><script>window.print();<\/script></body></html>`;
+            
+            const w = window.open('','_blank');
+            w.document.write(h);
+            w.document.close();
         }
 
         // --- DELETION LOGIC ---
