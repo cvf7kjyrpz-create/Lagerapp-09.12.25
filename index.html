@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V44 Cosmetic</title>
+    <title>Lager V45 Business</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -110,8 +110,6 @@
         /* SETTINGS COSMETICS */
         .settings-group { background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
         .settings-title { font-size: 0.65rem; color: #777; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px; }
-        
-        /* MODERN SWITCH */
         .switch-row { display: flex; justify-content: space-between; align-items: center; }
         .switch-label { font-size: 0.8rem; color: #ddd; }
         .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
@@ -120,15 +118,11 @@
         .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--success); border-color: var(--success); }
         input:checked + .slider:before { transform: translateX(18px); }
-
-        /* SETTINGS BUTTONS */
         .action-list { display: flex; flex-direction: column; gap: 8px; }
         .action-btn { display: flex; align-items: center; justify-content: space-between; background: #222; border: 1px solid #333; padding: 10px; border-radius: 4px; color: #ddd; cursor: pointer; font-size: 0.8rem; text-decoration: none; transition: 0.2s; }
         .action-btn:hover { background: #2a2a2a; border-color: #555; color: #fff; }
         .action-icon { font-size: 1.1rem; }
         .action-text { flex-grow: 1; text-align: left; margin-left: 10px; }
-
-        /* FILE UPLOAD STYLE */
         .file-upload-label { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 15px; border: 1px dashed #555; border-radius: 4px; color: #888; cursor: pointer; transition: 0.2s; background: #161616; box-sizing: border-box; }
         .file-upload-label:hover { border-color: #888; color: #ccc; background: #1a1a1a; }
         .file-upload-icon { font-size: 1.5rem; margin-bottom: 5px; opacity: 0.5; }
@@ -252,8 +246,12 @@
                 </div>
 
                 <div style="margin-top:15px; padding-top:10px; border-top:1px solid #333;">
-                    <label>Versand (€)</label><input type="number" step="0.01" id="sellShipping" value="0" oninput="calcBasketTotal()">
-                    <label style="margin-top:8px;">Gesamt</label><input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold; background:#111; border-color:var(--success);">
+                    <div class="row-2">
+                        <div><label>Versand (€)</label><input type="number" step="0.01" id="sellShipping" value="0" oninput="calcBasketTotal()"></div>
+                        <div><label>Gebühren (€)</label><input type="number" step="0.01" id="sellFees" value="0" oninput="calcBasketTotal()"></div>
+                    </div>
+                    
+                    <label style="margin-top:8px;">Gesamt (Kundenpreis)</label><input type="text" id="sellTotal" disabled style="color:var(--success); font-weight:bold; background:#111; border-color:var(--success);">
                     <label style="margin-top:8px;">Beleg</label>
                     <input type="file" id="sellFileInput" onchange="handleImageCompressed(this, 'sellBild', 'sellImgPreview')">
                     <input type="hidden" id="sellBild">
@@ -289,6 +287,10 @@
                         <div class="action-btn" onclick="exportBackup()">
                             <span class="action-icon">💾</span>
                             <span class="action-text">Manuelles Backup erstellen (.json)</span>
+                        </div>
+                        <div class="action-btn" onclick="exportCSV()">
+                            <span class="action-icon">📊</span>
+                            <span class="action-text">CSV-Export (für Excel/Steuer)</span>
                         </div>
                         <div class="action-btn" onclick="printInventory()">
                             <span class="action-icon">🖨️</span>
@@ -330,7 +332,10 @@
                         <div><label>Menge (ändert Lager!)</label><input type="number" id="editSaleQty" min="1"></div>
                         <div><label>Versand (€)</label><input type="number" step="0.01" id="editSaleShipping"></div>
                     </div>
-                    <div><label>Gesamtpreis (€)</label><input type="number" step="0.01" id="editSalePrice"></div>
+                    <div class="row-2">
+                        <div><label>Gesamtpreis (€)</label><input type="number" step="0.01" id="editSalePrice"></div>
+                        <div><label>Gebühren (€)</label><input type="number" step="0.01" id="editSaleFees"></div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -371,7 +376,6 @@
         let inventory = [];
         let salesLog = [];
         let currentView = 'inventory';
-        // SAFETY FEATURES
         let autoBackupMode = false;
         let unsavedChanges = false;
 
@@ -402,7 +406,6 @@
             renderCurrentView();
             updateStats();
             
-            // Lade Auto-Backup Einstellung
             const savedAuto = localStorage.getItem('lagerAutoBackup');
             if(savedAuto === 'true') {
                 autoBackupMode = true;
@@ -410,7 +413,6 @@
             }
         }
 
-        // --- SAFETY & BACKUP LOGIC ---
         function setUnsaved(status) {
             unsavedChanges = status;
             const ind = document.getElementById('statusIndicator');
@@ -421,14 +423,12 @@
         function toggleAutoBackup(cb) {
             autoBackupMode = cb.checked;
             localStorage.setItem('lagerAutoBackup', autoBackupMode);
-            if(autoBackupMode && unsavedChanges) exportBackup(); // Sofort sichern
+            if(autoBackupMode && unsavedChanges) exportBackup();
         }
 
         function triggerBackupIfAuto() {
             setUnsaved(true);
-            if(autoBackupMode) {
-                exportBackup(); // Das setzt Unsaved wieder auf false
-            }
+            if(autoBackupMode) { exportBackup(); }
         }
 
         function switchTab(tab) {
@@ -455,7 +455,8 @@
             const uniqueInvoices = new Set();
             salesLog.forEach(s => {
                 tRev += (s.total || 0);
-                tProf += ((s.total || 0) - (s.shipping || 0) - ((s.buyPrice || 0) * (s.qty || 0)));
+                // GEWINN FORMEL ANGEPASST: MINUS GEBÜHREN
+                tProf += ((s.total || 0) - (s.shipping || 0) - (s.fees || 0) - ((s.buyPrice || 0) * (s.qty || 0)));
                 if(s.invoiceNr) uniqueInvoices.add(s.invoiceNr);
             });
             
@@ -522,10 +523,13 @@
                 const g = groups[inv];
                 let totalBuyPrice = 0;
                 let totalShipping = 0;
+                let totalFees = 0;
                 
                 let itemsHTML = g.items.map(it => {
                     totalBuyPrice += (it.buyPrice || 0) * (it.qty || 1);
                     totalShipping += (it.shipping || 0); 
+                    totalFees += (it.fees || 0);
+
                     return `<div class="sale-row">
                         <span class="sale-name-col">${it.name} (${it.qty}x)</span>
                         <div style="display:flex; flex-shrink:0;">
@@ -536,7 +540,7 @@
                     </div>`
                 }).join('');
 
-                const profit = g.total - totalShipping - totalBuyPrice;
+                const profit = g.total - totalShipping - totalFees - totalBuyPrice;
                 const profitClass = profit >= 0 ? 'text-green' : 'text-red';
                 const div = document.createElement('div');
                 div.className = 'sale-group';
@@ -566,6 +570,29 @@
             sorted.forEach(i => { h += `<tr><td>${i.ort||'-'}</td><td>${i.artnr||''}</td><td>${i.name}</td><td>${i.menge}</td><td class="check-col"></td></tr>`; });
             h += `</tbody></table><script>window.print();<\/script></body></html>`;
             const w = window.open('','_blank'); w.document.write(h); w.document.close();
+        }
+
+        // --- CSV EXPORT (NEU) ---
+        function exportCSV() {
+            let csv = "Datum;RechnungsNr;Plattform;ArtNr;Artikel;Menge;EK_Einzel;VK_Gesamt;Versand;Gebuehren;Gewinn\n";
+            
+            salesLog.forEach(s => {
+                const buy = s.buyPrice || 0;
+                const sell = s.total || 0;
+                const ship = s.shipping || 0;
+                const fees = s.fees || 0;
+                const profit = sell - ship - fees - (buy * (s.qty || 1));
+                
+                // Format numbers for German Excel (comma)
+                const f = (n) => n.toFixed(2).replace('.', ',');
+
+                csv += `${s.date};${s.invoiceNr};${s.platform};${s.artnr||''};"${s.name.replace(/"/g, '""')}";${s.qty};${f(buy)};${f(sell)};${f(ship)};${f(fees)};${f(profit)}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `Umsatz_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
         }
 
         // --- DELETION LOGIC ---
@@ -661,6 +688,7 @@
             basket = [{ id: it.id, name: it.name, artnr: it.artnr, stock: it.menge, qty: 1, priceTotal: it.preis, origImg: it.bild }];
             document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('sellShipping').value = 0;
+            document.getElementById('sellFees').value = 0; // RESET
             document.getElementById('sellBild').value = "";
             document.getElementById('sellFileInput').value = "";
             document.getElementById('sellImgPreview').style.display = 'none';
@@ -737,6 +765,9 @@
         function calcBasketTotal() {
             let sum = basket.reduce((acc, item) => acc + (item.priceTotal || 0), 0);
             sum += parseFloat(document.getElementById('sellShipping').value || 0);
+            // Gebühren erhöhen NICHT den Total (Kundenpreis), sondern mindern nur den Gewinn
+            // Aber hier im UI zeigen wir nur "Gesamt" an, was meist der Rechnungsbetrag ist.
+            // Also: Total = Items + Shipping. Gebühren sind separat.
             document.getElementById('sellTotal').value = sum.toFixed(2) + " €";
         }
 
@@ -751,6 +782,7 @@
 
             const inv = document.getElementById('sellInvoiceNr').value;
             const ship = parseFloat(document.getElementById('sellShipping').value || 0);
+            const fees = parseFloat(document.getElementById('sellFees').value || 0);
             const date = document.getElementById('sellDate').value;
             const platform = document.getElementById('sellPlatform').value || "Sonstiges"; 
             const globalImg = document.getElementById('sellBild').value;
@@ -760,10 +792,14 @@
                 const dbItem = inventory.find(x => x.id === item.id);
                 if(dbItem) { dbItem.menge -= item.qty; await dbOp('inventory', 'put', dbItem); }
                 let useImg = globalImg || item.origImg;
+                
                 await dbOp('sales', 'add', {
                     invoiceNr: inv, platform: platform, date: date, name: item.name, artnr: item.artnr,
-                    qty: item.qty, buyPrice: dbItem ? dbItem.preis : 0, shipping: (i === 0 ? ship : 0),
-                    total: (item.priceTotal || 0) + (i === 0 ? ship : 0), invoiceImg: useImg
+                    qty: item.qty, buyPrice: dbItem ? dbItem.preis : 0, 
+                    shipping: (i === 0 ? ship : 0),
+                    fees: (i === 0 ? fees : 0), // Gebühr nur beim ersten Item speichern
+                    total: (item.priceTotal || 0) + (i === 0 ? ship : 0), 
+                    invoiceImg: useImg
                 });
             }
             await loadData(); closeModals(); switchTab('sales');
@@ -793,6 +829,7 @@
             document.getElementById('editSaleQty').value = s.qty;
             document.getElementById('editSalePrice').value = s.total.toFixed(2);
             document.getElementById('editSaleShipping').value = s.shipping || 0;
+            document.getElementById('editSaleFees').value = s.fees || 0; // LOAD FEES
             document.getElementById('modalEditSale').style.display = 'flex';
         }
 
@@ -814,6 +851,7 @@
             s.date = document.getElementById('editSaleDate').value;
             s.qty = newQty;
             s.shipping = parseFloat(document.getElementById('editSaleShipping').value) || 0;
+            s.fees = parseFloat(document.getElementById('editSaleFees').value) || 0; // SAVE FEES
             s.total = newTotal;
             await dbOp('sales', 'put', s);
             await loadData(); closeModals();
@@ -862,7 +900,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `Backup_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
-            setUnsaved(false); // Alles gesichert!
+            setUnsaved(false); 
         }
 
         async function importBackup(inp) {
