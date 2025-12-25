@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lager V45 Business</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    
+    <title>LagerManager</title>
     <style>
         :root {
             --bg: #1e1e1e; 
@@ -22,15 +27,15 @@
             background: var(--bg); 
             color: var(--text); 
             margin: 0; 
-            padding-bottom: 70px; 
+            padding-bottom: 80px; 
             font-size: 13px; 
+            overscroll-behavior-y: none;
         }
 
         /* --- HEADER --- */
-        .app-header { background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .app-header { background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; padding-top: env(safe-area-inset-top); }
         .header-top { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #1a1a1a; }
         
-        /* STATUS INDICATOR */
         .status-container { display:flex; align-items:center; gap:10px; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--success); display: inline-block; box-shadow: 0 0 5px var(--success); transition: 0.3s; }
         .status-dot.unsafe { background: var(--danger); box-shadow: 0 0 5px var(--danger); animation: pulse 2s infinite; }
@@ -50,7 +55,6 @@
         .search-input { width: 100%; height: 28px; background: #111; border: 1px solid var(--border); border-radius: 2px; padding: 0 30px 0 10px; color: #ccc; box-sizing: border-box; font-size: 0.75rem; }
         .search-clear { position: absolute; right: 0; top: 0; bottom: 0; width: 30px; background: none; border: none; color: #777; cursor: pointer; display: none; }
 
-        /* 5 SPALTEN */
         .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
         .stat-item { background: var(--panel); padding: 3px; text-align: center; }
         .stat-lbl { font-size: 0.55rem; color: #666; text-transform: uppercase; }
@@ -87,22 +91,22 @@
         .btn-del-icon { color: #d66; border-color: #522; }
 
         /* FAB */
-        .fab { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; width: 45px; height: 45px; border-radius: 50%; border: none; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 90;}
+        .fab { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; width: 50px; height: 50px; border-radius: 50%; border: none; font-size: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 90; padding-bottom: 4px;}
 
         /* MODALS */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
-        .modal-box { background: var(--panel); width: 100%; max-width: 450px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 95vh; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .modal-header { padding: 8px 12px; background: #222; border-bottom: 1px solid var(--border); font-weight: bold; font-size: 0.8rem; color: #eee; }
-        .modal-body { padding: 12px; overflow-y: auto; }
-        .modal-footer { padding: 10px 12px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #222; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; padding-bottom: 20px;}
+        .modal-box { background: var(--panel); width: 100%; max-width: 450px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 10px 20px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden; }
+        .modal-header { padding: 12px; background: #222; border-bottom: 1px solid var(--border); font-weight: bold; font-size: 0.9rem; color: #eee; }
+        .modal-body { padding: 15px; overflow-y: auto; }
+        .modal-footer { padding: 12px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #222; }
 
         /* INPUTS */
-        .form-grid { display: grid; gap: 6px; }
-        .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-        label { display: block; font-size: 0.65rem; color: #777; margin-bottom: 1px; text-transform: uppercase; }
-        input, select, textarea { width: 100%; height: 30px; background: #111; border: 1px solid #444; color: #ddd; padding: 0 6px; border-radius: 2px; font-size: 0.8rem; box-sizing: border-box;}
-        textarea { height: 50px; padding: 4px; }
-        .btn { border: none; padding: 8px; font-weight: 600; cursor: pointer; text-transform: uppercase; font-size: 0.7rem; border-radius: 2px; }
+        .form-grid { display: grid; gap: 8px; }
+        .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        label { display: block; font-size: 0.7rem; color: #888; margin-bottom: 2px; text-transform: uppercase; }
+        input, select, textarea { width: 100%; height: 35px; background: #111; border: 1px solid #444; color: #ddd; padding: 0 8px; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box;}
+        textarea { height: 60px; padding: 6px; }
+        .btn { border: none; padding: 10px; font-weight: 600; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; border-radius: 4px; }
         .btn-primary { background: var(--primary); color: #fff; }
         .btn-secondary { background: #333; color: #ccc; }
         .btn-danger { background: var(--danger); color: #fff; }
@@ -119,22 +123,20 @@
         input:checked + .slider { background-color: var(--success); border-color: var(--success); }
         input:checked + .slider:before { transform: translateX(18px); }
         .action-list { display: flex; flex-direction: column; gap: 8px; }
-        .action-btn { display: flex; align-items: center; justify-content: space-between; background: #222; border: 1px solid #333; padding: 10px; border-radius: 4px; color: #ddd; cursor: pointer; font-size: 0.8rem; text-decoration: none; transition: 0.2s; }
+        /* Action Button (div or label) */
+        .action-btn { display: flex; align-items: center; justify-content: space-between; background: #222; border: 1px solid #333; padding: 12px; border-radius: 4px; color: #ddd; cursor: pointer; font-size: 0.85rem; text-decoration: none; transition: 0.2s; box-sizing: border-box; }
         .action-btn:hover { background: #2a2a2a; border-color: #555; color: #fff; }
-        .action-icon { font-size: 1.1rem; }
+        .action-icon { font-size: 1.2rem; }
         .action-text { flex-grow: 1; text-align: left; margin-left: 10px; }
-        .file-upload-label { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 15px; border: 1px dashed #555; border-radius: 4px; color: #888; cursor: pointer; transition: 0.2s; background: #161616; box-sizing: border-box; }
-        .file-upload-label:hover { border-color: #888; color: #ccc; background: #1a1a1a; }
-        .file-upload-icon { font-size: 1.5rem; margin-bottom: 5px; opacity: 0.5; }
 
-        .basket-item { background: #1a1a1a; border: 1px solid #333; padding: 6px; margin-bottom: 4px; }
-        .basket-header { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: bold; margin-bottom: 2px; color: #ddd;}
+        .basket-item { background: #1a1a1a; border: 1px solid #333; padding: 8px; margin-bottom: 4px; border-radius: 4px; }
+        .basket-header { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold; margin-bottom: 4px; color: #ddd;}
         #searchDropdown { display: none; background: #222; border: 1px solid #444; margin-top: 2px; max-height: 180px; overflow-y: auto; position: absolute; width: 100%; z-index: 50; }
-        .search-res { padding: 6px; border-bottom: 1px solid #333; cursor: pointer; font-size: 0.75rem; }
+        .search-res { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; font-size: 0.8rem; }
         
         #modalImageViewer { z-index: 300; background: #000; }
         #fullImage { max-width: 100%; max-height: 90vh; object-fit: contain; }
-        .close-img { position: absolute; top: 15px; right: 15px; color: #fff; background: #333; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; }
+        .close-img { position: absolute; top: 30px; right: 20px; color: #fff; background: #333; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; }
 
         .delete-choice-btn { text-align: center; padding: 12px; background: #333; border: 1px solid #444; cursor: pointer; border-radius: 4px; transition: 0.2s; }
         .delete-choice-btn:hover { background: #444; border-color: #666; }
@@ -282,12 +284,19 @@
                 </div>
 
                 <div class="settings-group">
-                    <div class="settings-title">Aktionen</div>
+                    <div class="settings-title">Daten & Aktionen</div>
                     <div class="action-list">
                         <div class="action-btn" onclick="exportBackup()">
                             <span class="action-icon">💾</span>
-                            <span class="action-text">Manuelles Backup erstellen (.json)</span>
+                            <span class="action-text">Backup speichern (.json)</span>
                         </div>
+                        
+                        <label class="action-btn">
+                            <span class="action-icon">📂</span>
+                            <span class="action-text">Backup importieren (.json)</span>
+                            <input type="file" accept=".json" onchange="importBackup(this)" style="display:none;">
+                        </label>
+
                         <div class="action-btn" onclick="exportCSV()">
                             <span class="action-icon">📊</span>
                             <span class="action-text">CSV-Export (für Excel/Steuer)</span>
@@ -297,15 +306,6 @@
                             <span class="action-text">Inventur-Liste drucken</span>
                         </div>
                     </div>
-                </div>
-
-                <div class="settings-group" style="border-color:#422; background:#221515;">
-                    <div class="settings-title" style="color:#d66;">Daten Wiederherstellen</div>
-                    <label class="file-upload-label">
-                        <span class="file-upload-icon">📂</span>
-                        <span>Hier klicken, um Backup (.json) zu laden</span>
-                        <input type="file" accept=".json" onchange="importBackup(this)" style="display:none;">
-                    </label>
                 </div>
 
             </div>
@@ -455,7 +455,6 @@
             const uniqueInvoices = new Set();
             salesLog.forEach(s => {
                 tRev += (s.total || 0);
-                // GEWINN FORMEL ANGEPASST: MINUS GEBÜHREN
                 tProf += ((s.total || 0) - (s.shipping || 0) - (s.fees || 0) - ((s.buyPrice || 0) * (s.qty || 0)));
                 if(s.invoiceNr) uniqueInvoices.add(s.invoiceNr);
             });
@@ -572,23 +571,18 @@
             const w = window.open('','_blank'); w.document.write(h); w.document.close();
         }
 
-        // --- CSV EXPORT (NEU) ---
+        // --- CSV EXPORT ---
         function exportCSV() {
             let csv = "Datum;RechnungsNr;Plattform;ArtNr;Artikel;Menge;EK_Einzel;VK_Gesamt;Versand;Gebuehren;Gewinn\n";
-            
             salesLog.forEach(s => {
                 const buy = s.buyPrice || 0;
                 const sell = s.total || 0;
                 const ship = s.shipping || 0;
                 const fees = s.fees || 0;
                 const profit = sell - ship - fees - (buy * (s.qty || 1));
-                
-                // Format numbers for German Excel (comma)
                 const f = (n) => n.toFixed(2).replace('.', ',');
-
                 csv += `${s.date};${s.invoiceNr};${s.platform};${s.artnr||''};"${s.name.replace(/"/g, '""')}";${s.qty};${f(buy)};${f(sell)};${f(ship)};${f(fees)};${f(profit)}\n`;
             });
-
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `Umsatz_${new Date().toISOString().split('T')[0]}.csv`;
@@ -688,7 +682,7 @@
             basket = [{ id: it.id, name: it.name, artnr: it.artnr, stock: it.menge, qty: 1, priceTotal: it.preis, origImg: it.bild }];
             document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('sellShipping').value = 0;
-            document.getElementById('sellFees').value = 0; // RESET
+            document.getElementById('sellFees').value = 0;
             document.getElementById('sellBild').value = "";
             document.getElementById('sellFileInput').value = "";
             document.getElementById('sellImgPreview').style.display = 'none';
@@ -765,9 +759,6 @@
         function calcBasketTotal() {
             let sum = basket.reduce((acc, item) => acc + (item.priceTotal || 0), 0);
             sum += parseFloat(document.getElementById('sellShipping').value || 0);
-            // Gebühren erhöhen NICHT den Total (Kundenpreis), sondern mindern nur den Gewinn
-            // Aber hier im UI zeigen wir nur "Gesamt" an, was meist der Rechnungsbetrag ist.
-            // Also: Total = Items + Shipping. Gebühren sind separat.
             document.getElementById('sellTotal').value = sum.toFixed(2) + " €";
         }
 
@@ -797,7 +788,7 @@
                     invoiceNr: inv, platform: platform, date: date, name: item.name, artnr: item.artnr,
                     qty: item.qty, buyPrice: dbItem ? dbItem.preis : 0, 
                     shipping: (i === 0 ? ship : 0),
-                    fees: (i === 0 ? fees : 0), // Gebühr nur beim ersten Item speichern
+                    fees: (i === 0 ? fees : 0),
                     total: (item.priceTotal || 0) + (i === 0 ? ship : 0), 
                     invoiceImg: useImg
                 });
@@ -829,7 +820,7 @@
             document.getElementById('editSaleQty').value = s.qty;
             document.getElementById('editSalePrice').value = s.total.toFixed(2);
             document.getElementById('editSaleShipping').value = s.shipping || 0;
-            document.getElementById('editSaleFees').value = s.fees || 0; // LOAD FEES
+            document.getElementById('editSaleFees').value = s.fees || 0;
             document.getElementById('modalEditSale').style.display = 'flex';
         }
 
@@ -851,7 +842,7 @@
             s.date = document.getElementById('editSaleDate').value;
             s.qty = newQty;
             s.shipping = parseFloat(document.getElementById('editSaleShipping').value) || 0;
-            s.fees = parseFloat(document.getElementById('editSaleFees').value) || 0; // SAVE FEES
+            s.fees = parseFloat(document.getElementById('editSaleFees').value) || 0;
             s.total = newTotal;
             await dbOp('sales', 'put', s);
             await loadData(); closeModals();
